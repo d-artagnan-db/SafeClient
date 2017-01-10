@@ -1,0 +1,7 @@
+<configuration>
+    <!--The default HBase client uses the def-hbase-site configuration -->
+    <property>
+        <name>hbase.zookeeper.quorum</name>
+        <value>baseline</value>
+    </property>
+</configuration>

@@ -1,0 +1,121 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<!--
+/**
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by app<?xml version="1.0" encoding="UTF-8"?>licable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+-->
+<configuration>
+    <property>
+        <name>hbase.master.port</name>
+        <value>70000</value>
+    </property>
+    <property>
+        <name>hbase.master.info.port</name>
+        <value>-1</value>
+    </property>
+    <property>
+        <name>hbase.rootdir</name>
+        <value>file:///var/tmp/test-data/cluster2/root</value>
+    </property>
+    <property>
+        <name>zookeeper.port</name>
+        <value>26262</value>
+    </property>
+    <property>
+        <name>zookeeper.data.file</name>
+        <value>/var/tmp/test-data/zookeeper2</value>
+    </property>
+    <property>
+        <name>hbase.zookeeper.quorum</name>
+        <value>localhost</value>
+    </property>
+    <property>
+        <name>hbase.zookeeper.property.clientPort</name>
+        <value>26262</value>
+    </property>
+    <property>
+        <name>hbase.coprocessor.region.classes</name>
+         <value>
+            pt.uminho.haslab.smcoprocessors.SmpcCoprocessor
+        </value>
+    </property>
+    <property>
+        <name>smhbase.column.family</name>
+        <value>columns</value>
+    </property>
+    <property>
+        <name>smhbase.column.qualifier</name>
+        <value>shareKey</value>
+    </property>
+    <property>
+        <name>smhbase.player.id</name>
+        <value>1</value>
+    </property>
+    <property>
+        <name>smhbase.nbits</name>
+        <value>63</value>
+        <description> 
+            On the client the values are being
+            generated with a parameter of 63 bits. On the
+            reality the SharemindDealer uses 64 bits. 
+            All of the values encrypted in SharemindSecret sharing
+            must be between 0 and 2^(63)-1. But since the values
+            generated use 64 bits, each searver will also create a 
+            SharemindSharedSecret with the parameter of 64bits. 
+            Because every computation of the mod must be made on
+            64 bits.
+        </description>
+    </property>
+    <property>
+        <name>hbase.coprocessor.development</name>
+        <value>True</value>
+    </property>
+    <property>
+        <name>smhbase.relay.wait.time</name>
+        <value>18000</value>
+    </property>
+    <property>
+        <name>smhbase.relay.host</name>
+        <value>localhost</value>
+    </property>
+    <property>
+        <name>smhbase.relay.port</name>
+        <value>6263</value>
+    </property>
+    <property>
+        <name>smhbase.relay.target.first.address</name>
+        <value>localhost</value>
+    </property>
+    <property>
+        <name>smhbase.relay.target.first.port</name>
+        <value>6264</value>
+    </property>
+    <property>
+        <name>smhbase.relay.target.second.address</name>
+        <value>localhost</value>
+    </property>
+    <property>
+        <name>smhbase.relay.target.second.port</name>
+        <value>6262</value>
+    </property>
+    <property>
+        <name>hbase.rpc.timeout</name>
+        <value>6000000</value>
+    </property>
+</configuration>
