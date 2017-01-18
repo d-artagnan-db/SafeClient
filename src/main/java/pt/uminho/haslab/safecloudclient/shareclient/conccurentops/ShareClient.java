@@ -1,4 +1,4 @@
-package pt.uminho.haslab.safecloudclient.shareclient.benchmarks;
+package pt.uminho.haslab.safecloudclient.shareclient.conccurentops;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -6,34 +6,43 @@ import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HTableInterface;
+import org.junit.After;
 import pt.uminho.haslab.safecloudclient.shareclient.SharedAdmin;
 import pt.uminho.haslab.safecloudclient.shareclient.SharedTable;
 import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
 import pt.uminho.haslab.testingutils.ShareCluster;
 
-public class ShareBenchTest implements BenchClient {
+public class ShareClient implements TestClient {
 
 	private ShareCluster clusters;
 	private SharedAdmin admin;
 
-	public ShareBenchTest() throws Exception {
+	public ShareClient() throws Exception {
+		System.setProperty("hadoop.home.dir", "/home/roger/hadoop-2.7.2");
+		// inicialized on start method
 		clusters = null;
 		admin = null;
+
 	}
 
 	@Override
-	public void createTable(HTableDescriptor table) throws IOException,
-			InterruptedException {
-		admin.createTable(table);
+	public void createTestTable(HTableDescriptor testeTable)
+			throws IOException, InterruptedException {
+		admin.createTable(testeTable);
 	}
 
 	@Override
-	public void deleteTable(String tableName) throws IOException {
-		admin.deleteTable(tableName);
+	public boolean checkTableExists(String tableName) throws IOException {
+		return admin.tableExits(tableName);
+	}
+
+	@After
+	public void tearDown() throws IOException {
+		clusters.tearDown();
 	}
 
 	@Override
-	public HTableInterface getTableInterface(String tableName)
+	public HTableInterface createTableInterface(String tableName)
 			throws IOException, InvalidNumberOfBits {
 		Configuration conf = new Configuration();
 		conf.addResource("hbase-client.xml");
@@ -41,31 +50,21 @@ public class ShareBenchTest implements BenchClient {
 	}
 
 	@Override
-	public void closeClientConnection() throws IOException {
-		admin.close();
-	}
-
-	@Override
 	public void startCluster() throws Exception {
 		List<String> resources = new ArrayList<String>();
-		System.out.println("going to start cluster");
 
-		for (int i = 1; i < 4; i++) {
-
+		for (int i = 0; i < 3; i++) {
 			resources.add("hbase-site-" + i + ".xml");
 		}
-		System.out.println("Resources added");
 		// Boot the clusters
 		clusters = new ShareCluster(resources);
 		Configuration conf = new Configuration();
 		conf.addResource("hbase-client.xml");
 		admin = new SharedAdmin(conf);
-		System.out.println("Cluster started");
 	}
 
 	@Override
-	public void stopCluster() throws Exception {
-		admin.close();
+	public void stopCluster() throws IOException {
 		clusters.tearDown();
 	}
 

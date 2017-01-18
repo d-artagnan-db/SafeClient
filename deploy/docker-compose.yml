@@ -1,0 +1,11 @@
+client:
+    image: safecloudclient
+    net: ncwork
+    # Attaches a local folder to the container for the container to write
+    # the results.
+    volumes:
+      - /home/roger/Documents/projects/safecloud-eu/results:/home/client/results
+    hostname: client
+    container_name: client
+    #Parameters to run the sharedClient with one test
+    command: "hbase-client.xml 10 log4j.properties results 100"

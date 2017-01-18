@@ -40,9 +40,10 @@ public class ConcurrentGetBench {
 		private final List<Long> times;
 
 		public ConcurrentClient(String resources, List<BigInteger> identifiers,
-				List<BigInteger> values) throws IOException {
+				List<BigInteger> values) throws IOException, Exception {
 
 			client = new ShareBench(resources);
+			// client = new ShareBenchTest();
 			this.clientIdentifiers = identifiers;
 			this.clientValues = values;
 			times = new ArrayList<Long>();
@@ -120,7 +121,7 @@ public class ConcurrentGetBench {
 				System.out.println(ex);
 				throw new IllegalStateException(ex);
 			}
-
+			System.out.println("going to exit client thread");
 		}
 	}
 
@@ -184,7 +185,7 @@ public class ConcurrentGetBench {
 		for (ConcurrentClient client : clients) {
 			((Thread) client).join();
 		}
-
+		System.out.println("Going to write client results");
 		PrintWriter writer = new PrintWriter("results/putLatency.txt", "UTF-8");;
 		for (ConcurrentClient client : clients) {
 			for (long time : client.getTimes()) {
@@ -193,5 +194,7 @@ public class ConcurrentGetBench {
 		}
 
 		writer.close();
+		System.out.println("Client results writen");
+
 	}
 }

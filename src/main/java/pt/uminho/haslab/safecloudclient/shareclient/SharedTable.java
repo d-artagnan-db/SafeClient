@@ -7,19 +7,13 @@ import com.google.protobuf.ServiceException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.math.BigInteger;
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.Cell;
-import org.apache.hadoop.hbase.CellScanner;
-import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Append;
@@ -30,7 +24,6 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Query;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
@@ -40,6 +33,9 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
+import pt.uminho.haslab.safecloudclient.shareclient.conccurentops.MultiGet;
+import pt.uminho.haslab.safecloudclient.shareclient.conccurentops.MultiPut;
+import pt.uminho.haslab.safecloudclient.shareclient.conccurentops.MultiScan;
 import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
 import pt.uminho.haslab.smhbase.exceptions.InvalidSecretValue;
 import pt.uminho.haslab.smhbase.interfaces.Dealer;
@@ -62,7 +58,7 @@ public class SharedTable implements HTableInterface {
 	 * values.This does not work if either have multiple clients or the client
 	 * inserts and than reconects to insert again.
 	 */
-	private static AtomicLong lastMaxKey = new AtomicLong();
+	private static final AtomicLong lastMaxKey = new AtomicLong();
 
 	public SharedTable(Configuration conf, String tableName)
 			throws IOException, InvalidNumberOfBits {
@@ -100,25 +96,6 @@ public class SharedTable implements HTableInterface {
 		return lastMaxKey.getAndAdd(1);
 	}
 
-	private Put createSecretRegionPut(Put put, byte[] identifier,
-			byte[] virtualKey) throws IOException {
-		Put secretPut = new Put(identifier);
-		CellScanner cs = put.cellScanner();
-
-		while (cs.advance()) {
-			Cell cell = cs.current();
-
-			secretPut.add(CellUtil.cloneFamily(cell),
-					CellUtil.cloneQualifier(cell), CellUtil.cloneValue(cell));
-		}
-
-		secretPut.add(sharedConfig.getShareKeyColumnFamily().getBytes(),
-				sharedConfig.getShareKeyColumnQualifier().getBytes(),
-				virtualKey);
-		return secretPut;
-
-	}
-
 	/**
 	 * 
 	 * TODO:The put has to check if there is a key with the same value
@@ -134,21 +111,16 @@ public class SharedTable implements HTableInterface {
 
 			List<byte[]> secrets = getSecretKey(put.getRow());
 
-			byte[] maxKey = ("" + getMaximumKey()).getBytes();
+			long requestID = getMaximumKey();
+			byte[] maxKey = ("" + requestID).getBytes();
 
-			final Put secretPutOne = createSecretRegionPut(put, maxKey,
-					secrets.get(0));
-			final Put secretPutTwo = createSecretRegionPut(put, maxKey,
-					secrets.get(1));
-			final Put secretPutThree = createSecretRegionPut(put, maxKey,
-					secrets.get(2));
-			connections.get(0).put(secretPutOne);
-			connections.get(1).put(secretPutTwo);
-			connections.get(2).put(secretPutThree);
-
+			MultiPut mput = new MultiPut(this.sharedConfig, connections,
+					secrets, requestID, 1, put, maxKey);
+			mput.doOperation();
 		} catch (InvalidSecretValue ex) {
-			Logger.getLogger(SharedTable.class.getName()).log(Level.SEVERE,
-					null, ex);
+			LOG.debug(ex);
+		} catch (InterruptedException ex) {
+			LOG.debug(ex);
 		}
 	}
 
@@ -176,8 +148,10 @@ public class SharedTable implements HTableInterface {
 			// System.out.println("Secrets");
 			long requestID = getMaximumKey();
 			System.out.println("RequestID is " + requestID);
-			MultiGet mGet = new MultiGet(get, secrets, requestID, 1);
-			return mGet.doOperation();
+			MultiGet mGet = new MultiGet(sharedConfig, connections, secrets,
+					requestID, 1);
+			mGet.doOperation();
+			return mGet.getResult();
 
 		} catch (InvalidSecretValue ex) {
 			// System.out.println(ex);
@@ -202,212 +176,6 @@ public class SharedTable implements HTableInterface {
 		byteSecrets.add(secrets.getU3().toByteArray());
 
 		return byteSecrets;
-	}
-
-	private abstract class MultiOP {
-
-		protected final Query oldQuery;
-		protected final List<byte[]> secrets;
-
-		protected final long requestID;
-		protected final int targetPlayer;
-
-		public MultiOP(Query oldQuery, List<byte[]> secrets, long requestID,
-				int targetPlayer) {
-			this.oldQuery = oldQuery;
-			this.secrets = secrets;
-			this.requestID = requestID;
-			this.targetPlayer = targetPlayer;
-		}
-
-		protected abstract Thread queryThread(HTable table, byte[] row);
-
-		protected abstract Result decodeResults(List<Thread> threads)
-				throws IOException;
-
-		public Result doOperation() throws InterruptedException, IOException {
-			List<Thread> calls = new ArrayList<Thread>();
-
-			for (int i = 0; i < secrets.size(); i++) {
-				HTable table = connections.get(i);
-				byte[] row = secrets.get(i);
-				calls.add(queryThread(table, row));
-			}
-
-			// System.out.println("Going to issue get request");
-			for (Thread t : calls) {
-				t.start();
-
-			}
-			// System.out.println("Going to wait for calls to be issued");
-			for (Thread t : calls) {
-				t.join();
-			}
-			// System.out.println("Get calls terminated");
-
-			return decodeResults(calls);
-		}
-	}
-
-	private class MultiGet extends MultiOP {
-
-		public MultiGet(Query oldQuery, List<byte[]> secrets, long requestID,
-				int targetPlayer) {
-			super(oldQuery, secrets, requestID, targetPlayer);
-		}
-
-		@Override
-		protected Thread queryThread(HTable table, byte[] row) {
-			return new GetThread(table, oldQuery, row, requestID, targetPlayer);
-		}
-
-		@Override
-		protected Result decodeResults(List<Thread> threads) throws IOException {
-			byte[] secretColFam = sharedConfig.getShareKeyColumnFamily()
-					.getBytes();
-			byte[] secretColQual = sharedConfig.getShareKeyColumnQualifier()
-					.getBytes();
-
-			Result resOne = ((QueryThread) threads.get(0)).getResult();
-			Result resTwo = ((QueryThread) threads.get(1)).getResult();
-			Result resThree = ((QueryThread) threads.get(2)).getResult();
-
-			byte[] rowSecretOne = resOne.getValue(secretColFam, secretColQual);
-			byte[] rowSecretTwo = resTwo.getValue(secretColFam, secretColQual);
-			byte[] rowSecretThree = resThree.getValue(secretColFam,
-					secretColQual);
-
-			BigInteger firstSecret = new BigInteger(rowSecretOne);
-			BigInteger secondSecret = new BigInteger(rowSecretTwo);
-			BigInteger thirdSecret = new BigInteger(rowSecretThree);
-
-			SharemindSharedSecret secret = new SharemindSharedSecret(
-					sharedConfig.getNBits(), firstSecret, secondSecret,
-					thirdSecret);
-			byte[] resRow = secret.unshare().toByteArray();
-
-			CellScanner firstScanner = resOne.cellScanner();
-			CellScanner secondScanner = resTwo.cellScanner();
-			CellScanner thirdScanner = resThree.cellScanner();
-			List<Cell> cells = new ArrayList<Cell>();
-
-			while (firstScanner.advance() && secondScanner.advance()
-					&& thirdScanner.advance()) {
-				Cell firstCell = firstScanner.current();
-				Cell secondCell = secondScanner.current();
-				Cell thirdCell = thirdScanner.current();
-				List<byte[]> values = new ArrayList<byte[]>();
-				byte[] fValue = CellUtil.cloneValue(firstCell);
-				byte[] sValue = CellUtil.cloneValue(secondCell);
-				byte[] tValue = CellUtil.cloneValue(thirdCell);
-				values.add(fValue);
-				values.add(sValue);
-				values.add(tValue);
-				byte[] value = oneTimeDecode(values);
-
-				byte[] cf = CellUtil.cloneFamily(firstCell);
-				byte[] cq = CellUtil.cloneQualifier(secondCell);
-				byte type = firstCell.getTypeByte();
-				long timestamp = firstCell.getTimestamp();
-
-				Cell decCell = CellUtil.createCell(resRow, cf, cq, timestamp,
-						type, value);
-				cells.add(decCell);
-			}
-
-			return Result.create(cells);
-
-		}
-
-	}
-
-	public List<byte[]> oneTimePadEncode(byte[] value) {
-		List<byte[]> encValues = new ArrayList<byte[]>();
-
-		SecureRandom random = new SecureRandom();
-		byte firstRandom[] = new byte[value.length];
-		byte secondRandom[] = new byte[value.length];
-
-		random.nextBytes(firstRandom);
-		random.nextBytes(secondRandom);
-		encValues.add(firstRandom);
-		encValues.add(secondRandom);
-
-		BigInteger bfRandom = new BigInteger(firstRandom);
-		BigInteger bsRandom = new BigInteger(secondRandom);
-		BigInteger bvRandom = new BigInteger(value);
-
-		byte encValue[] = bfRandom.xor(bsRandom).xor(bvRandom).toByteArray();
-
-		encValues.add(encValue);
-		return encValues;
-	}
-
-	public byte[] oneTimeDecode(List<byte[]> values) {
-		BigInteger firstSecret = new BigInteger(values.get(0));
-		BigInteger secondSecret = new BigInteger(values.get(1));
-		BigInteger thirdSecret = new BigInteger(values.get(2));
-		return firstSecret.xor(secondSecret).xor(thirdSecret).toByteArray();
-	}
-
-	private static abstract class QueryThread extends Thread {
-
-		protected final Query oldQuery;
-
-		protected final byte[] secretRow;
-
-		protected final HTable table;
-
-		protected Result res;
-
-		protected final long requestID;
-
-		protected final int targetPlayer;
-
-		public QueryThread(HTable table, Query oldQuery, byte[] secretRow,
-				long requestID, int targetPlayer) {
-			this.oldQuery = oldQuery;
-			this.secretRow = secretRow;
-			this.table = table;
-			this.requestID = requestID;
-			this.targetPlayer = targetPlayer;
-		}
-
-		public Result getResult() {
-			return res;
-		}
-
-		protected abstract Result query() throws IOException;
-
-		@Override
-		public void run() {
-			try {
-				res = query();
-			} catch (IOException ex) {
-				LOG.debug(ex);
-			}
-
-		}
-
-	}
-
-	private class GetThread extends QueryThread {
-
-		public GetThread(HTable table, Query oldQuery, byte[] secretRow,
-				long requestID, int targetPlayer) {
-			super(table, oldQuery, secretRow, requestID, targetPlayer);
-		}
-
-		@Override
-		protected Result query() throws IOException {
-
-			Get get = new Get(secretRow);
-			get.setAttribute("requestID", ("" + requestID).getBytes());
-			get.setAttribute("targetPlayer", ("" + targetPlayer).getBytes());
-
-			return table.get(get);
-		}
-
 	}
 
 	@Override
@@ -489,8 +257,39 @@ public class SharedTable implements HTableInterface {
 
 	@Override
 	public ResultScanner getScanner(Scan scan) throws IOException {
-		throw new UnsupportedOperationException("Not supported yet.");
 
+		try {
+			long requestID = getMaximumKey();
+			if (scan.getStartRow().length != 0 && scan.getStopRow().length != 0) {
+				List<byte[]> startRowSecrets = getSecretKey(scan.getStartRow());
+				List<byte[]> stopRowSecrets = getSecretKey(scan.getStopRow());
+				MultiScan ms = new MultiScan(sharedConfig, connections,
+						requestID, 1, startRowSecrets, stopRowSecrets);
+				ms.startScan();
+				return ms;
+
+			} else if (scan.getStartRow().length != 0
+					&& scan.getStopRow().length == 0) {
+				List<byte[]> startRowSecrets = getSecretKey(scan.getStartRow());
+				List<byte[]> stopRowSecrets = new ArrayList<byte[]>();
+				MultiScan ms = new MultiScan(sharedConfig, connections,
+						requestID, 1, startRowSecrets, stopRowSecrets);
+				ms.startScan();
+				return ms;
+			} else if (scan.getStartRow().length == 0
+					&& scan.getStopRow().length == 0) {
+				List<byte[]> startRowSecrets = new ArrayList<byte[]>();
+				List<byte[]> stopRowSecrets = new ArrayList<byte[]>();
+				MultiScan ms = new MultiScan(sharedConfig, connections,
+						requestID, 1, startRowSecrets, stopRowSecrets);
+				ms.startScan();
+				return ms;
+			}
+		} catch (InvalidSecretValue ex) {
+			LOG.debug("Exception found here " + ex);
+			throw new IllegalStateException(ex);
+		}
+		return null;
 	}
 
 	@Override
@@ -500,7 +299,7 @@ public class SharedTable implements HTableInterface {
 	}
 
 	@Override
-	public ResultScanner getScanner(byte[] bytes, byte[] bytes1)
+	public ResultScanner getScanner(byte[] startRow, byte[] stopRow)
 			throws IOException {
 		throw new UnsupportedOperationException("Not supported yet.");
 
@@ -585,7 +384,9 @@ public class SharedTable implements HTableInterface {
 
 	@Override
 	public void flushCommits() throws IOException {
-		throw new UnsupportedOperationException("Not supported yet.");
+		for (HTable table : connections) {
+			table.flushCommits();
+		}
 
 	}
 
@@ -621,14 +422,17 @@ public class SharedTable implements HTableInterface {
 
 	@Override
 	public void setAutoFlush(boolean bln) {
-		throw new UnsupportedOperationException("Not supported yet.");
+		for (HTable table : this.connections) {
+			table.setAutoFlushTo(bln);
+		}
 
 	}
 
 	@Override
 	public void setAutoFlush(boolean bln, boolean bln1) {
-		throw new UnsupportedOperationException("Not supported yet.");
-
+		for (HTable table : this.connections) {
+			table.setAutoFlush(bln, bln1);
+		}
 	}
 
 	@Override
@@ -645,7 +449,9 @@ public class SharedTable implements HTableInterface {
 
 	@Override
 	public void setWriteBufferSize(long l) throws IOException {
-		throw new UnsupportedOperationException("Not supported yet.");
+		for (HTable table : this.connections) {
+			table.setWriteBufferSize(l);
+		}
 
 	}
 

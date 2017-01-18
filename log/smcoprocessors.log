@@ -1,0 +1,90 @@
+2017-01-18 00:44:34,000 INFO  [RS_OPEN_META-rogerubz:45751-0] smcoprocessors.SmpcCoprocessor(76): Starting coprocessor hbase:meta
+2017-01-18 00:44:34,011 DEBUG [RS_OPEN_META-rogerubz:45751-0] CMiddleware.RelayServer(39): Starting server 6262
+2017-01-18 00:44:34,013 DEBUG [RS_OPEN_META-rogerubz:45751-0] smcoprocessors.SmpcCoprocessor(84): Player 0 is going to wait for other players
+2017-01-18 00:44:34,013 DEBUG [RS_OPEN_META-rogerubz:45751-0] smcoprocessors.SmpcCoprocessor(161): waiting for other players 22000
+2017-01-18 00:44:34,015 DEBUG [Thread-77] smcoprocessors.SmpcCoprocessor$WaitOthers(139): Going to sleep and wait for other players
+2017-01-18 00:44:34,016 INFO  [RS_OPEN_META-rogerubz:45751-0] smcoprocessors.SmpcCoprocessor(88): Resources initated 0
+2017-01-18 00:44:34,250 INFO  [RS_OPEN_PRIORITY_REGION-rogerubz:45751-0] smcoprocessors.SmpcCoprocessor(76): Starting coprocessor hbase:namespace
+2017-01-18 00:44:34,250 DEBUG [RS_OPEN_PRIORITY_REGION-rogerubz:45751-0] smcoprocessors.SmpcCoprocessor(90): Second start 0
+2017-01-18 00:44:40,172 INFO  [RS_OPEN_META-rogerubz:44938-0] smcoprocessors.SmpcCoprocessor(76): Starting coprocessor hbase:meta
+2017-01-18 00:44:40,173 DEBUG [RS_OPEN_META-rogerubz:44938-0] CMiddleware.RelayServer(39): Starting server 6263
+2017-01-18 00:44:40,173 DEBUG [RS_OPEN_META-rogerubz:44938-0] smcoprocessors.SmpcCoprocessor(84): Player 1 is going to wait for other players
+2017-01-18 00:44:40,173 DEBUG [RS_OPEN_META-rogerubz:44938-0] smcoprocessors.SmpcCoprocessor(161): waiting for other players 18000
+2017-01-18 00:44:40,173 INFO  [RS_OPEN_META-rogerubz:44938-0] smcoprocessors.SmpcCoprocessor(88): Resources initated 1
+2017-01-18 00:44:40,173 DEBUG [Thread-161] smcoprocessors.SmpcCoprocessor$WaitOthers(139): Going to sleep and wait for other players
+2017-01-18 00:44:40,268 INFO  [RS_OPEN_PRIORITY_REGION-rogerubz:44938-0] smcoprocessors.SmpcCoprocessor(76): Starting coprocessor hbase:namespace
+2017-01-18 00:44:40,268 DEBUG [RS_OPEN_PRIORITY_REGION-rogerubz:44938-0] smcoprocessors.SmpcCoprocessor(90): Second start 1
+2017-01-18 00:44:46,225 INFO  [RS_OPEN_META-rogerubz:36823-0] smcoprocessors.SmpcCoprocessor(76): Starting coprocessor hbase:meta
+2017-01-18 00:44:46,225 DEBUG [RS_OPEN_META-rogerubz:36823-0] CMiddleware.RelayServer(39): Starting server 6264
+2017-01-18 00:44:46,225 DEBUG [RS_OPEN_META-rogerubz:36823-0] smcoprocessors.SmpcCoprocessor(84): Player 2 is going to wait for other players
+2017-01-18 00:44:46,225 DEBUG [RS_OPEN_META-rogerubz:36823-0] smcoprocessors.SmpcCoprocessor(161): waiting for other players 10000
+2017-01-18 00:44:46,225 INFO  [RS_OPEN_META-rogerubz:36823-0] smcoprocessors.SmpcCoprocessor(88): Resources initated 2
+2017-01-18 00:44:46,226 DEBUG [Thread-245] smcoprocessors.SmpcCoprocessor$WaitOthers(139): Going to sleep and wait for other players
+2017-01-18 00:44:46,311 INFO  [RS_OPEN_PRIORITY_REGION-rogerubz:36823-0] smcoprocessors.SmpcCoprocessor(76): Starting coprocessor hbase:namespace
+2017-01-18 00:44:46,311 DEBUG [RS_OPEN_PRIORITY_REGION-rogerubz:36823-0] smcoprocessors.SmpcCoprocessor(90): Second start 2
+2017-01-18 00:44:56,016 INFO  [Thread-77] CMiddleware.RelayClient(94): 6262 is going to connect to localhost:6263
+2017-01-18 00:44:56,016 INFO  [Thread-77] CMiddleware.RelayClient(94): 6262 is going to connect to localhost:6264
+2017-01-18 00:44:56,016 DEBUG [Thread-75] CMiddleware.RelayClient(130): 6262 is going to start relay client thread
+2017-01-18 00:44:56,017 DEBUG [Thread-76] CMiddleware.RelayClient(130): 6262 is going to start relay client thread
+2017-01-18 00:44:56,017 INFO  [Thread-77] CMiddleware.IORelay(116): 6262 waiting for clients to connect to server
+2017-01-18 00:44:56,226 INFO  [Thread-245] CMiddleware.RelayClient(94): 6264 is going to connect to localhost:6262
+2017-01-18 00:44:56,226 INFO  [Thread-245] CMiddleware.RelayClient(94): 6264 is going to connect to localhost:6263
+2017-01-18 00:44:56,227 DEBUG [Thread-243] CMiddleware.RelayClient(130): 6264 is going to start relay client thread
+2017-01-18 00:44:56,227 INFO  [Thread-245] CMiddleware.IORelay(116): 6264 waiting for clients to connect to server
+2017-01-18 00:44:56,228 DEBUG [Thread-244] CMiddleware.RelayClient(130): 6264 is going to start relay client thread
+2017-01-18 00:44:58,174 INFO  [Thread-161] CMiddleware.RelayClient(94): 6263 is going to connect to localhost:6264
+2017-01-18 00:44:58,175 INFO  [Thread-161] CMiddleware.RelayClient(94): 6263 is going to connect to localhost:6262
+2017-01-18 00:44:58,176 INFO  [Thread-245] CMiddleware.IORelay(118): 6264 completed booting phase
+2017-01-18 00:44:58,177 INFO  [Thread-77] CMiddleware.IORelay(118): 6262 completed booting phase
+2017-01-18 00:44:58,177 DEBUG [Thread-159] CMiddleware.RelayClient(130): 6263 is going to start relay client thread
+2017-01-18 00:44:58,177 INFO  [Thread-161] CMiddleware.IORelay(116): 6263 waiting for clients to connect to server
+2017-01-18 00:44:58,178 DEBUG [Thread-160] CMiddleware.RelayClient(130): 6263 is going to start relay client thread
+2017-01-18 00:44:58,178 INFO  [Thread-161] CMiddleware.IORelay(118): 6263 completed booting phase
+2017-01-18 00:45:16,714 INFO  [RS_OPEN_REGION-rogerubz:36823-0] smcoprocessors.SmpcCoprocessor(76): Starting coprocessor TestPutGet
+2017-01-18 00:45:16,714 INFO  [RS_OPEN_REGION-rogerubz:44938-0] smcoprocessors.SmpcCoprocessor(76): Starting coprocessor TestPutGet
+2017-01-18 00:45:16,715 DEBUG [RS_OPEN_REGION-rogerubz:44938-0] smcoprocessors.SmpcCoprocessor(90): Second start 1
+2017-01-18 00:45:16,715 DEBUG [RS_OPEN_REGION-rogerubz:36823-0] smcoprocessors.SmpcCoprocessor(90): Second start 2
+2017-01-18 00:45:16,724 INFO  [RS_OPEN_REGION-rogerubz:45751-0] smcoprocessors.SmpcCoprocessor(76): Starting coprocessor TestPutGet
+2017-01-18 00:45:16,724 DEBUG [RS_OPEN_REGION-rogerubz:45751-0] smcoprocessors.SmpcCoprocessor(90): Second start 0
+2017-01-18 00:45:17,023 DEBUG [B.DefaultRpcServer.handler=9,queue=0,port=45751] smcoprocessors.SmpcCoprocessor(356): Starting preScanner open
+2017-01-18 00:45:17,023 DEBUG [B.DefaultRpcServer.handler=9,queue=0,port=45751] smcoprocessors.SmpcCoprocessor(363): Starting row does not contain a value
+2017-01-18 00:45:17,023 DEBUG [B.DefaultRpcServer.handler=9,queue=0,port=45751] smcoprocessors.SmpcCoprocessor(369): Ending Row does not contain a value
+2017-01-18 00:45:17,023 DEBUG [B.DefaultRpcServer.handler=9,queue=0,port=45751] smcoprocessors.SmpcCoprocessor(374): Going to return secret RegionScanner
+2017-01-18 00:45:17,032 DEBUG [B.DefaultRpcServer.handler=6,queue=0,port=44938] smcoprocessors.SmpcCoprocessor(356): Starting preScanner open
+2017-01-18 00:45:17,032 DEBUG [B.DefaultRpcServer.handler=6,queue=0,port=44938] smcoprocessors.SmpcCoprocessor(363): Starting row does not contain a value
+2017-01-18 00:45:17,032 DEBUG [B.DefaultRpcServer.handler=6,queue=0,port=44938] smcoprocessors.SmpcCoprocessor(369): Ending Row does not contain a value
+2017-01-18 00:45:17,032 DEBUG [B.DefaultRpcServer.handler=6,queue=0,port=44938] smcoprocessors.SmpcCoprocessor(374): Going to return secret RegionScanner
+2017-01-18 00:45:17,034 DEBUG [B.DefaultRpcServer.handler=14,queue=2,port=36823] smcoprocessors.SmpcCoprocessor(356): Starting preScanner open
+2017-01-18 00:45:17,034 DEBUG [B.DefaultRpcServer.handler=14,queue=2,port=36823] smcoprocessors.SmpcCoprocessor(363): Starting row does not contain a value
+2017-01-18 00:45:17,034 DEBUG [B.DefaultRpcServer.handler=14,queue=2,port=36823] smcoprocessors.SmpcCoprocessor(369): Ending Row does not contain a value
+2017-01-18 00:45:17,034 DEBUG [B.DefaultRpcServer.handler=14,queue=2,port=36823] smcoprocessors.SmpcCoprocessor(374): Going to return secret RegionScanner
+2017-01-18 00:45:21,209 DEBUG [RS_CLOSE_META-rogerubz:45751-0] CMiddleware.IORelay(79): 6262 going to force stop relay
+2017-01-18 00:45:21,209 DEBUG [RS_CLOSE_META-rogerubz:45751-0] CMiddleware.RelayClient(108): 6262 is going to shutdown connection to localhost:6263
+2017-01-18 00:45:21,209 DEBUG [RS_CLOSE_META-rogerubz:45751-0] CMiddleware.RelayClient(110): 6262 asked to send 0 messages and actualy sent 0
+2017-01-18 00:45:21,212 DEBUG [RS_CLOSE_META-rogerubz:45751-0] CMiddleware.RelayClient(123): 6262 is shutting down now localhost:6263
+2017-01-18 00:45:21,212 DEBUG [Thread-254] CMiddleware.Client(46): Hndle message with type 99 and size 0
+2017-01-18 00:45:21,213 DEBUG [RS_CLOSE_META-rogerubz:45751-0] CMiddleware.RelayClient(108): 6262 is going to shutdown connection to localhost:6264
+2017-01-18 00:45:21,213 DEBUG [RS_CLOSE_META-rogerubz:45751-0] CMiddleware.RelayClient(110): 6262 asked to send 0 messages and actualy sent 0
+2017-01-18 00:45:21,213 DEBUG [RS_CLOSE_META-rogerubz:45751-0] CMiddleware.RelayClient(123): 6262 is shutting down now localhost:6264
+2017-01-18 00:45:21,213 DEBUG [Thread-252] CMiddleware.Client(46): Hndle message with type 99 and size 0
+2017-01-18 00:45:21,215 DEBUG [RS_CLOSE_META-rogerubz:45751-0] CMiddleware.IORelay(85): 6262 relay force stopped
+2017-01-18 00:45:28,870 DEBUG [RS_CLOSE_META-rogerubz:44938-0] CMiddleware.IORelay(79): 6263 going to force stop relay
+2017-01-18 00:45:28,870 DEBUG [RS_CLOSE_META-rogerubz:44938-0] CMiddleware.RelayClient(108): 6263 is going to shutdown connection to localhost:6264
+2017-01-18 00:45:28,870 DEBUG [RS_CLOSE_META-rogerubz:44938-0] CMiddleware.RelayClient(110): 6263 asked to send 0 messages and actualy sent 0
+2017-01-18 00:45:28,870 DEBUG [RS_CLOSE_META-rogerubz:44938-0] CMiddleware.RelayClient(123): 6263 is shutting down now localhost:6264
+2017-01-18 00:45:28,870 DEBUG [Thread-256] CMiddleware.Client(46): Hndle message with type 99 and size 0
+2017-01-18 00:45:28,871 DEBUG [RS_CLOSE_META-rogerubz:44938-0] CMiddleware.RelayClient(108): 6263 is going to shutdown connection to localhost:6262
+2017-01-18 00:45:28,871 DEBUG [RS_CLOSE_META-rogerubz:44938-0] CMiddleware.RelayClient(110): 6263 asked to send 0 messages and actualy sent 0
+2017-01-18 00:45:28,871 DEBUG [RS_CLOSE_META-rogerubz:44938-0] CMiddleware.RelayClient(123): 6263 is shutting down now localhost:6262
+2017-01-18 00:45:28,871 DEBUG [Thread-257] CMiddleware.Client(46): Hndle message with type 99 and size 0
+2017-01-18 00:45:28,872 DEBUG [RS_CLOSE_META-rogerubz:44938-0] CMiddleware.IORelay(85): 6263 relay force stopped
+2017-01-18 00:45:34,984 DEBUG [RS_CLOSE_META-rogerubz:36823-0] CMiddleware.IORelay(79): 6264 going to force stop relay
+2017-01-18 00:45:34,985 DEBUG [RS_CLOSE_META-rogerubz:36823-0] CMiddleware.RelayClient(108): 6264 is going to shutdown connection to localhost:6262
+2017-01-18 00:45:34,985 DEBUG [RS_CLOSE_META-rogerubz:36823-0] CMiddleware.RelayClient(110): 6264 asked to send 0 messages and actualy sent 0
+2017-01-18 00:45:34,985 DEBUG [RS_CLOSE_META-rogerubz:36823-0] CMiddleware.RelayClient(123): 6264 is shutting down now localhost:6262
+2017-01-18 00:45:34,985 DEBUG [Thread-253] CMiddleware.Client(46): Hndle message with type 99 and size 0
+2017-01-18 00:45:34,985 DEBUG [RS_CLOSE_META-rogerubz:36823-0] CMiddleware.RelayClient(108): 6264 is going to shutdown connection to localhost:6263
+2017-01-18 00:45:34,985 DEBUG [RS_CLOSE_META-rogerubz:36823-0] CMiddleware.RelayClient(110): 6264 asked to send 0 messages and actualy sent 0
+2017-01-18 00:45:34,985 DEBUG [RS_CLOSE_META-rogerubz:36823-0] CMiddleware.RelayClient(123): 6264 is shutting down now localhost:6263
+2017-01-18 00:45:34,985 DEBUG [Thread-255] CMiddleware.Client(46): Hndle message with type 99 and size 0
+2017-01-18 00:45:34,986 DEBUG [RS_CLOSE_META-rogerubz:36823-0] CMiddleware.IORelay(85): 6264 relay force stopped

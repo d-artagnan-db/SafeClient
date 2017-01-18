@@ -27,8 +27,8 @@ import pt.uminho.haslab.testingutils.ValuesGenerator;
 @RunWith(Parameterized.class)
 public abstract class ConcurrentSimpleHBaseTest {
 
-	protected static final int nThreads = 10;
-	protected static final int nValues = 20;
+	protected static final int nThreads = 1;
+	protected static final int nValues = 10;
 
 	protected final String tableName = "TestPutGet";
 
@@ -73,6 +73,7 @@ public abstract class ConcurrentSimpleHBaseTest {
 		protected final byte[] cf;
 		protected final byte[] cq;
 		protected final HTableInterface table;
+		protected boolean testPassed;
 
 		public ConcurrentClient(String resource,
 				List<BigInteger> clientTestingValues,
@@ -85,12 +86,17 @@ public abstract class ConcurrentSimpleHBaseTest {
 			this.cf = cf;
 			this.cq = cq;
 			this.table = new SharedTable(conf, tableName);
+			testPassed = true;
 
 		}
 
+		public boolean getTestPassed() {
+			return testPassed;
+		}
+
 		private void fillTable() throws Exception {
-			System.out.println("vallz" + clientTestingValues.size());
-			System.out.println("identz" + clientIdentifiers.size());
+			// System.out.println("vallz " + clientTestingValues.size());
+			// System.out.println("identz " + clientIdentifiers.size());
 			Assert.assertEquals(true, testClient.checkTableExists(tableName));
 			for (int i = 0; i < clientIdentifiers.size(); i++) {
 				byte[] identifier = clientIdentifiers.get(i).toByteArray();
@@ -100,8 +106,8 @@ public abstract class ConcurrentSimpleHBaseTest {
 				Put put = new Put(identifier);
 				put.add(cf, cq, value);
 				table.put(put);
-				System.out.println("Row id " + rowID + " has inserted value "
-						+ val);
+				// System.out.println("Row id " + rowID + " has inserted value "
+				// + val);
 
 			}
 			startSignal.countDown();
@@ -129,6 +135,7 @@ public abstract class ConcurrentSimpleHBaseTest {
 
 	@Test
 	public void testBoot() throws Exception {
+		// System.out.println("Booting test");
 		testClient.startCluster();
 		createTestTable(testClient);
 		assertEquals(true, testClient.checkTableExists(tableName));
@@ -145,6 +152,11 @@ public abstract class ConcurrentSimpleHBaseTest {
 
 		for (Thread t : threads) {
 			t.join();
+		}
+
+		for (Thread t : threads) {
+			Assert.assertEquals(true, ((ConcurrentClient) t).getTestPassed());
+			// Assert.assertEquals(true, false);
 		}
 
 		testClient.stopCluster();

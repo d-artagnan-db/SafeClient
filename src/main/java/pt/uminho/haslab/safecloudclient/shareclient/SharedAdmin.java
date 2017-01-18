@@ -61,7 +61,6 @@ public class SharedAdmin {
 					} catch (IOException ex) {
 						System.out.println(ex);
 					}
-
 				}
 			};
 
