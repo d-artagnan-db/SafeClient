@@ -1,6 +1,8 @@
 package pt.uminho.haslab.safecloudclient.tests;
 
 import pt.uminho.haslab.safecloudclient.clients.tests.TestClient;
+import pt.uminho.haslab.cryptoenv.Utils;
+//import pt.uminho.haslab.safecloudclient.clients.TestClient;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.List;
@@ -17,6 +19,33 @@ public class PutGetTest extends SimpleHBaseTest {
 
 	}
 
+//	@Override
+//	public void testExecution(TestClient client) throws IOException,
+//			InvalidNumberOfBits, Exception {
+//
+//		HTableInterface table = client.createTableInterface(tableName);
+//
+//		byte[] cf = columnDescriptor.getBytes();
+//		byte[] cq = "testQualifier".getBytes();
+//
+//		createAndFillTable(client, table, cf, cq);
+//
+//		BigInteger key = BigInteger.ZERO;
+//		for (BigInteger value : testingValues) {
+//			System.out.println("Going to get value");
+//			Get get = new Get(key.toByteArray());
+//			get.addColumn(cf, cq);
+//			Result res = table.get(get);
+//			byte[] storedValue = res.getValue(cf, cq);
+//			System.out.println("first val" + value);
+//			System.out.println("stored value " + new BigInteger(storedValue));
+//			assertEquals(value, new BigInteger(storedValue));
+//			key = key.add(BigInteger.ONE);
+//
+//		}
+//
+//	}
+
 	@Override
 	public void testExecution(TestClient client) throws IOException,
 			InvalidNumberOfBits, Exception {
@@ -29,7 +58,7 @@ public class PutGetTest extends SimpleHBaseTest {
 		createAndFillTable(client, table, cf, cq);
 
 		BigInteger key = BigInteger.ZERO;
-		for (BigInteger value : testingValues) {
+		for (int i = 0;  i < testingValues.size(); i++) {
 			System.out.println("Going to get value");
 			Get get = new Get(key.toByteArray());
 			get.addColumn(cf, cq);

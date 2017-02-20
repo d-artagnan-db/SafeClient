@@ -7,8 +7,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.HTableInterface;
+import pt.uminho.haslab.cryptoenv.CryptoTechnique;
+import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoTable;
 import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
 import pt.uminho.haslab.testingutils.ShareCluster;
 
@@ -37,7 +38,8 @@ public class DefaultHBaseClient implements TestClient {
 			throws IOException, InvalidNumberOfBits {
 		Configuration conf = new Configuration();
 		conf.addResource("def-hbase-client.xml");
-		return new HTable(conf, tableName);
+		//return new HTable(conf, tableName);
+		return new CryptoTable(conf, tableName, CryptoTechnique.CryptoType.OPE);
 
 	}
 
