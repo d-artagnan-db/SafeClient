@@ -31,9 +31,10 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
         createAndFillTable(client, table, cf, cq);
 
-        testPut(table, cf, cq);
-        testGet(table, cf, cq);
-        testDelete(table, cf, cq);
+//        testPut(table, cf, cq);
+//        testGet(table, cf, cq);
+//        testDelete(table, cf, cq);
+        testScan(table);
     }
 
     public void testPut(HTableInterface table, byte[] cf, byte[] cq) {
@@ -105,7 +106,16 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
     }
 
-    public void testScan() {
+    public void testScan(HTableInterface table) {
+        try {
 
+            ResultScanner rs = table.getScanner(new Scan());
+            for(Result r = rs.next(); r != null; r = rs.next()) {
+                System.out.println("> "+r.toString());
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

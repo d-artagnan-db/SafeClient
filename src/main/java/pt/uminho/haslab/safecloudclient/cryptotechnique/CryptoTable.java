@@ -6,6 +6,8 @@ import org.apache.hadoop.hbase.CellScanner;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.filter.ByteArrayComparable;
+import org.apache.hadoop.hbase.filter.RowFilter;
 import pt.uminho.haslab.cryptoenv.CryptoHandler;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 import pt.uminho.haslab.cryptoenv.Utils;
@@ -24,21 +26,23 @@ public class CryptoTable extends HTable {
     public CryptoHandler handler;
     public byte[] key;
     public Utils utils;
+    public ResultScannerFactory resultScannerFactory;
 
     public CryptoTable(CryptoTechnique.CryptoType cType) {
         this.cType = cType;
         this.handler = new CryptoHandler();
         this.key = this.handler.gen(cType);
         this.utils = new Utils();
+        this.resultScannerFactory = new ResultScannerFactory();
     }
-
-
+    
     public CryptoTable(Configuration conf, String tableName, CryptoTechnique.CryptoType cType) throws IOException {
         super(conf, TableName.valueOf(tableName));
         this.cType = cType;
         this.handler = new CryptoHandler();
         this.key = this.handler.gen(cType);
         this.utils = new Utils();
+        this.resultScannerFactory = new ResultScannerFactory();
     }
 
 
@@ -71,7 +75,7 @@ public class CryptoTable extends HTable {
     }
 
 
-    private Result decodeResult(byte[] row, Result res) {
+    public Result decodeResult(byte[] row, Result res) {
         List<Cell> cellList = new ArrayList<Cell>();
         while (res.advance()) {
             Cell cell = res.current();
@@ -93,23 +97,6 @@ public class CryptoTable extends HTable {
         return Result.create(cellList);
     }
 
-    @Override
-    public ResultScanner getScanner(Scan scan) throws IOException {
-        byte[] startRow = scan.getStartRow();
-        byte[] stopRow = scan.getStopRow();
-        Scan newScan = null;
-        if (startRow.length != 0 && stopRow.length != 0) {
-            newScan = new Scan(this.encode(startRow), this.encode(stopRow));
-        } else if (startRow.length != 0 && stopRow.length == 0) {
-            newScan = new Scan(this.encode(startRow));
-        } else if (startRow.length == 0 && stopRow.length == 0) {
-            newScan = new Scan();
-        }
-
-        ResultScanner encScan = super.getScanner(newScan);
-
-        return encScan;
-    }
 
     /*
     TODO
@@ -158,9 +145,6 @@ public class CryptoTable extends HTable {
 
     /*
     TODO
-    (1) Fazer get de todos os valores
-    (2) Decifrar todos
-    (3) Comparar com o valor que se pretende e devolver
     (4) Otimizar, não fazer para todos os elementos
      */
     @Override
@@ -195,8 +179,46 @@ public class CryptoTable extends HTable {
         }
     }
 
-    public Result scan(Scan scan) {
-        return null;
+    public Scan encryptedScan(Scan s) {
+        byte[] startRow = s.getStartRow();
+        byte[] stopRow = s.getStopRow();
+
+        Scan newScan = null;
+        if (startRow.length != 0 && stopRow.length != 0) {
+            newScan = new Scan(this.encode(startRow), this.encode(stopRow));
+        } else if (startRow.length != 0 && stopRow.length == 0) {
+            newScan = new Scan(this.encode(startRow));
+        } else if (startRow.length == 0 && stopRow.length == 0) {
+            newScan = new Scan();
+        }
+        return newScan;
     }
 
+    @Override
+    public ResultScanner getScanner(Scan scan) throws IOException {
+        ResultScanner encResultScanner = null;
+        Scan encScan = encryptedScan(scan);
+
+        switch (this.cType) {
+            case STD:
+                encResultScanner = this.resultScannerFactory.
+                        getResultScanner(
+                                this.cType,
+                                this.key,
+                                encScan.getStartRow(),
+                                encScan.getStopRow(),
+                                super.getScanner(encScan));
+
+                return encResultScanner;
+            case DET:
+                break;
+
+            case OPE:
+
+            default:
+                break;
+        }
+
+        return encResultScanner;
+    }
 }
