@@ -113,9 +113,6 @@ public class CryptoTable extends HTable {
 
     /*
     TODO
-    (1) Fazer get de todos os valores - done
-    (2) Decifrar todos - done
-    (3) Comparar com o valor que se pretende e devolver - done
     (4) Otimizar, não fazer para todos os elementos
      */
     @Override
@@ -124,7 +121,6 @@ public class CryptoTable extends HTable {
         Scan getScan = new Scan();
         Result getResult = null;
         try {
-            System.out.println("CType: "+this.cType);
             switch(this.cType) {
                 case STD:
 //                      TODO otimizar isto para não fazer get a tudo
