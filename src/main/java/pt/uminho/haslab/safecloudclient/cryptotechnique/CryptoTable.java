@@ -64,7 +64,7 @@ public class CryptoTable extends HTable {
                         this.encode(CellUtil.cloneValue(cell)));
             }
             super.put(encPut);
-            System.out.println("Put: "+encPut.toString());
+//            System.out.println("Put: "+this.cType+" - "+encPut.toString());
         } catch (IOException e) {
             System.out.println("CryptoTable: Exception in put method - "+e.getMessage());
         }
@@ -89,9 +89,26 @@ public class CryptoTable extends HTable {
                     type,
                     this.decode(value));
             cellList.add(decCell);
-
         }
         return Result.create(cellList);
+    }
+
+    @Override
+    public ResultScanner getScanner(Scan scan) throws IOException {
+        byte[] startRow = scan.getStartRow();
+        byte[] stopRow = scan.getStopRow();
+        Scan newScan = null;
+        if (startRow.length != 0 && stopRow.length != 0) {
+            newScan = new Scan(this.encode(startRow), this.encode(stopRow));
+        } else if (startRow.length != 0 && stopRow.length == 0) {
+            newScan = new Scan(this.encode(startRow));
+        } else if (startRow.length == 0 && stopRow.length == 0) {
+            newScan = new Scan();
+        }
+
+        ResultScanner encScan = super.getScanner(newScan);
+
+        return encScan;
     }
 
     /*
@@ -104,14 +121,15 @@ public class CryptoTable extends HTable {
     @Override
     public Result get(Get get) {
         this.utils = new Utils();
-        Scan newScan = new Scan();
+        Scan getScan = new Scan();
         Result getResult = null;
         try {
+            System.out.println("CType: "+this.cType);
             switch(this.cType) {
                 case STD:
-//                    TODO otimizar isto para não fazer get a tudo
+//                      TODO otimizar isto para não fazer get a tudo
                     BigInteger wantedValue = new BigInteger(get.getRow());
-                    ResultScanner encScan = super.getScanner(newScan);
+                    ResultScanner encScan = super.getScanner(getScan);
                     for (Result r = encScan.next(); r != null; r = encScan.next()) {
                         Result res = this.decodeResult(r.getRow(), r);
                         BigInteger aux = new BigInteger(res.getRow());
@@ -120,14 +138,17 @@ public class CryptoTable extends HTable {
                             break;
                         }
                     }
+                    return getResult;
                 case DET:
                 case OPE:
+                    getResult = null;
 //                    TODO para o OPE inicializar dinamicamente os tamanhos do plaintext e ciphertext
                     byte[] row = get.getRow();
                     Get encGet = new Get(this.encode(row));
                     Result res = super.get(encGet);
-                    System.out.println("Res: "+res.toString());
-                    getResult = decodeResult(res.getRow(), res);
+                    if(!res.isEmpty()) {
+                        getResult = decodeResult(res.getRow(), res);
+                    }
                     return getResult;
                 default:
                     break;
@@ -148,7 +169,34 @@ public class CryptoTable extends HTable {
      */
     @Override
     public void delete(Delete delete) {
-
+        Scan deleteScan = new Scan();
+        try {
+            switch(this.cType) {
+                case STD:
+                    BigInteger wantedValue = new BigInteger(delete.getRow());
+                    ResultScanner encScan = super.getScanner(deleteScan);
+                    for(Result r = encScan.next(); r != null; r = encScan.next()) {
+                        BigInteger resultValue = new BigInteger(this.decodeResult(r.getRow(), r).getRow());
+                        if(wantedValue.equals(resultValue)) {
+                            System.out.println("Row deleted: "+resultValue);
+                            Delete del = new Delete(r.getRow());
+                            super.delete(del);
+                        }
+                    }
+                    break;
+                case DET:
+                case OPE:
+                    byte[] row = delete.getRow();
+                    Delete encDelete = new Delete(this.encode(row));
+                    super.delete(encDelete);
+                    System.out.println("Row deleted: "+new BigInteger(row));
+                    break;
+                default:
+                    break;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public Result scan(Scan scan) {

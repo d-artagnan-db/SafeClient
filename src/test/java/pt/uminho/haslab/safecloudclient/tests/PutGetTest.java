@@ -1,6 +1,7 @@
 package pt.uminho.haslab.safecloudclient.tests;
 
 import pt.uminho.haslab.safecloudclient.clients.tests.TestClient;
+import org.junit.Test;
 import pt.uminho.haslab.cryptoenv.Utils;
 //import pt.uminho.haslab.safecloudclient.clients.TestClient;
 import java.io.IOException;
@@ -59,20 +60,20 @@ public class PutGetTest extends SimpleHBaseTest {
 
 		BigInteger key = BigInteger.ZERO;
 		for (int i = 0;  i < testingValues.size(); i++) {
-			System.out.println("Going to get value");
 			Get get = new Get(key.toByteArray());
 			get.addColumn(cf, cq);
 			Result res = table.get(get);
-			byte[] storedValue = res.getValue(cf, cq);
-			System.out.println("Row key is " + new BigInteger(res.getRow()));
-			System.out.println("first val" + value);
-			System.out.println("stored value " + new BigInteger(storedValue));
-			assertEquals(value, new BigInteger(storedValue));
-			assertEquals(key, new BigInteger(res.getRow()));
+
+			if(!res.isEmpty()) {
+                byte[] storedValue = res.getValue(cf, cq);
+                System.out.println("Row key is " + new BigInteger(res.getRow()));
+                System.out.println("first val" + value);
+                System.out.println("stored value " + new BigInteger(storedValue));
+                assertEquals(value, new BigInteger(storedValue));
+                assertEquals(key, new BigInteger(res.getRow()));
+			}
 			key = key.add(BigInteger.ONE);
-
 		}
-
 	}
 
 }
