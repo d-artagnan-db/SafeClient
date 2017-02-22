@@ -13,7 +13,7 @@ public class ResultScannerFactory {
             case STD:
                 return new StandardResultScanner(cp, startRow, stopRow, rs);
             case DET:
-                return new DeterministicResultScanner(cp, rs);
+                return new DeterministicResultScanner(cp, startRow, stopRow, rs);
             case OPE:
                 return new OrderPreservingResultScanner(cp, rs);
             default:

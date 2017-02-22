@@ -108,8 +108,8 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
     public void testScan(HTableInterface table) throws IOException {
         Scan s = new Scan();
-        s.setStartRow(this.utils.integerToByteArray(0));
-        s.setStopRow(this.utils.integerToByteArray(8));
+//        s.setStartRow(this.utils.integerToByteArray(5));
+//        s.setStopRow(this.utils.integerToByteArray(8));
         ResultScanner rs = table.getScanner(s);
 
         for(Result r = rs.next(); r != null ; r = rs.next()) {

@@ -50,36 +50,38 @@ public class StandardResultScanner implements ResultScanner {
         }
         else {
             this.hasEndRow = false;
-            this.end = new BigInteger(this.cProperties.utils.integerToByteArray(0));
         }
 
         this.hasFilter = false;
 
     }
 
-
-
     public Result next() throws IOException {
         Result res = this.scanner.next();
         if(res!=null) {
             BigInteger row = new BigInteger(this.cProperties.decode(res.getRow()));
-//            BigInteger start = new BigInteger(startRow);
-//            BigInteger end = new BigInteger(endRow);
-//
-//            if(startRow.length != 0)
-//                start= new BigInteger(this.startRow);
-//            if(endRow.length != 0)
-//            end = new BigInteger(this.endRow);
 
-            System.out.println("Row - "+row);
-            System.out.println("StartRow - "+this.start);
-            System.out.println("EndRow - "+this.end);
-
-            if (row.compareTo(start) >= 0 && row.compareTo(end) < 0) {
+            if(hasStartRow && hasEndRow) {
+                if (row.compareTo(start) >= 0 && row.compareTo(end) < 0) {
+                    return this.cProperties.decodeResult(res.getRow(), res);
+                } else
+                    return new Result();
+            }
+            else if(hasStartRow && !hasEndRow){
+                if (row.compareTo(start) >= 0) {
+                    return this.cProperties.decodeResult(res.getRow(), res);
+                } else
+                    return new Result();
+            }
+            else if(hasEndRow) {
+                if (row.compareTo(end) < 0) {
+                    return this.cProperties.decodeResult(res.getRow(), res);
+                } else
+                    return new Result();
+            }
+            else {
                 return this.cProperties.decodeResult(res.getRow(), res);
-            } else
-                return new Result();
-
+            }
         }
         else
             return null;

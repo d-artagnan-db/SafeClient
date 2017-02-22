@@ -13,26 +13,76 @@ import java.util.Iterator;
 public class DeterministicResultScanner implements ResultScanner {
     public CryptoProperties cProperties;
     public ResultScanner encryptedScanner;
+    public byte[] startRow;
+    public byte[] endRow;
+    public boolean hasStartRow;
+    public boolean hasEndRow;
+    public boolean hasFilter;
+    public BigInteger start;
+    public BigInteger end;
 
-    public DeterministicResultScanner(CryptoProperties cp, ResultScanner encryptedScanner) {
+    public DeterministicResultScanner(CryptoProperties cp, byte[] startRow, byte[] endRow, ResultScanner encryptedScanner) {
         this.cProperties = cp;
         this.encryptedScanner = encryptedScanner;
+        this.startRow = startRow;
+        this.endRow = endRow;
+        this.setFilters(startRow, endRow);
+    }
+
+    public void setFilters(byte[] startRow, byte[] endRow) {
+        if(startRow.length != 0) {
+            this.hasStartRow = true;
+            this.startRow = startRow;
+            this.start = new BigInteger(this.startRow);
+        }
+        else {
+            this.hasStartRow = false;
+            this.start = new BigInteger(this.cProperties.utils.integerToByteArray(0));
+        }
+
+        if(endRow.length != 0) {
+            this.hasEndRow = true;
+            this.endRow = endRow;
+            this.end = new BigInteger(endRow);
+        }
+        else {
+            this.hasEndRow = false;
+        }
+
+        this.hasFilter = false;
+
     }
 
     public Result next() throws IOException {
         Result res = this.encryptedScanner.next();
         if(res!=null) {
             BigInteger row = new BigInteger(this.cProperties.decode(res.getRow()));
-            BigInteger st = new BigInteger(this.cProperties.utils.integerToByteArray(0));
-            BigInteger e = new BigInteger(this.cProperties.utils.integerToByteArray(6));
-            if(row.compareTo(st) >= 0 && row.compareTo(e) < 0) {
+
+            if(hasStartRow && hasEndRow) {
+                if (row.compareTo(start) >= 0 && row.compareTo(end) < 0) {
+                    return this.cProperties.decodeResult(res.getRow(), res);
+                } else
+                    return new Result();
+            }
+            else if(hasStartRow && !hasEndRow){
+                if (row.compareTo(start) >= 0) {
+                    return this.cProperties.decodeResult(res.getRow(), res);
+                } else
+                    return new Result();
+            }
+            else if(hasEndRow) {
+                if (row.compareTo(end) < 0) {
+                    return this.cProperties.decodeResult(res.getRow(), res);
+                } else
+                    return new Result();
+            }
+            else {
                 return this.cProperties.decodeResult(res.getRow(), res);
             }
-            else
-                return new Result();
         }
         else
             return null;
+
     }
 
     public Result[] next(int i) throws IOException {

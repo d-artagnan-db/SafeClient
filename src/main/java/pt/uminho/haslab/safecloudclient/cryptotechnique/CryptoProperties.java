@@ -63,18 +63,21 @@ public class CryptoProperties {
         byte[] stopRow = s.getStopRow();
         Scan encScan = null;
 
-        if(this.cType.equals(CryptoTechnique.CryptoType.STD)) {
+        if(!this.cType.equals(CryptoTechnique.CryptoType.OPE)) {
             encScan = new Scan();
         }
         else {
+            encScan = new Scan();
             if (startRow.length != 0 && stopRow.length != 0) {
-                encScan = new Scan(this.encode(startRow), this.encode(stopRow));
+                encScan.setStartRow(this.encode(startRow));
+                encScan.setStopRow(this.encode(stopRow));
             } else if (startRow.length != 0 && stopRow.length == 0) {
-                encScan = new Scan(this.encode(startRow));
-            } else if (startRow.length == 0 && stopRow.length == 0) {
-                encScan = new Scan();
+                encScan.setStartRow(this.encode(startRow));
+            } else if (startRow.length == 0 && stopRow.length != 0) {
+                encScan.setStopRow(this.encode(stopRow));
             }
          }
+
          return encScan;
 
     }
