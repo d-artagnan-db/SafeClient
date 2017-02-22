@@ -116,7 +116,7 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 //        s.setStopRow(this.utils.integerToByteArray(8));
 
         byte[] value = this.utils.integerToByteArray(2);
-        Filter filter = new RowFilter(CompareFilter.CompareOp.GREATER_OR_EQUAL, new BinaryComparator(value));
+        Filter filter = new RowFilter(CompareFilter.CompareOp.GREATER, new BinaryComparator(value));
         s.setFilter(filter);
 
         ResultScanner rs = table.getScanner(s);

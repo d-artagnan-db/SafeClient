@@ -150,7 +150,8 @@ public class CryptoTable extends HTable {
                         this.cryptoProperties,
                         startRow,
                         endRow,
-                        encryptedResultScanner);
+                        encryptedResultScanner,
+                        scan.getFilter());
 
     }
 
