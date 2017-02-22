@@ -15,36 +15,67 @@ import java.util.Iterator;
 
 public class StandardResultScanner implements ResultScanner {
     public ResultScanner scanner;
-    public CryptoTable cryptoTable;
+    public CryptoProperties cProperties;
     public byte[] startRow;
     public byte[] endRow;
-    public boolean hasRowFilter;
-    public Utils utils;
-//    public String comparator;
-//    public String compareValue;
+    public boolean hasStartRow;
+    public boolean hasEndRow;
+    public boolean hasFilter;
+    public BigInteger start;
+    public BigInteger end;
 
-    public StandardResultScanner(byte[] key, byte[] startRow, byte[] endRow, ResultScanner encScanner) {
-        this.scanner = encScanner;
-        this.cryptoTable = new CryptoTable(CryptoTechnique.CryptoType.STD);
-        this.cryptoTable.key = key;
-        this.hasRowFilter = false;
-        this.utils = new Utils();
-        this.startRow = startRow;
-        this.endRow = endRow;
+
+    public StandardResultScanner(CryptoProperties cp, byte[] startRow, byte[] endRow, ResultScanner encryptedScanner) {
+        this.scanner = encryptedScanner;
+        this.cProperties = cp;
+        setFilters(startRow, endRow);
+
     }
+
+    public void setFilters(byte[] startRow, byte[] endRow) {
+        if(startRow.length != 0) {
+            this.hasStartRow = true;
+            this.startRow = startRow;
+            this.start = new BigInteger(this.cProperties.utils.integerToByteArray(2));
+            System.out.println("Start Row: "+this.start);
+        }
+        else {
+            this.hasStartRow = false;
+            this.start = new BigInteger(this.cProperties.utils.integerToByteArray(2));
+        }
+
+        if(endRow.length != 0) {
+            this.hasEndRow = true;
+            this.endRow = endRow;
+            this.end = new BigInteger(this.cProperties.utils.integerToByteArray(7));
+            System.out.println("End Row: "+this.end);
+        }
+        else {
+            this.hasEndRow = false;
+            this.end = new BigInteger(this.cProperties.utils.integerToByteArray(7));
+        }
+
+        this.hasFilter = false;
+
+    }
+
+
 
     public Result next() throws IOException {
         Result res = this.scanner.next();
-        if(!hasRowFilter && res != null) {
-            BigInteger row = new BigInteger(this.cryptoTable.decode(res.getRow()));
-//            TODO if's para o caso das start/end rows serem vazias
-            BigInteger st = new BigInteger(this.utils.integerToByteArray(0));
-            BigInteger e = new BigInteger(this.utils.integerToByteArray(10));
-            if(row.compareTo(st) >= 0 && row.compareTo(e) < 0) {
-                return this.cryptoTable.decodeResult(row.toByteArray(), res);
-            }
+        if(res!=null) {
+            BigInteger row = new BigInteger(this.cProperties.decode(res.getRow()));
+//            if(hasEndRow) {
+                if (row.compareTo(this.start) >= 0 && row.compareTo(this.end) < 0) {
+                    return this.cProperties.decodeResult(res.getRow(), res);
+                } else
+                    return new Result();
+//                TODO ver isto porque está sempre a enviar, tenha ou nao result
+//            }
+
         }
-        return null;
+        else
+            return null;
     }
 
     public Result[] next(int i) throws IOException {

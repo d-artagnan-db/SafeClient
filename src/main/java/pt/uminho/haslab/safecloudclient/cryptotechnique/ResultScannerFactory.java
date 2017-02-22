@@ -8,14 +8,14 @@ import pt.uminho.haslab.cryptoenv.CryptoTechnique;
  */
 public class ResultScannerFactory {
 
-    public ResultScanner getResultScanner(CryptoTechnique.CryptoType cType, byte[] key, byte[] startRow, byte[] stopRow, ResultScanner rs) {
+    public ResultScanner getResultScanner(CryptoTechnique.CryptoType cType, CryptoProperties cp, byte[] startRow, byte[] stopRow, ResultScanner rs) {
         switch (cType) {
             case STD:
-                return new StandardResultScanner(key, startRow, stopRow, rs);
+                return new StandardResultScanner(cp, startRow, stopRow, rs);
             case DET:
-                return new DeterministicResultScanner();
+                return new DeterministicResultScanner(cp, rs);
             case OPE:
-                return new OrderPreservingResultScanner();
+                return new OrderPreservingResultScanner(cp, rs);
             default:
                 return null;
         }

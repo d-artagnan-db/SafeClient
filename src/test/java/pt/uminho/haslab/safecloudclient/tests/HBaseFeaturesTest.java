@@ -34,7 +34,11 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 //        testPut(table, cf, cq);
 //        testGet(table, cf, cq);
 //        testDelete(table, cf, cq);
-        testScan(table);
+        for(int i = 0; i < 10; i++) {
+            System.out.println("Start scan");
+            testScan(table);
+            System.out.println("End scan");
+        }
     }
 
     public void testPut(HTableInterface table, byte[] cf, byte[] cq) {
@@ -106,16 +110,18 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
     }
 
-    public void testScan(HTableInterface table) {
-        try {
+    public void testScan(HTableInterface table) throws IOException {
+        Scan s = new Scan();
+//        s.setStartRow(this.utils.integerToByteArray(0));
+//        s.setStopRow(this.utils.integerToByteArray(8));
+        ResultScanner rs = table.getScanner(s);
 
-            ResultScanner rs = table.getScanner(new Scan());
-            for(Result r = rs.next(); r != null; r = rs.next()) {
-                System.out.println("> "+r.toString());
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
+        for(Result r = rs.next(); r != null ; r = rs.next()) {
+            if(!r.isEmpty())
+                System.out.println("> "+new BigInteger(r.getRow())+" - "+r.toString());
+            else
+                System.out.println("Is Empty");
         }
+
     }
 }
