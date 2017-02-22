@@ -138,14 +138,17 @@ public class CryptoTable extends HTable {
 
     @Override
     public ResultScanner getScanner(Scan scan) throws IOException {
+        byte[] startRow = scan.getStartRow();
+        byte[] endRow = scan.getStopRow();
+
         Scan encScan = this.cryptoProperties.encryptedScan(scan);
         ResultScanner encryptedResultScanner = super.getScanner(encScan);
 
         return this.resultScannerFactory.getResultScanner(
                         this.cryptoProperties.cType,
                         this.cryptoProperties,
-                        encScan.getStartRow(),
-                        encScan.getStopRow(),
+                        startRow,
+                        endRow,
                         encryptedResultScanner);
 
     }

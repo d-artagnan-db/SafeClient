@@ -24,35 +24,33 @@ public class StandardResultScanner implements ResultScanner {
     public BigInteger start;
     public BigInteger end;
 
-
     public StandardResultScanner(CryptoProperties cp, byte[] startRow, byte[] endRow, ResultScanner encryptedScanner) {
         this.scanner = encryptedScanner;
         this.cProperties = cp;
-        setFilters(startRow, endRow);
-
+        this.startRow = startRow;
+        this.endRow = endRow;
+        this.setFilters(startRow, endRow);
     }
 
     public void setFilters(byte[] startRow, byte[] endRow) {
         if(startRow.length != 0) {
             this.hasStartRow = true;
             this.startRow = startRow;
-            this.start = new BigInteger(this.cProperties.utils.integerToByteArray(2));
-            System.out.println("Start Row: "+this.start);
+            this.start = new BigInteger(this.startRow);
         }
         else {
             this.hasStartRow = false;
-            this.start = new BigInteger(this.cProperties.utils.integerToByteArray(2));
+            this.start = new BigInteger(this.cProperties.utils.integerToByteArray(0));
         }
 
         if(endRow.length != 0) {
             this.hasEndRow = true;
             this.endRow = endRow;
-            this.end = new BigInteger(this.cProperties.utils.integerToByteArray(7));
-            System.out.println("End Row: "+this.end);
+            this.end = new BigInteger(endRow);
         }
         else {
             this.hasEndRow = false;
-            this.end = new BigInteger(this.cProperties.utils.integerToByteArray(7));
+            this.end = new BigInteger(this.cProperties.utils.integerToByteArray(0));
         }
 
         this.hasFilter = false;
@@ -65,13 +63,22 @@ public class StandardResultScanner implements ResultScanner {
         Result res = this.scanner.next();
         if(res!=null) {
             BigInteger row = new BigInteger(this.cProperties.decode(res.getRow()));
-//            if(hasEndRow) {
-                if (row.compareTo(this.start) >= 0 && row.compareTo(this.end) < 0) {
-                    return this.cProperties.decodeResult(res.getRow(), res);
-                } else
-                    return new Result();
-//                TODO ver isto porque está sempre a enviar, tenha ou nao result
-//            }
+//            BigInteger start = new BigInteger(startRow);
+//            BigInteger end = new BigInteger(endRow);
+//
+//            if(startRow.length != 0)
+//                start= new BigInteger(this.startRow);
+//            if(endRow.length != 0)
+//            end = new BigInteger(this.endRow);
+
+            System.out.println("Row - "+row);
+            System.out.println("StartRow - "+this.start);
+            System.out.println("EndRow - "+this.end);
+
+            if (row.compareTo(start) >= 0 && row.compareTo(end) < 0) {
+                return this.cProperties.decodeResult(res.getRow(), res);
+            } else
+                return new Result();
 
         }
         else

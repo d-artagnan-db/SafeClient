@@ -34,12 +34,8 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 //        testPut(table, cf, cq);
 //        testGet(table, cf, cq);
 //        testDelete(table, cf, cq);
-        for(int i = 0; i < 10; i++) {
-            System.out.println("Start scan");
-            testScan(table);
-            System.out.println("End scan");
-        }
-    }
+        testScan(table);
+     }
 
     public void testPut(HTableInterface table, byte[] cf, byte[] cq) {
         try {
@@ -112,8 +108,8 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
     public void testScan(HTableInterface table) throws IOException {
         Scan s = new Scan();
-//        s.setStartRow(this.utils.integerToByteArray(0));
-//        s.setStopRow(this.utils.integerToByteArray(8));
+        s.setStartRow(this.utils.integerToByteArray(0));
+        s.setStopRow(this.utils.integerToByteArray(8));
         ResultScanner rs = table.getScanner(s);
 
         for(Result r = rs.next(); r != null ; r = rs.next()) {
