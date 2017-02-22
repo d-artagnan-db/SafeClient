@@ -4,10 +4,12 @@ import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.filter.*;
 import pt.uminho.haslab.cryptoenv.CryptoHandler;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 import pt.uminho.haslab.cryptoenv.Utils;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,24 +65,62 @@ public class CryptoProperties {
         byte[] stopRow = s.getStopRow();
         Scan encScan = null;
 
-        if(!this.cType.equals(CryptoTechnique.CryptoType.OPE)) {
-            encScan = new Scan();
+        switch(this.cType) {
+            case STD:
+            case DET:
+                encScan = new Scan();
+                break;
+            case OPE:
+                encScan = new Scan();
+                if (startRow.length != 0 && stopRow.length != 0) {
+                    encScan.setStartRow(this.encode(startRow));
+                    encScan.setStopRow(this.encode(stopRow));
+                } else if (startRow.length != 0 && stopRow.length == 0) {
+                    encScan.setStartRow(this.encode(startRow));
+                } else if (startRow.length == 0 && stopRow.length != 0) {
+                    encScan.setStopRow(this.encode(stopRow));
+                }
+
+                if (s.hasFilter()) {
+                    RowFilter encryptedFilter = (RowFilter) parseFilter((RowFilter) s.getFilter());
+                    encScan.setFilter(encryptedFilter);
+                }
+                break;
+            default:
+                break;
         }
-        else {
-            encScan = new Scan();
-            if (startRow.length != 0 && stopRow.length != 0) {
-                encScan.setStartRow(this.encode(startRow));
-                encScan.setStopRow(this.encode(stopRow));
-            } else if (startRow.length != 0 && stopRow.length == 0) {
-                encScan.setStartRow(this.encode(startRow));
-            } else if (startRow.length == 0 && stopRow.length != 0) {
-                encScan.setStopRow(this.encode(stopRow));
-            }
-         }
-
-         return encScan;
-
+        return encScan;
     }
 
+
+    public Object parseFilter(RowFilter filter) {
+        CompareFilter.CompareOp comp;
+        ByteArrayComparable bComp;
+
+        switch (this.cType) {
+            case STD:
+            case DET:
+                comp = filter.getOperator();
+                bComp = filter.getComparator();
+
+                System.out.println("Filter-> "+filter.toString()+"\nCompareFilter: "+comp+"\nBinaryComparator:"+bComp+" - "+(bComp.compareTo(this.utils.integerToByteArray(4)))+" - "+new BigInteger(bComp.getValue()));
+                System.out.println("Filter-> "+filter.toString()+"\nCompareFilter: "+comp+"\nBinaryComparator:"+bComp+" - "+(bComp.compareTo(this.utils.integerToByteArray(10)))+" - "+new BigInteger(bComp.getValue()));
+                System.out.println("Filter-> "+filter.toString()+"\nCompareFilter: "+comp+"\nBinaryComparator:"+bComp+" - "+(bComp.compareTo(this.utils.integerToByteArray(3)))+" - "+new BigInteger(bComp.getValue()));
+
+                Object[] parserResult = new Object[2];
+                parserResult[0] = comp;
+                parserResult[1] = bComp.getValue();
+
+                return parserResult;
+            case OPE:
+                comp = filter.getOperator();
+                bComp = filter.getComparator();
+                BinaryComparator encBC = new BinaryComparator(this.encode(bComp.getValue()));
+
+                return new RowFilter(comp, encBC);
+            default:
+                return null;
+        }
+    }
 
 }

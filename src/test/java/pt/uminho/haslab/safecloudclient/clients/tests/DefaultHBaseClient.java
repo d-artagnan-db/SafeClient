@@ -39,7 +39,7 @@ public class DefaultHBaseClient implements TestClient {
 		Configuration conf = new Configuration();
 		conf.addResource("def-hbase-client.xml");
 		//return new HTable(conf, tableName);
-		return new CryptoTable(conf, tableName, CryptoTechnique.CryptoType.STD);
+		return new CryptoTable(conf, tableName, CryptoTechnique.CryptoType.OPE);
 
 	}
 

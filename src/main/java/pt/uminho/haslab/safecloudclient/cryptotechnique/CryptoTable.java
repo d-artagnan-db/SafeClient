@@ -6,6 +6,7 @@ import org.apache.hadoop.hbase.CellScanner;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.filter.*;
 import pt.uminho.haslab.cryptoenv.CryptoHandler;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 import pt.uminho.haslab.cryptoenv.Utils;
@@ -152,6 +153,5 @@ public class CryptoTable extends HTable {
                         encryptedResultScanner);
 
     }
-
 
 }

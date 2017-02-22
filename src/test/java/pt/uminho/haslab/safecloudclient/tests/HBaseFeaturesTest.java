@@ -1,6 +1,10 @@
 package pt.uminho.haslab.safecloudclient.tests;
 
 import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.filter.BinaryComparator;
+import org.apache.hadoop.hbase.filter.CompareFilter;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.RowFilter;
 import pt.uminho.haslab.cryptoenv.Utils;
 import pt.uminho.haslab.safecloudclient.clients.TestClient;
 
@@ -110,6 +114,11 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
         Scan s = new Scan();
 //        s.setStartRow(this.utils.integerToByteArray(5));
 //        s.setStopRow(this.utils.integerToByteArray(8));
+
+        byte[] value = this.utils.integerToByteArray(2);
+        Filter filter = new RowFilter(CompareFilter.CompareOp.GREATER_OR_EQUAL, new BinaryComparator(value));
+        s.setFilter(filter);
+
         ResultScanner rs = table.getScanner(s);
 
         for(Result r = rs.next(); r != null ; r = rs.next()) {
