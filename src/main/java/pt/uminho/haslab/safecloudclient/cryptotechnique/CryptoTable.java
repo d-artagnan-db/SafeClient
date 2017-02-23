@@ -22,31 +22,21 @@ public class CryptoTable extends HTable {
 
 
     public CryptoTable(CryptoTechnique.CryptoType cType) {
-        this.cryptoProperties = new CryptoProperties(cType);
+        this.cryptoProperties = new CryptoProperties(cType, 23);
         this.resultScannerFactory = new ResultScannerFactory();
     }
 
     public CryptoTable(Configuration conf, String tableName, CryptoTechnique.CryptoType cType) throws IOException {
         super(conf, TableName.valueOf(tableName));
-        this.cryptoProperties = new CryptoProperties(cType);
+        this.cryptoProperties = new CryptoProperties(cType, 23);
         this.resultScannerFactory = new ResultScannerFactory();
-    }
-
-    public byte[] addPadding(byte[] value) {
-        String s = new BigInteger(value).toString();
-        System.out.println("Before: "+s);
-        s = String.format("%023d", new BigInteger(value));
-        System.out.println("After: "+s);
-        System.out.println("Going to insert value " + s);
-        return s.getBytes();
     }
 
 
     @Override
     public void put(Put put) {
         try {
-//            byte[] row = put.getRow();
-            byte[] row = addPadding(put.getRow());
+            byte[] row = this.cryptoProperties.addPadding(put.getRow());
             Put encPut = new Put(this.cryptoProperties.encode(row));
             CellScanner cs = put.cellScanner();
 
@@ -57,7 +47,7 @@ public class CryptoTable extends HTable {
                         this.cryptoProperties.encode(CellUtil.cloneValue(cell)));
             }
             super.put(encPut);
-//            System.out.println("Put: "+this.cType+" - "+encPut.toString());
+
         } catch (IOException e) {
             System.out.println("CryptoTable: Exception in put method - "+e.getMessage());
         }
@@ -72,10 +62,10 @@ public class CryptoTable extends HTable {
         Scan getScan = new Scan();
         Result getResult = null;
         try {
+            byte[] row = this.cryptoProperties.addPadding(get.getRow());
             switch(this.cryptoProperties.cType) {
                 case STD:
-//                      TODO otimizar isto para não fazer get a tudo
-                    BigInteger wantedValue = new BigInteger(get.getRow());
+                    BigInteger wantedValue = new BigInteger(row);
                     ResultScanner encScan = super.getScanner(getScan);
                     for (Result r = encScan.next(); r != null; r = encScan.next()) {
                         Result res = this.cryptoProperties.decodeResult(r.getRow(), r);
@@ -88,9 +78,6 @@ public class CryptoTable extends HTable {
                     return getResult;
                 case DET:
                 case OPE:
-                    getResult = null;
-//                    TODO para o OPE inicializar dinamicamente os tamanhos do plaintext e ciphertext
-                    byte[] row = get.getRow();
                     Get encGet = new Get(this.cryptoProperties.encode(row));
                     Result res = super.get(encGet);
                     if(!res.isEmpty()) {
@@ -115,25 +102,25 @@ public class CryptoTable extends HTable {
     public void delete(Delete delete) {
         Scan deleteScan = new Scan();
         try {
+            byte[] row = this.cryptoProperties.addPadding(delete.getRow());
             switch(this.cryptoProperties.cType) {
                 case STD:
-                    BigInteger wantedValue = new BigInteger(delete.getRow());
+                    BigInteger wantedValue = new BigInteger(row);
                     ResultScanner encScan = super.getScanner(deleteScan);
                     for(Result r = encScan.next(); r != null; r = encScan.next()) {
                         BigInteger resultValue = new BigInteger(this.cryptoProperties.decodeResult(r.getRow(), r).getRow());
                         if(wantedValue.equals(resultValue)) {
-                            System.out.println("Row deleted: "+resultValue);
                             Delete del = new Delete(r.getRow());
                             super.delete(del);
+                            System.out.println("Row deleted: "+new String(row));
                         }
                     }
                     break;
                 case DET:
                 case OPE:
-                    byte[] row = delete.getRow();
                     Delete encDelete = new Delete(this.cryptoProperties.encode(row));
                     super.delete(encDelete);
-                    System.out.println("Row deleted: "+new BigInteger(row));
+                    System.out.println("Row deleted: "+new String(row));
                     break;
                 default:
                     break;
@@ -145,8 +132,8 @@ public class CryptoTable extends HTable {
 
     @Override
     public ResultScanner getScanner(Scan scan) throws IOException {
-        byte[] startRow = scan.getStartRow();
-        byte[] endRow = scan.getStopRow();
+        byte[] startRow = this.cryptoProperties.addPadding(scan.getStartRow());
+        byte[] endRow = this.cryptoProperties.addPadding(scan.getStopRow());
 
         Scan encScan = this.cryptoProperties.encryptedScan(scan);
         ResultScanner encryptedResultScanner = super.getScanner(encScan);

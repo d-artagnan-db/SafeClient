@@ -22,12 +22,14 @@ public class CryptoProperties {
     public CryptoTechnique.CryptoType cType;
     public byte[] key;
     public Utils utils;
+    public int formatSize;
 
-    public CryptoProperties(CryptoTechnique.CryptoType cType) {
+    public CryptoProperties(CryptoTechnique.CryptoType cType, int formatSize) {
         this.handler = new CryptoHandler();
         this.cType = cType;
         this.key = this.handler.gen(cType);
         this.utils = new Utils();
+        this.formatSize = formatSize;
     }
 
     public byte[] encode(byte[] content) {
@@ -61,8 +63,8 @@ public class CryptoProperties {
     }
 
     public Scan encryptedScan(Scan s) {
-        byte[] startRow = s.getStartRow();
-        byte[] stopRow = s.getStopRow();
+        byte[] startRow = addPadding(s.getStartRow());
+        byte[] stopRow = addPadding(s.getStopRow());
         Scan encScan = null;
 
         switch(this.cType) {
@@ -106,13 +108,13 @@ public class CryptoProperties {
 
                     Object[] parserResult = new Object[2];
                     parserResult[0] = comp;
-                    parserResult[1] = bComp.getValue();
+                    parserResult[1] = addPadding(bComp.getValue());
 
                     return parserResult;
                 case OPE:
                     comp = filter.getOperator();
                     bComp = filter.getComparator();
-                    BinaryComparator encBC = new BinaryComparator(this.encode(bComp.getValue()));
+                    BinaryComparator encBC = new BinaryComparator(this.encode(addPadding(bComp.getValue())));
 
                     return new RowFilter(comp, encBC);
                 default:
@@ -120,6 +122,12 @@ public class CryptoProperties {
             }
         }
         else return null;
+    }
+
+    public byte[] addPadding(byte[] value) {
+        String format = "%0"+this.formatSize+"d";
+        String s = String.format(format, new BigInteger(value));
+        return s.getBytes();
     }
 
 }
