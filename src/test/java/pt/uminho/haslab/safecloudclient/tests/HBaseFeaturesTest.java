@@ -35,9 +35,9 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
         createAndFillTable(client, table, cf, cq);
 
-//        testPut(table, cf, cq);
-//        testGet(table, cf, cq);
-//        testDelete(table, cf, cq);
+        testPut(table, cf, cq);
+        testGet(table, cf, cq);
+        testDelete(table, cf, cq);
         testScan(table);
      }
 
@@ -112,18 +112,18 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
     public void testScan(HTableInterface table) throws IOException {
         Scan s = new Scan();
-        s.setStartRow(this.utils.integerToByteArray(5));
-        s.setStopRow(this.utils.integerToByteArray(8));
-
-        byte[] value = this.utils.integerToByteArray(6);
-        Filter filter = new RowFilter(CompareFilter.CompareOp.LESS, new BinaryComparator(value));
-        s.setFilter(filter);
+//        s.setStartRow(this.utils.integerToByteArray(5));
+//        s.setStopRow(this.utils.integerToByteArray(8));
+//
+//        byte[] value = this.utils.integerToByteArray(6);
+//        Filter filter = new RowFilter(CompareFilter.CompareOp.LESS, new BinaryComparator(value));
+//        s.setFilter(filter);
 
         ResultScanner rs = table.getScanner(s);
 
         for(Result r = rs.next(); r != null ; r = rs.next()) {
             if(!r.isEmpty())
-                System.out.println("> "+new BigInteger(r.getRow())+" - "+r.toString());
+                System.out.println("> "+new String(r.getRow())+" - "+r.toString());
             else
                 System.out.println("Is Empty");
         }

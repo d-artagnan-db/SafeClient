@@ -32,11 +32,21 @@ public class CryptoTable extends HTable {
         this.resultScannerFactory = new ResultScannerFactory();
     }
 
+    public byte[] addPadding(byte[] value) {
+        String s = new BigInteger(value).toString();
+        System.out.println("Before: "+s);
+        s = String.format("%023d", new BigInteger(value));
+        System.out.println("After: "+s);
+        System.out.println("Going to insert value " + s);
+        return s.getBytes();
+    }
+
 
     @Override
     public void put(Put put) {
         try {
-            byte[] row = put.getRow();
+//            byte[] row = put.getRow();
+            byte[] row = addPadding(put.getRow());
             Put encPut = new Put(this.cryptoProperties.encode(row));
             CellScanner cs = put.cellScanner();
 
