@@ -97,30 +97,29 @@ public class CryptoProperties {
         CompareFilter.CompareOp comp;
         ByteArrayComparable bComp;
 
-        switch (this.cType) {
-            case STD:
-            case DET:
-                comp = filter.getOperator();
-                bComp = filter.getComparator();
+        if(filter != null) {
+            switch (this.cType) {
+                case STD:
+                case DET:
+                    comp = filter.getOperator();
+                    bComp = filter.getComparator();
 
-                System.out.println("Filter-> "+filter.toString()+"\nCompareFilter: "+comp+"\nBinaryComparator:"+bComp+" - "+(bComp.compareTo(this.utils.integerToByteArray(4)))+" - "+new BigInteger(bComp.getValue()));
-                System.out.println("Filter-> "+filter.toString()+"\nCompareFilter: "+comp+"\nBinaryComparator:"+bComp+" - "+(bComp.compareTo(this.utils.integerToByteArray(10)))+" - "+new BigInteger(bComp.getValue()));
-                System.out.println("Filter-> "+filter.toString()+"\nCompareFilter: "+comp+"\nBinaryComparator:"+bComp+" - "+(bComp.compareTo(this.utils.integerToByteArray(3)))+" - "+new BigInteger(bComp.getValue()));
+                    Object[] parserResult = new Object[2];
+                    parserResult[0] = comp;
+                    parserResult[1] = bComp.getValue();
 
-                Object[] parserResult = new Object[2];
-                parserResult[0] = comp;
-                parserResult[1] = bComp.getValue();
+                    return parserResult;
+                case OPE:
+                    comp = filter.getOperator();
+                    bComp = filter.getComparator();
+                    BinaryComparator encBC = new BinaryComparator(this.encode(bComp.getValue()));
 
-                return parserResult;
-            case OPE:
-                comp = filter.getOperator();
-                bComp = filter.getComparator();
-                BinaryComparator encBC = new BinaryComparator(this.encode(bComp.getValue()));
-
-                return new RowFilter(comp, encBC);
-            default:
-                return null;
+                    return new RowFilter(comp, encBC);
+                default:
+                    return null;
+            }
         }
+        else return null;
     }
 
 }

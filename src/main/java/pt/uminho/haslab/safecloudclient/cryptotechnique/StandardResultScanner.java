@@ -2,12 +2,7 @@ package pt.uminho.haslab.safecloudclient.cryptotechnique;
 
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.filter.ByteArrayComparable;
 import org.apache.hadoop.hbase.filter.CompareFilter;
-import org.apache.hadoop.hbase.filter.Filter;
-import org.apache.hadoop.hbase.filter.RowFilter;
-import pt.uminho.haslab.cryptoenv.CryptoTechnique;
-import pt.uminho.haslab.cryptoenv.Utils;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -29,17 +24,16 @@ public class StandardResultScanner implements ResultScanner {
     public BigInteger end;
     public CompareFilter.CompareOp compareOp;
     public byte[] compareValue;
-    public RowFilter rw;
 
-    public StandardResultScanner(CryptoProperties cp, byte[] startRow, byte[] endRow, ResultScanner encryptedScanner, Filter filter) {
+    public StandardResultScanner(CryptoProperties cp, byte[] startRow, byte[] endRow, ResultScanner encryptedScanner, Object filterResult) {
         this.scanner = encryptedScanner;
         this.cProperties = cp;
         this.startRow = startRow;
         this.endRow = endRow;
-        this.setFilters(startRow, endRow, (RowFilter) filter);
+        this.setFilters(startRow, endRow, filterResult);
     }
 
-    public void setFilters(byte[] startRow, byte[] endRow, RowFilter filter) {
+    public void setFilters(byte[] startRow, byte[] endRow, Object filter) {
         if(startRow.length != 0) {
             this.hasStartRow = true;
             this.startRow = startRow;
@@ -61,69 +55,74 @@ public class StandardResultScanner implements ResultScanner {
 
         if(filter != null) {
             this.hasFilter = true;
-            this.compareOp = filter.getOperator();
-            this.compareValue= filter.getComparator().getValue();
-            this.rw = filter;
-            System.out.println("Filter: "+this.compareOp+" - "+new BigInteger(compareValue));
+            Object[] filterProperties = (Object[]) filter;
+            this.compareOp = (CompareFilter.CompareOp) filterProperties[0];
+            this.compareValue= (byte[]) filterProperties[1];
         }
         else {
             this.hasFilter = false;
         }
     }
 
+    public boolean digestStartEndRow(BigInteger row) {
+        boolean digest;
+        if(hasStartRow && hasEndRow) {
+            digest = (row.compareTo(start) >= 0 && row.compareTo(end) < 0);
+        }
+        else if(hasStartRow && !hasEndRow){
+            digest = (row.compareTo(start) >= 0);
+        }
+        else if(hasEndRow) {
+            digest = (row.compareTo(end) < 0);
+        }
+        else {
+            digest = true;
+        }
+
+        return digest;
+    }
+
+    public boolean digestFilter(BigInteger row, BigInteger value) {
+        boolean digest = true;
+        switch (this.compareOp) {
+            case EQUAL:
+                digest = (row.compareTo(value) == 0);
+                break;
+            case GREATER:
+                digest = (row.compareTo(value) > 0);
+                break;
+            case LESS:
+                digest = (row.compareTo(value) < 0);
+                break;
+            case GREATER_OR_EQUAL:
+                digest = (row.compareTo(value) >= 0);
+                break;
+            case LESS_OR_EQUAL:
+                digest = (row.compareTo(value) < 0);
+                break;
+        }
+        return digest;
+    }
+
 
     public Result next() throws IOException {
         Result res = this.scanner.next();
+        boolean digest;
         if(res!=null) {
-            Result digestedResult;
             BigInteger row = new BigInteger(this.cProperties.decode(res.getRow()));
 
-            if(hasStartRow && hasEndRow) {
-                if (row.compareTo(start) >= 0 && row.compareTo(end) < 0) {
-                    digestedResult = this.cProperties.decodeResult(res.getRow(), res);
-                } else
-                    return new Result();
-            }
-            else if(hasStartRow && !hasEndRow){
-                if (row.compareTo(start) >= 0) {
-                    digestedResult = this.cProperties.decodeResult(res.getRow(), res);
-                } else
-                    return new Result();
-            }
-            else if(hasEndRow) {
-                if (row.compareTo(end) < 0) {
-                    digestedResult = this.cProperties.decodeResult(res.getRow(), res);
-                } else
-                    digestedResult = new Result();
-            }
-            else {
-                digestedResult = this.cProperties.decodeResult(res.getRow(), res);
-            }
+            digest = digestStartEndRow(row);
 
-            if(hasFilter) {
+            if(hasFilter && digest) {
                 BigInteger value = new BigInteger(this.compareValue);
-//                System.out.println("CompareFilter: "+compareOp+"\nBinaryComparator:"+(rw.getComparator().compareTo(this.cProperties.utils.integerToByteArray(4)))+" - "+value);
-//                System.out.println("CompareFilter: "+compareOp+"\nBinaryComparator:"+(rw.getComparator().compareTo(this.cProperties.utils.integerToByteArray(10)))+" - "+value);
-//                System.out.println("CompareFilter: "+compareOp+"\nBinaryComparator:"+(rw.getComparator().compareTo(this.cProperties.utils.integerToByteArray(3)))+" - "+value);
-
-
-                switch (this.compareOp) {
-                    case EQUAL:
-                        if(row.compareTo(value) == 0)
-                            System.out.println(row+" EQUAL to "+value);
-                        break;
-                    case GREATER:
-                        if(row.compareTo(value) > 0)
-                            System.out.println(row+" GREATER than "+value);
-                        break;
-                    case LESS:
-                        if(row.compareTo(value) < 0)
-                            System.out.println(row+" LESS than "+value);
-                        break;
-                }
+                digest = digestFilter(row, value);
             }
 
-            return digestedResult;
+            if(digest)
+                return this.cProperties.decodeResult(res.getRow(), res);
+            else
+                return new Result();
+
         }
         else
             return null;

@@ -7,14 +7,10 @@ import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.*;
-import pt.uminho.haslab.cryptoenv.CryptoHandler;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
-import pt.uminho.haslab.cryptoenv.Utils;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by rgmacedo on 2/20/17.
@@ -151,7 +147,7 @@ public class CryptoTable extends HTable {
                         startRow,
                         endRow,
                         encryptedResultScanner,
-                        scan.getFilter());
+                        this.cryptoProperties.parseFilter((RowFilter) scan.getFilter()));
 
     }
 
