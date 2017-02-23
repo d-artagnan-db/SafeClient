@@ -1,6 +1,6 @@
 package pt.uminho.haslab.safecloudclient.tests;
 
-import pt.uminho.haslab.safecloudclient.clients.TestClient;
+import pt.uminho.haslab.safecloudclient.clients.tests.TestClient;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -18,7 +18,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
 import pt.uminho.haslab.testingutils.ValuesGenerator;
-import pt.uminho.haslab.safecloudclient.clients.DefaultHBaseClient;
+import pt.uminho.haslab.safecloudclient.clients.tests.DefaultHBaseClient;
 
 @RunWith(Parameterized.class)
 public abstract class SimpleHBaseTest {

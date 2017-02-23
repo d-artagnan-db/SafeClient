@@ -77,22 +77,6 @@ public class SharedTable implements HTableInterface {
 	}
 
 	private long getMaximumKey() throws IOException {
-
-		/*
-		 * byte[][] endKeys = connections.get(0).getEndKeys();
-		 * System.out.println("Number of inserted keys "+endKeys.length);
-		 * BigInteger max = BigInteger.ZERO; for (byte[] endKey : endKeys) {
-		 * System.out.println("End key length "+endKey.length);
-		 * System.out.println("End key "+Arrays.toString(endKey)); BigInteger
-		 * endKeyValue = BigInteger.ZERO;
-		 * 
-		 * if(endKey.length > 0){ endKeyValue = new BigInteger(endKey); } if
-		 * (endKeyValue.compareTo(max) == 1) { max = endKeyValue; }
-		 * 
-		 * }
-		 */
-		// int current = lastMaxKey.get();
-		// lastMaxKey += 1;
 		return lastMaxKey.getAndAdd(1);
 	}
 
@@ -118,9 +102,12 @@ public class SharedTable implements HTableInterface {
 					secrets, requestID, 1, put, maxKey);
 			mput.doOperation();
 		} catch (InvalidSecretValue ex) {
-			LOG.debug(ex);
+			LOG.error(ex);
+            throw new IllegalStateException(ex);
 		} catch (InterruptedException ex) {
-			LOG.debug(ex);
+			LOG.error(ex);
+            throw new IllegalStateException(ex);
+
 		}
 	}
 
@@ -145,21 +132,18 @@ public class SharedTable implements HTableInterface {
 	public Result get(Get get) throws IOException {
 		try {
 			List<byte[]> secrets = getSecretKey(get.getRow());
-			// System.out.println("Secrets");
+
 			long requestID = getMaximumKey();
-			System.out.println("RequestID is " + requestID);
 			MultiGet mGet = new MultiGet(sharedConfig, connections, secrets,
 					requestID, 1);
 			mGet.doOperation();
 			return mGet.getResult();
 
 		} catch (InvalidSecretValue ex) {
-			// System.out.println(ex);
-			LOG.debug(ex);
+			LOG.error(ex);
 			throw new IllegalStateException(ex);
 		} catch (InterruptedException ex) {
-			// System.out.println(ex);
-			LOG.debug(ex);
+			LOG.error(ex);
 			throw new IllegalStateException(ex);
 		}
 	}
@@ -277,6 +261,14 @@ public class SharedTable implements HTableInterface {
 				ms.startScan();
 				return ms;
 			} else if (scan.getStartRow().length == 0
+					&& scan.getStopRow().length != 0) {
+				List<byte[]> startRowSecrets = new ArrayList<byte[]>();
+				List<byte[]> stopRowSecrets = getSecretKey(scan.getStopRow());
+				MultiScan ms = new MultiScan(sharedConfig, connections,
+						requestID, 1, startRowSecrets, stopRowSecrets);
+				ms.startScan();
+                return ms;
+			} else if (scan.getStartRow().length == 0
 					&& scan.getStopRow().length == 0) {
 				List<byte[]> startRowSecrets = new ArrayList<byte[]>();
 				List<byte[]> stopRowSecrets = new ArrayList<byte[]>();
@@ -286,7 +278,7 @@ public class SharedTable implements HTableInterface {
 				return ms;
 			}
 		} catch (InvalidSecretValue ex) {
-			LOG.debug("Exception found here " + ex);
+			LOG.error(ex);
 			throw new IllegalStateException(ex);
 		}
 		return null;

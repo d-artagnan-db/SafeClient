@@ -39,8 +39,8 @@ public abstract class QueryThread extends Thread {
 		try {
 			query();
 		} catch (IOException ex) {
-			System.out.println("Exception found here " + ex.getMessage());
 			LOG.debug(ex);
+            throw new IllegalStateException(ex);
 		}
 
 	}

@@ -16,7 +16,6 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
-import pt.uminho.haslab.safecloudclient.shareclient.SharedClientConfiguration;
 import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
 
 public class GeneralBenchmark implements Benchmark {

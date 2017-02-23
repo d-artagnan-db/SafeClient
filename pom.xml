@@ -15,12 +15,6 @@
     </properties>
     <dependencies>
         <dependency>
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-client</artifactId>
-            <version>${hbase.version}</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>testingutilities</artifactId>
             <version>${project.version}</version>

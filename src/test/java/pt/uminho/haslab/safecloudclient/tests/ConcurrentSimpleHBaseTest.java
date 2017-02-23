@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -18,14 +19,16 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import pt.uminho.haslab.safecloudclient.clients.ShareClient;
-import pt.uminho.haslab.safecloudclient.clients.TestClient;
-import pt.uminho.haslab.safecloudclient.shareclient.SharedTable;
+import org.mortbay.log.Log;
+import pt.uminho.haslab.safecloudclient.clients.tests.ShareClient;
+import pt.uminho.haslab.safecloudclient.clients.tests.TestClient;
 import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
 import pt.uminho.haslab.testingutils.ValuesGenerator;
 
 @RunWith(Parameterized.class)
 public abstract class ConcurrentSimpleHBaseTest {
+
+    static final org.apache.commons.logging.Log LOG = LogFactory.getLog(ConcurrentSimpleHBaseTest.class.getName());
 
 	protected static final int nThreads = 1;
 	protected static final int nValues = 10;
@@ -49,7 +52,7 @@ public abstract class ConcurrentSimpleHBaseTest {
 	}
 
 	public ConcurrentSimpleHBaseTest(List<BigInteger> testingValues,
-			List<List<BigInteger>> testingIdentifiers) throws Exception {
+			List<List<BigInteger>> testingIdentifiers) {
 
 		this.testingValues = testingValues;
 		this.identifiers = testingIdentifiers;
@@ -57,35 +60,34 @@ public abstract class ConcurrentSimpleHBaseTest {
 		startSignal = new CountDownLatch(nThreads);
 	}
 
-	protected void createTestTable(TestClient client)
-			throws ZooKeeperConnectionException, IOException, Exception {
+	protected void createTestTable() throws ZooKeeperConnectionException,
+			IOException, Exception {
 		TableName tbname = TableName.valueOf(tableName);
 		HTableDescriptor table = new HTableDescriptor(tbname);
 		HColumnDescriptor family = new HColumnDescriptor(columnDescriptor);
 		table.addFamily(family);
-		client.createTestTable(table);
+		testClient.createTestTable(table);
 
 	}
 
 	protected abstract class ConcurrentClient extends Thread {
-		protected final List<BigInteger> clientTestingValues;
 		protected final List<BigInteger> clientIdentifiers;
 		protected final byte[] cf;
 		protected final byte[] cq;
 		protected final HTableInterface table;
 		protected boolean testPassed;
+		protected final int clientID;
 
-		public ConcurrentClient(String resource,
-				List<BigInteger> clientTestingValues,
-				List<BigInteger> clientIdentifiers, String tableName,
-				byte[] cf, byte[] cq) throws IOException, InvalidNumberOfBits {
+		public ConcurrentClient(String resource, int id, String tableName,
+				byte[] cf, byte[] cq) throws IOException, InvalidNumberOfBits,
+				Exception {
 			Configuration conf = new Configuration();
 			conf.addResource(resource);
-			this.clientTestingValues = testingValues;
-			this.clientIdentifiers = clientIdentifiers;
+			this.clientIdentifiers = identifiers.get(id);
+			this.clientID = id;
 			this.cf = cf;
 			this.cq = cq;
-			this.table = new SharedTable(conf, tableName);
+			this.table = testClient.createTableInterface(tableName);
 			testPassed = true;
 
 		}
@@ -95,19 +97,14 @@ public abstract class ConcurrentSimpleHBaseTest {
 		}
 
 		private void fillTable() throws Exception {
-			// System.out.println("vallz " + clientTestingValues.size());
-			// System.out.println("identz " + clientIdentifiers.size());
+
 			Assert.assertEquals(true, testClient.checkTableExists(tableName));
 			for (int i = 0; i < clientIdentifiers.size(); i++) {
 				byte[] identifier = clientIdentifiers.get(i).toByteArray();
-				byte[] value = clientTestingValues.get(i).toByteArray();
-				BigInteger rowID = new BigInteger(identifier);
-				BigInteger val = new BigInteger(value);
+				byte[] value = testingValues.get(i).toByteArray();
 				Put put = new Put(identifier);
 				put.add(cf, cq, value);
 				table.put(put);
-				// System.out.println("Row id " + rowID + " has inserted value "
-				// + val);
 
 			}
 			startSignal.countDown();
@@ -123,7 +120,7 @@ public abstract class ConcurrentSimpleHBaseTest {
 				fillTable();
 				testExecution();
 			} catch (Exception ex) {
-				System.out.println(ex);
+				Log.debug(ex);
 				throw new IllegalStateException(ex);
 			}
 
@@ -134,32 +131,38 @@ public abstract class ConcurrentSimpleHBaseTest {
 	protected abstract Thread getExecutionThread(int i);
 
 	@Test
-	public void testBoot() throws Exception {
-		// System.out.println("Booting test");
-		testClient.startCluster();
-		createTestTable(testClient);
-		assertEquals(true, testClient.checkTableExists(tableName));
-		List<Thread> threads = new ArrayList<Thread>();
-
-		for (int i = 0; i < nThreads; i++) {
-			Thread t = getExecutionThread(i);
-			threads.add(t);
-		}
-
-		for (Thread t : threads) {
-			t.start();
-		}
-
-		for (Thread t : threads) {
-			t.join();
-		}
-
-		for (Thread t : threads) {
-			Assert.assertEquals(true, ((ConcurrentClient) t).getTestPassed());
-			// Assert.assertEquals(true, false);
-		}
-
-		testClient.stopCluster();
+	public void testBoot(){
+        try {
+            testClient.startCluster();
+            createTestTable();
+            assertEquals(true, testClient.checkTableExists(tableName));
+            List<Thread> threads = new ArrayList<Thread>();
+            
+            for (int i = 0; i < nThreads; i++) {
+                Thread t = getExecutionThread(i);
+                threads.add(t);
+            }
+            
+            for (Thread t : threads) {
+                Log.debug("Going to launch client thread");
+                t.start();
+            }
+            
+            for (Thread t : threads) {
+                Log.debug("Going to join client thread");
+                t.join();
+            }
+            
+            for (Thread t : threads) {
+                Log.debug("Going to check result of client thread");
+                Assert.assertEquals(true, ((ConcurrentClient) t).getTestPassed());
+            }
+            
+            testClient.stopCluster();
+        } catch (Exception ex) {
+            LOG.error(ex);
+            throw new IllegalStateException(ex);
+        }
 
 	}
 }

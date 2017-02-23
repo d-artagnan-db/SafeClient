@@ -20,7 +20,6 @@ public class SharedClientConfiguration {
 		for (Map.Entry<String, String> entry : conf) {
 			String key = entry.getKey();
 			String value = entry.getValue();
-
 			if (key.contains("cluster" + id)) {
 				String clusterKey = key.replace("cluster" + id + ".", "");
 				cluster.set(clusterKey, value);

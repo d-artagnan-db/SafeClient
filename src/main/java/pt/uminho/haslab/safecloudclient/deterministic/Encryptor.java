@@ -13,68 +13,72 @@ import javax.crypto.spec.SecretKeySpec;
 import org.apache.commons.codec.binary.Base64;
 
 public class Encryptor {
-   
- public static byte[] encrypt(String key, String initVector, byte[] value) {
-        try {
-            IvParameterSpec iv = new IvParameterSpec(initVector.getBytes("UTF-8"));
-            SecretKeySpec skeySpec = new SecretKeySpec(key.getBytes("UTF-8"), "AES");
 
-            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
-            cipher.init(Cipher.ENCRYPT_MODE, skeySpec, iv);
+	public static byte[] encrypt(String key, String initVector, byte[] value) {
+		try {
+			IvParameterSpec iv = new IvParameterSpec(
+					initVector.getBytes("UTF-8"));
+			SecretKeySpec skeySpec = new SecretKeySpec(key.getBytes("UTF-8"),
+					"AES");
 
-            byte[] encrypted = cipher.doFinal(value);
-            System.out.println("encrypted string: "
-                    + Base64.encodeBase64String(encrypted));
+			Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
+			cipher.init(Cipher.ENCRYPT_MODE, skeySpec, iv);
 
-            //return Base64.encodeBase64String(encrypted);
-            return encrypted;
-        } catch (UnsupportedEncodingException ex) {
-            System.out.println(ex);
-        } catch (InvalidAlgorithmParameterException ex) {
-            System.out.println(ex);
-        } catch (InvalidKeyException ex) {
-            System.out.println(ex);
-        } catch (NoSuchAlgorithmException ex) {
-            System.out.println(ex);
-        } catch (BadPaddingException ex) {
-            System.out.println(ex);
-        } catch (IllegalBlockSizeException ex) {
-            System.out.println(ex);
-        } catch (NoSuchPaddingException ex) {
-            System.out.println(ex);
-        }
+			byte[] encrypted = cipher.doFinal(value);
+			System.out.println("encrypted string: "
+					+ Base64.encodeBase64String(encrypted));
 
-        return null;
-    }
+			// return Base64.encodeBase64String(encrypted);
+			return encrypted;
+		} catch (UnsupportedEncodingException ex) {
+			System.out.println(ex);
+		} catch (InvalidAlgorithmParameterException ex) {
+			System.out.println(ex);
+		} catch (InvalidKeyException ex) {
+			System.out.println(ex);
+		} catch (NoSuchAlgorithmException ex) {
+			System.out.println(ex);
+		} catch (BadPaddingException ex) {
+			System.out.println(ex);
+		} catch (IllegalBlockSizeException ex) {
+			System.out.println(ex);
+		} catch (NoSuchPaddingException ex) {
+			System.out.println(ex);
+		}
 
-    public static byte[] decrypt(String key, String initVector, byte[] encrypted) {
-        try {
-            IvParameterSpec iv = new IvParameterSpec(initVector.getBytes("UTF-8"));
-            SecretKeySpec skeySpec = new SecretKeySpec(key.getBytes("UTF-8"), "AES");
+		return null;
+	}
 
-            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
-            cipher.init(Cipher.DECRYPT_MODE, skeySpec, iv);
+	public static byte[] decrypt(String key, String initVector, byte[] encrypted) {
+		try {
+			IvParameterSpec iv = new IvParameterSpec(
+					initVector.getBytes("UTF-8"));
+			SecretKeySpec skeySpec = new SecretKeySpec(key.getBytes("UTF-8"),
+					"AES");
 
-            byte[] original = cipher.doFinal(Base64.decodeBase64(encrypted));
+			Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
+			cipher.init(Cipher.DECRYPT_MODE, skeySpec, iv);
 
-            //return new String(original);
-            return original;
-        } catch (UnsupportedEncodingException ex) {
-            System.out.println(ex);
-        } catch (InvalidAlgorithmParameterException ex) {
-            System.out.println(ex);
-        } catch (InvalidKeyException ex) {
-            System.out.println(ex);
-        } catch (NoSuchAlgorithmException ex) {
-            System.out.println(ex);
-        } catch (BadPaddingException ex) {
-            System.out.println(ex);
-        } catch (IllegalBlockSizeException ex) {
-            System.out.println(ex);
-        } catch (NoSuchPaddingException ex) {
-            System.out.println(ex);
-        }
+			byte[] original = cipher.doFinal(Base64.decodeBase64(encrypted));
 
-        return null;
-    }
+			// return new String(original);
+			return original;
+		} catch (UnsupportedEncodingException ex) {
+			System.out.println(ex);
+		} catch (InvalidAlgorithmParameterException ex) {
+			System.out.println(ex);
+		} catch (InvalidKeyException ex) {
+			System.out.println(ex);
+		} catch (NoSuchAlgorithmException ex) {
+			System.out.println(ex);
+		} catch (BadPaddingException ex) {
+			System.out.println(ex);
+		} catch (IllegalBlockSizeException ex) {
+			System.out.println(ex);
+		} catch (NoSuchPaddingException ex) {
+			System.out.println(ex);
+		}
+
+		return null;
+	}
 }

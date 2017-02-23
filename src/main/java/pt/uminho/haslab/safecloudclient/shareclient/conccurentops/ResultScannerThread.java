@@ -18,14 +18,19 @@ public class ResultScannerThread extends QueryThread implements ResultScanner {
 			long requestID, int targetPlayer, byte[] startRow, byte[] stopRow)
 			throws IOException {
 		super(config, table, requestID, targetPlayer);
-		Scan scan = null;
-		if (startRow.length != 0 && stopRow.length != 0) {
-			scan = new Scan(startRow, stopRow);
-		} else if (startRow.length != 0 && stopRow.length == 0) {
-			scan = new Scan(startRow);
-		} else if (startRow.length == 0 && stopRow.length == 0) {
-			scan = new Scan();
-		}
+		Scan scan = new Scan();
+        LOG.debug("Start row size is "+ startRow.length);
+        LOG.debug("Stop row size is "+ stopRow.length);
+
+        
+        if(startRow.length != 0){
+            scan.setStartRow(startRow);
+        }
+        if(stopRow.length != 0){
+            scan.setStopRow(stopRow);
+        }
+        
+
 		scan.setAttribute("requestID", ("" + requestID).getBytes());
 		scan.setAttribute("targetPlayer", ("" + targetPlayer).getBytes());
 		resultScanner = table.getScanner(scan);
@@ -34,10 +39,7 @@ public class ResultScannerThread extends QueryThread implements ResultScanner {
 
 	public Result next() throws IOException {
 		try {
-			// System.out.println("going to return value on next "+
-			// results.size());
 			return results.take();
-			// return Result.EMPTY_RESULT;
 		} catch (InterruptedException ex) {
 			throw new IllegalStateException(ex);
 		}
@@ -48,7 +50,7 @@ public class ResultScannerThread extends QueryThread implements ResultScanner {
 	}
 
 	public void close() {
-		// resultScanner.close();
+		resultScanner.close();
 	}
 
 	public Iterator<Result> iterator() {

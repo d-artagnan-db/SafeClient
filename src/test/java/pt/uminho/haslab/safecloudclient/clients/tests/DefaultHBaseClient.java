@@ -1,4 +1,4 @@
-package pt.uminho.haslab.safecloudclient.clients;
+package pt.uminho.haslab.safecloudclient.clients.tests;
 
 import java.io.IOException;
 import java.util.ArrayList;

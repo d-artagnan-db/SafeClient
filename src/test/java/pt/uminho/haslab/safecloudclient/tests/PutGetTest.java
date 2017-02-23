@@ -1,6 +1,6 @@
 package pt.uminho.haslab.safecloudclient.tests;
 
-import pt.uminho.haslab.safecloudclient.clients.TestClient;
+import pt.uminho.haslab.safecloudclient.clients.tests.TestClient;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.List;

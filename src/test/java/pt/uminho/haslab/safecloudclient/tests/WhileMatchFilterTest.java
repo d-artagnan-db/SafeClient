@@ -10,7 +10,7 @@ import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.RowFilter;
 import org.apache.hadoop.hbase.filter.WhileMatchFilter;
-import pt.uminho.haslab.safecloudclient.clients.TestClient;
+import pt.uminho.haslab.safecloudclient.clients.tests.TestClient;
 
 public class WhileMatchFilterTest extends SimpleHBaseTest {
 

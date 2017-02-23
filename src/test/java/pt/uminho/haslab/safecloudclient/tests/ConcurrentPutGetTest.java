@@ -5,7 +5,6 @@ import java.math.BigInteger;
 import java.util.List;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Result;
-import org.junit.Assert;
 import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
 
 public class ConcurrentPutGetTest extends ConcurrentSimpleHBaseTest {
@@ -17,36 +16,25 @@ public class ConcurrentPutGetTest extends ConcurrentSimpleHBaseTest {
 
 	private class PutThread extends ConcurrentClient {
 
-		public PutThread(String resource, List<BigInteger> clientTestingValues,
-				List<BigInteger> clientIdentifiers, String tableName,
-				byte[] cf, byte[] cq) throws IOException, InvalidNumberOfBits {
-			super(resource, clientTestingValues, clientIdentifiers, tableName,
-					cf, cq);
+		public PutThread(String resource, int id, String tableName, byte[] cf,
+				byte[] cq) throws IOException, InvalidNumberOfBits, Exception {
+			super(resource, id, tableName, cf, cq);
 		}
 
 		@Override
 		protected void testExecution() {
 
-			System.out.println(Thread.currentThread().getId() + " Going to do "
-					+ clientTestingValues.size() + " gets");
 			for (int i = 0; i < clientIdentifiers.size(); i++) {
 				try {
 					byte[] identifier = clientIdentifiers.get(i).toByteArray();
-					byte[] value = clientTestingValues.get(i).toByteArray();
-					// byte[] ident = new
-					// BigInteger("999999999999").toByteArray();
+
 					Get get = new Get(identifier);
 					Result result = table.get(get);
-					System.out.println("Result is " + result);
-					System.out.println("Result is " + result.isEmpty());
-					/*
-					 * System.out.println(Thread.currentThread().getId() +
-					 * " Comparing Values " + new BigInteger(identifier) +
-					 * " -- " + new BigInteger(result.getValue(cf, cq)));
-					 * System.out.println("Received result" + result);
-					 * Assert.assertArrayEquals(identifier, result.getRow());
-					 * Assert.assertArrayEquals(value, result.getValue(cf, cq));
-					 */
+
+					testPassed = testingValues.get(i).equals(
+							new BigInteger(result.getValue(cf, cq)));
+					testPassed &= clientIdentifiers.get(i).equals(
+							new BigInteger(result.getRow()));
 
 				} catch (IOException ex) {
 					System.out.println(ex);
@@ -60,21 +48,19 @@ public class ConcurrentPutGetTest extends ConcurrentSimpleHBaseTest {
 	@Override
 	protected Thread getExecutionThread(int i) {
 
-		List<BigInteger> localIdentifiers = identifiers.get(i);
-		// System.out.println("Local identifiers "+ localIdentifiers);
-		// System.out.println("Local identifiers "+ localIdentifiers.size());
-		List<BigInteger> values = testingValues;
 		String resource = "hbase-client.xml";
 		byte[] cf = columnDescriptor.getBytes();
 		byte[] cq = "testQualifier".getBytes();
 
 		try {
-			return new PutThread(resource, values, localIdentifiers, tableName,
-					cf, cq);
+			return new PutThread(resource, i, tableName, cf, cq);
 		} catch (IOException ex) {
 			System.out.println(ex);
 			throw new IllegalStateException(ex);
 		} catch (InvalidNumberOfBits ex) {
+			System.out.println(ex);
+			throw new IllegalStateException(ex);
+		} catch (Exception ex) {
 			System.out.println(ex);
 			throw new IllegalStateException(ex);
 		}

@@ -5,8 +5,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellScanner;
 import org.apache.hadoop.hbase.CellUtil;
@@ -17,6 +16,8 @@ import static pt.uminho.haslab.safecloudclient.shareclient.conccurentops.OneTime
 import pt.uminho.haslab.smhbase.sharemindImp.SharemindSharedSecret;
 
 public abstract class MultiOP {
+
+    static final org.apache.commons.logging.Log LOG = LogFactory.getLog(MultiOP.class.getName());
 
 	protected final long requestID;
 	protected final int targetPlayer;
@@ -103,17 +104,17 @@ public abstract class MultiOP {
 			index += 1;
 		}
 
-		// System.out.println("Going to issue get request");
+		LOG.debug("Going to issue get request");
 		for (Thread t : calls) {
 			t.start();
 
 		}
-		// System.out.println("Going to wait for calls to be issued");
+		LOG.debug("Going to wait for calls to be issued");
 		for (Thread t : calls) {
 			t.join();
 		}
-		// System.out.println("Get calls terminated");
-
+        
+		LOG.debug("Get calls terminated");
 		threadsJoined(calls);
 	}
 
@@ -125,7 +126,7 @@ public abstract class MultiOP {
 			index += 1;
 		}
 
-		// System.out.println("Going to issue get request");
+		LOG.debug("Going to issue get request");
 
 		for (Thread t : calls) {
 			t.start();

@@ -4,12 +4,16 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import pt.uminho.haslab.safecloudclient.shareclient.SharedClientConfiguration;
 
 public class MultiScan extends MultiOP implements ResultScanner {
+
+    static final Log LOG = LogFactory.getLog(MultiScan.class.getName());
 
 	private final List<byte[]> startRow;
 	private final List<byte[]> stopRow;
@@ -29,17 +33,29 @@ public class MultiScan extends MultiOP implements ResultScanner {
 	protected Thread queryThread(SharedClientConfiguration config,
 			HTable table, int index) {
 		try {
+            LOG.debug(startRow.isEmpty());
+            LOG.debug(stopRow.isEmpty());
 			if (!startRow.isEmpty() && !stopRow.isEmpty()) {
+                LOG.debug("1");
 				Thread t = new ResultScannerThread(config, table, requestID,
 						targetPlayer, startRow.get(index), stopRow.get(index));
 				scans.add(t);
 				return t;
 			} else if (!startRow.isEmpty() && stopRow.isEmpty()) {
+                LOG.debug("2");
 				Thread t = new ResultScannerThread(config, table, requestID,
 						targetPlayer, startRow.get(index), new byte[0]);
+                LOG.debug("Thread is null? "+ t);
+				scans.add(t);
+                return t;
+			} else if (startRow.isEmpty() && !stopRow.isEmpty()) {
+                LOG.debug("3");
+				Thread t = new ResultScannerThread(config, table, requestID,
+						targetPlayer, new byte[0], stopRow.get(index));
 				scans.add(t);
 				return t;
 			} else if (startRow.isEmpty() && stopRow.isEmpty()) {
+                LOG.debug(4);
 				Thread t = new ResultScannerThread(config, table, requestID,
 						targetPlayer, new byte[0], new byte[0]);
 				scans.add(t);
@@ -48,7 +64,7 @@ public class MultiScan extends MultiOP implements ResultScanner {
 			}
 
 		} catch (IOException ex) {
-			System.out.println(ex.getMessage());
+			LOG.error(ex.getMessage());
 			throw new IllegalStateException(ex);
 		}
 		return null;

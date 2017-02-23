@@ -34,9 +34,6 @@ public class SharedAdmin {
 			confs.add(clusterConfig);
 			HBaseAdmin admin = new HBaseAdmin(clusterConfig);
 			admins.add(admin);
-			// System.out.println("Going to request tables");
-			// System.out.println(Arrays.toString(admin.getConnection()
-			// .listTableNames()));
 		}
 
 	}
@@ -55,9 +52,7 @@ public class SharedAdmin {
 				@Override
 				public void run() {
 					try {
-						System.out.println("Going to create a table");
 						admin.createTable(descriptor);
-						System.out.println("Table created");
 					} catch (IOException ex) {
 						System.out.println(ex);
 					}
