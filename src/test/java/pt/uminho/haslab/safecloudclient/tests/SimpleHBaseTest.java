@@ -2,12 +2,6 @@ package pt.uminho.haslab.safecloudclient.tests;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import pt.uminho.haslab.safecloudclient.clients.tests.TestClient;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
@@ -18,9 +12,16 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import pt.uminho.haslab.safecloudclient.clients.tests.ShareClient;
+import pt.uminho.haslab.safecloudclient.clients.tests.TestClient;
 import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
 import pt.uminho.haslab.testingutils.ValuesGenerator;
-import pt.uminho.haslab.safecloudclient.clients.tests.ShareClient;
+
+import java.io.IOException;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 @RunWith(Parameterized.class)
 public abstract class SimpleHBaseTest {
@@ -30,15 +31,8 @@ public abstract class SimpleHBaseTest {
 	protected final String tableName = "TestPutGet";
 
 	protected final String columnDescriptor = "values";
-
-	@Parameterized.Parameters
-	public static Collection valueGenerator() {
-		return ValuesGenerator.SingleListValuesGenerator();
-	}
-
 	protected final List<BigInteger> testingValues;
 	private final List<TestClient> clients;
-
 	protected SimpleHBaseTest(int maxBits, List<BigInteger> values)
 			throws Exception {
 		testingValues = values;
@@ -47,6 +41,11 @@ public abstract class SimpleHBaseTest {
 		clients.add(new ShareClient());
 		// clients.add(new DefaultHBaseClient());
 		LOG.debug("Client created");
+	}
+
+	@Parameterized.Parameters
+	public static Collection valueGenerator() {
+		return ValuesGenerator.SingleListValuesGenerator();
 	}
 
 	protected void createTestTable(TestClient client)
@@ -73,6 +72,8 @@ public abstract class SimpleHBaseTest {
 		for (BigInteger value : testingValues) {
 			LOG.debug("Going to insert value " + key);
 			Put put = new Put(key.toByteArray());
+
+			//Put put = new Put(String.valueOf(key).getBytes());
 			put.add(cf, cq, value.toByteArray());
 			table.put(put);
 			key = key.add(BigInteger.ONE);

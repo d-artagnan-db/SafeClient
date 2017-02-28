@@ -11,6 +11,7 @@ import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.Arrays;
 
 /**
  * Created by rgmacedo on 2/20/17.
@@ -25,8 +26,7 @@ public class CryptoTable extends HTable {
 		this.resultScannerFactory = new ResultScannerFactory();
 	}
 
-	public CryptoTable(Configuration conf, String tableName,
-			CryptoTechnique.CryptoType cType) throws IOException {
+	public CryptoTable(Configuration conf, String tableName, CryptoTechnique.CryptoType cType) throws IOException {
 		super(conf, TableName.valueOf(tableName));
 		this.cryptoProperties = new CryptoProperties(cType, 23);
 		this.resultScannerFactory = new ResultScannerFactory();
@@ -35,15 +35,16 @@ public class CryptoTable extends HTable {
 	@Override
 	public void put(Put put) {
 		try {
-			byte[] row = this.cryptoProperties.addPadding(put.getRow());
+			byte[] row = put.getRow();
 			Put encPut = new Put(this.cryptoProperties.encode(row));
+
 			CellScanner cs = put.cellScanner();
 
 			while (cs.advance()) {
 				Cell cell = cs.current();
 				encPut.add(CellUtil.cloneFamily(cell),
 						CellUtil.cloneQualifier(cell),
-						this.cryptoProperties.encode(CellUtil.cloneValue(cell)));
+						CellUtil.cloneValue(cell));
 			}
 			super.put(encPut);
 
@@ -53,27 +54,21 @@ public class CryptoTable extends HTable {
 		}
 	}
 
-	/*
-	 * TODO (4) Otimizar, não fazer para todos os elementos
-	 */
 	@Override
 	public Result get(Get get) {
 		Scan getScan = new Scan();
 		Result getResult = null;
+
 		try {
-			byte[] row = this.cryptoProperties.addPadding(get.getRow());
+			byte[] row = get.getRow();
 			switch (this.cryptoProperties.cType) {
 				case STD :
-					// BigInteger wantedValue = new BigInteger(row);
-					String wantedValue = new String(row);
 					ResultScanner encScan = super.getScanner(getScan);
-					for (Result r = encScan.next(); r != null; r = encScan
-							.next()) {
-						Result res = this.cryptoProperties.decodeResult(
-								r.getRow(), r);
-						// BigInteger aux = new BigInteger(res.getRow());
-						String aux = new String(res.getRow());
-						if (wantedValue.equals(aux)) {
+					for (Result r = encScan.next(); r != null; r = encScan.next()) {
+						Result res = this.cryptoProperties.decodeResult(r.getRow(), r);
+						byte[] aux = res.getRow();
+
+						if (Arrays.equals(row, aux)) {
 							getResult = res;
 							break;
 						}
@@ -84,8 +79,7 @@ public class CryptoTable extends HTable {
 					Get encGet = new Get(this.cryptoProperties.encode(row));
 					Result res = super.get(encGet);
 					if (!res.isEmpty()) {
-						getResult = this.cryptoProperties.decodeResult(
-								res.getRow(), res);
+						getResult = this.cryptoProperties.decodeResult(res.getRow(), res);
 					}
 					return getResult;
 				default :
@@ -99,28 +93,22 @@ public class CryptoTable extends HTable {
 		return getResult;
 	}
 
-	/*
-	 * TODO (4) Otimizar, não fazer para todos os elementos
-	 */
 	@Override
 	public void delete(Delete delete) {
 		Scan deleteScan = new Scan();
 		try {
-			byte[] row = this.cryptoProperties.addPadding(delete.getRow());
+			byte[] row = delete.getRow();
 			switch (this.cryptoProperties.cType) {
 				case STD :
-					BigInteger wantedValue = new BigInteger(row);
 					ResultScanner encScan = super.getScanner(deleteScan);
-					for (Result r = encScan.next(); r != null; r = encScan
-							.next()) {
-						BigInteger resultValue = new BigInteger(
-								this.cryptoProperties.decodeResult(r.getRow(),
-										r).getRow());
-						if (wantedValue.equals(resultValue)) {
+					for (Result r = encScan.next(); r != null; r = encScan.next()) {
+						Result res = this.cryptoProperties.decodeResult(r.getRow(), r);
+						byte[] resultValue = res.getRow();
+
+						if (Arrays.equals(row, resultValue)) {
 							Delete del = new Delete(r.getRow());
 							super.delete(del);
-							System.out.println("Row deleted: "
-									+ new String(row));
+							System.out.println("Row deleted: "+ new String(row));
 						}
 					}
 					break;
@@ -143,18 +131,19 @@ public class CryptoTable extends HTable {
 	@Override
 	public ResultScanner getScanner(Scan scan) {
 		try {
-			byte[] startRow = this.cryptoProperties.addPadding(scan
-					.getStartRow());
-			byte[] endRow = this.cryptoProperties.addPadding(scan.getStopRow());
+			byte[] startRow = scan.getStartRow();
+			byte[] endRow = scan.getStopRow();
 
 			Scan encScan = this.cryptoProperties.encryptedScan(scan);
 			ResultScanner encryptedResultScanner = super.getScanner(encScan);
 
 			return this.resultScannerFactory.getResultScanner(
-					this.cryptoProperties.cType, this.cryptoProperties,
-					startRow, endRow, encryptedResultScanner,
-					this.cryptoProperties.parseFilter((RowFilter) scan
-							.getFilter()));
+					this.cryptoProperties.cType,
+					this.cryptoProperties,
+					startRow,
+					endRow,
+					encryptedResultScanner,
+					this.cryptoProperties.parseFilter((RowFilter) scan.getFilter()));
 		} catch (Exception e) {
 			System.out.println("CryptoTable: Exception in scan method. "
 					+ e.getMessage());

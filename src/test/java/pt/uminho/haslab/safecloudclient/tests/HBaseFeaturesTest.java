@@ -10,6 +10,8 @@ import pt.uminho.haslab.safecloudclient.clients.TestClient;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -34,34 +36,32 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 		byte[] cf = columnDescriptor.getBytes();
 		byte[] cq = "testQualifier".getBytes();
 
-		createAndFillTable(client, table, cf, cq);
+		// createTestTable(client);
+		// testPut(table, cf, cq, this.utils.stringToByteArray("1234"));
+		// testPut(table, cf, cq, this.utils.stringToByteArray("2000"));
+		// testGetRow(table, cf, cq, this.utils.stringToByteArray("1234"));
 
-		testPut(table, cf, cq);
-		testGet(table, cf, cq);
-		testDelete(table, cf, cq);
+		createAndFillTable(client, table, cf, cq);
 		testScan(table);
+
 	}
 
-	public void testPut(HTableInterface table, byte[] cf, byte[] cq) {
-		System.out.println("Test Put: \n");
+	public void testPut(HTableInterface table, byte[] cf, byte[] cq,
+			byte[] value) {
+		System.out.println("Test Put: ");
 		try {
-			BigInteger row = new BigInteger(this.utils.integerToByteArray(1234));
-			Put put = new Put(row.toByteArray());
+			Put put = new Put(value);
 			put.add(cf, cq, "Hello".getBytes());
 
 			table.put(put);
 
-			Get get = new Get(row.toByteArray());
+			Get get = new Get(value);
 			get.addColumn(cf, cq);
 			Result res = table.get(get);
 			if (res != null) {
 				byte[] storedKey = res.getRow();
-				System.out.println("Actual Key: " + "00000000000000000001234");
-				System.out.println("Stored Key: " + new String(storedKey));
-				// assertEquals("00000000000000000001234", new
-				// String(storedKey));
-				System.out.println("Key " + row + " inserted successfully: "
-						+ res.toString());
+				System.out.println("Key " + new String(value)
+						+ " inserted successfully: " + res.toString());
 			}
 
 		} catch (IOException e) {
@@ -75,12 +75,12 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 		try {
 			BigInteger key = BigInteger.ZERO;
 			for (int i = 0; i < testingValues.size(); i++) {
-				Get get = new Get(key.toByteArray());
+				Get get = new Get(String.valueOf(key).getBytes());
 				get.addColumn(cf, cq);
 				Result res = table.get(get);
 				if (res != null) {
 					byte[] storedKey = res.getRow();
-					System.out.println("Actual Key: " + key);
+					System.out.println("Actual Key: " + String.valueOf(key));
 					System.out.println("Stored Key: " + new String(storedKey));
 					// assertEquals(key, new BigInteger(storedKey));
 				}
@@ -91,6 +91,25 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 					+ e.getMessage());
 		}
 
+	}
+
+	public void testGetRow(HTableInterface table, byte[] cf, byte[] cq,
+			byte[] value) {
+		System.out.println("Test Get: \n");
+		try {
+			Get get = new Get(value);
+			get.addColumn(cf, cq);
+			Result res = table.get(get);
+			if (res != null) {
+				byte[] storedKey = res.getRow();
+				System.out.println("Actual Key: " + new String(value));
+				System.out.println("Stored Key: " + new String(storedKey));
+			}
+
+		} catch (IOException e) {
+			System.out.println("HBaseFeaturesTest: testGet exception. "
+					+ e.getMessage());
+		}
 	}
 
 	public void testDelete(HTableInterface table, byte[] cf, byte[] cq) {
@@ -123,11 +142,16 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 		System.out.println("Test Scan:\n");
 
 		Scan s = new Scan();
-		s.setStartRow(this.utils.integerToByteArray(2));
-		s.setStopRow(this.utils.integerToByteArray(8));
+		// s.setStartRow(String.valueOf(2).getBytes());
+		s.setStopRow(String.valueOf(8).getBytes());
+		byte[] value = String.valueOf(6).getBytes();
 
-		byte[] value = this.utils.integerToByteArray(6);
-		Filter filter = new RowFilter(CompareFilter.CompareOp.LESS,
+		// System.out.println("Scan Properties: ");
+		// System.out.println("Start Row: "+ new String(s.getStartRow()));
+		// System.out.println("Stop Row: "+ new String(s.getStopRow()));
+		// System.out.println("Filter (<): "+ new String(value));
+
+		Filter filter = new RowFilter(CompareFilter.CompareOp.GREATER_OR_EQUAL,
 				new BinaryComparator(value));
 		s.setFilter(filter);
 

@@ -2,6 +2,7 @@ package pt.uminho.haslab.safecloudclient.cryptotechnique;
 
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 
 import java.io.IOException;
@@ -19,8 +20,6 @@ public class DeterministicResultScanner implements ResultScanner {
 	public boolean hasStartRow;
 	public boolean hasEndRow;
 	public boolean hasFilter;
-	public BigInteger start;
-	public BigInteger end;
 	public CompareFilter.CompareOp compareOp;
 	public byte[] compareValue;
 
@@ -37,17 +36,13 @@ public class DeterministicResultScanner implements ResultScanner {
 		if (startRow.length != 0) {
 			this.hasStartRow = true;
 			this.startRow = startRow;
-			this.start = new BigInteger(this.startRow);
 		} else {
 			this.hasStartRow = false;
-			this.start = new BigInteger(
-					this.cProperties.utils.integerToByteArray(0));
 		}
 
 		if (endRow.length != 0) {
 			this.hasEndRow = true;
 			this.endRow = endRow;
-			this.end = new BigInteger(endRow);
 		} else {
 			this.hasEndRow = false;
 		}
@@ -62,14 +57,16 @@ public class DeterministicResultScanner implements ResultScanner {
 		}
 	}
 
-	public boolean digestStartEndRow(BigInteger row) {
+	public boolean digestStartEndRow(byte[] row) {
 		boolean digest;
+		BinaryComparator binaryComparator = new BinaryComparator(row);
 		if (hasStartRow && hasEndRow) {
-			digest = (row.compareTo(start) >= 0 && row.compareTo(end) < 0);
+			digest = (binaryComparator.compareTo(startRow) >= 0 && binaryComparator
+					.compareTo(endRow) < 0);
 		} else if (hasStartRow && !hasEndRow) {
-			digest = (row.compareTo(start) >= 0);
+			digest = (binaryComparator.compareTo(startRow) >= 0);
 		} else if (hasEndRow) {
-			digest = (row.compareTo(end) < 0);
+			digest = (binaryComparator.compareTo(endRow) < 0);
 		} else {
 			digest = true;
 		}
@@ -77,23 +74,25 @@ public class DeterministicResultScanner implements ResultScanner {
 		return digest;
 	}
 
-	public boolean digestFilter(BigInteger row, BigInteger value) {
+	public boolean digestFilter(byte[] row, byte[] value) {
 		boolean digest = true;
+		BinaryComparator binaryComparator = new BinaryComparator(row);
+
 		switch (this.compareOp) {
 			case EQUAL :
-				digest = (row.compareTo(value) == 0);
+				digest = (binaryComparator.compareTo(value) == 0);
 				break;
 			case GREATER :
-				digest = (row.compareTo(value) > 0);
+				digest = (binaryComparator.compareTo(value) > 0);
 				break;
 			case LESS :
-				digest = (row.compareTo(value) < 0);
+				digest = (binaryComparator.compareTo(value) < 0);
 				break;
 			case GREATER_OR_EQUAL :
-				digest = (row.compareTo(value) >= 0);
+				digest = (binaryComparator.compareTo(value) >= 0);
 				break;
 			case LESS_OR_EQUAL :
-				digest = (row.compareTo(value) < 0);
+				digest = (binaryComparator.compareTo(value) < 0);
 				break;
 		}
 		return digest;
@@ -103,14 +102,12 @@ public class DeterministicResultScanner implements ResultScanner {
 		Result res = this.scanner.next();
 		boolean digest;
 		if (res != null) {
-			BigInteger row = new BigInteger(this.cProperties.decode(res
-					.getRow()));
+			byte[] row = this.cProperties.decode(res.getRow());
 
 			digest = digestStartEndRow(row);
 
 			if (hasFilter && digest) {
-				BigInteger value = new BigInteger(this.compareValue);
-				digest = digestFilter(row, value);
+				digest = digestFilter(row, this.compareValue);
 			}
 
 			if (digest)

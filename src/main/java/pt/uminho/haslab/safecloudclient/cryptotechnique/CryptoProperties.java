@@ -10,6 +10,7 @@ import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 import pt.uminho.haslab.cryptoenv.Utils;
 
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,15 +52,15 @@ public class CryptoProperties {
 			byte type = cell.getTypeByte();
 
 			Cell decCell = CellUtil.createCell(this.decode(row), cf, cq,
-					timestamp, type, this.decode(value));
+					timestamp, type, value);
 			cellList.add(decCell);
 		}
 		return Result.create(cellList);
 	}
 
 	public Scan encryptedScan(Scan s) {
-		byte[] startRow = addPadding(s.getStartRow());
-		byte[] stopRow = addPadding(s.getStopRow());
+		byte[] startRow = s.getStartRow();
+		byte[] stopRow = s.getStopRow();
 		Scan encScan = null;
 
 		switch (this.cType) {
@@ -79,8 +80,7 @@ public class CryptoProperties {
 				}
 
 				if (s.hasFilter()) {
-					RowFilter encryptedFilter = (RowFilter) parseFilter((RowFilter) s
-							.getFilter());
+					RowFilter encryptedFilter = (RowFilter) parseFilter((RowFilter) s.getFilter());
 					encScan.setFilter(encryptedFilter);
 				}
 				break;
@@ -103,14 +103,14 @@ public class CryptoProperties {
 
 					Object[] parserResult = new Object[2];
 					parserResult[0] = comp;
-					parserResult[1] = addPadding(bComp.getValue());
+					parserResult[1] = bComp.getValue();
 
 					return parserResult;
 				case OPE :
 					comp = filter.getOperator();
 					bComp = filter.getComparator();
 					BinaryComparator encBC = new BinaryComparator(
-							this.encode(addPadding(bComp.getValue())));
+							this.encode(bComp.getValue()));
 
 					return new RowFilter(comp, encBC);
 				default :
@@ -120,10 +120,11 @@ public class CryptoProperties {
 			return null;
 	}
 
-	public byte[] addPadding(byte[] value) {
-		String format = "%0" + this.formatSize + "d";
-		String s = String.format(format, new BigInteger(value));
-		return s.getBytes();
-	}
+	// TODO mudar o formato para byte buffer
+	// public byte[] addPadding(byte[] value) {
+	// String format = "%0" + this.formatSize + "d";
+	// String s = String.format(format, Integer.parseInt(new String(value)));
+	// return s.getBytes();
+	// }
 
 }
