@@ -26,19 +26,19 @@ public class CryptoProperties {
 	public int formatSize;
 
 	public CryptoProperties(CryptoTechnique.CryptoType cType, int formatSize) {
-		this.handler = new CryptoHandler();
 		this.cType = cType;
-		this.key = this.handler.gen(cType);
+		this.handler = new CryptoHandler(cType);
+		this.key = this.handler.gen();
 		this.utils = new Utils();
 		this.formatSize = formatSize;
 	}
 
 	public byte[] encode(byte[] content) {
-		return this.handler.encrypt(this.cType, this.key, content);
+		return this.handler.encrypt(this.key, content);
 	}
 
 	public byte[] decode(byte[] content) {
-		return this.handler.decrypt(this.cType, this.key, content);
+		return this.handler.decrypt(this.key, content);
 	}
 
 	public Result decodeResult(byte[] row, Result res) {
@@ -80,7 +80,8 @@ public class CryptoProperties {
 				}
 
 				if (s.hasFilter()) {
-					RowFilter encryptedFilter = (RowFilter) parseFilter((RowFilter) s.getFilter());
+					RowFilter encryptedFilter = (RowFilter) parseFilter((RowFilter) s
+							.getFilter());
 					encScan.setFilter(encryptedFilter);
 				}
 				break;
@@ -119,12 +120,5 @@ public class CryptoProperties {
 		} else
 			return null;
 	}
-
-	// TODO mudar o formato para byte buffer
-	// public byte[] addPadding(byte[] value) {
-	// String format = "%0" + this.formatSize + "d";
-	// String s = String.format(format, Integer.parseInt(new String(value)));
-	// return s.getBytes();
-	// }
 
 }
