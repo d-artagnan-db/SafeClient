@@ -41,9 +41,8 @@ public class DefaultHBaseClient implements TestClient {
 		Configuration conf = new Configuration();
 		conf.addResource("def-hbase-client.xml");
 		// return new HTable(conf, tableName);
-		CryptoTable ct = new CryptoTable(conf, tableName,
-				CryptoTechnique.CryptoType.DET);
-		ct.cryptoProperties.setKey(readKeyFromFile("key.txt"));
+		CryptoTable ct = new CryptoTable(conf, tableName, CryptoTechnique.CryptoType.STD);
+//		ct.cryptoProperties.setKey(readKeyFromFile("key.txt"));
 		return ct;
 	}
 
