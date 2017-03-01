@@ -2,6 +2,17 @@ package pt.uminho.haslab.safecloudclient.tests;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import pt.uminho.haslab.cryptoenv.CryptoTechnique;
+import pt.uminho.haslab.safecloudclient.clients.CryptoClient;
+import pt.uminho.haslab.safecloudclient.clients.PlaintextClient;
+import pt.uminho.haslab.safecloudclient.clients.TestClient;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
@@ -30,32 +41,50 @@ public abstract class SimpleHBaseTest {
 
 	protected final String tableName = "TestPutGet";
 
-	protected final String columnDescriptor = "values";
-	protected final List<BigInteger> testingValues;
-	private final List<TestClient> clients;
-	protected SimpleHBaseTest(int maxBits, List<BigInteger> values)
-			throws Exception {
-		testingValues = values;
-		clients = new ArrayList<TestClient>();
-		LOG.debug("Going to create client");
-		clients.add(new ShareClient());
-		// clients.add(new DefaultHBaseClient());
-		LOG.debug("Client created");
-	}
+
+//	protected final String columnDescriptor = "values";
+
+//	protected final String tableName = "Standard";
+//	protected final String tableName = "Vanilla";
+
+	protected final String columnDescriptor = "col1";
 
 	@Parameterized.Parameters
 	public static Collection valueGenerator() {
 		return ValuesGenerator.SingleListValuesGenerator();
 	}
 
-	protected void createTestTable(TestClient client)
-			throws ZooKeeperConnectionException, IOException, Exception {
-		TableName tbname = TableName.valueOf(tableName);
-		HTableDescriptor table = new HTableDescriptor(tbname);
-		HColumnDescriptor family = new HColumnDescriptor(columnDescriptor);
-		table.addFamily(family);
-		client.createTestTable(table);
+	protected final List<BigInteger> testingValues;
+	private final List<TestClient> clients;
 
+	protected SimpleHBaseTest(int maxBits, List<BigInteger> values) throws Exception {
+		testingValues = values;
+		clients = addClients();
+	}
+
+	public List<TestClient> addClients() throws IOException {
+		List<TestClient> clients = new ArrayList<TestClient>();
+
+		System.out.println("Going to create client");
+//		clients.add(new ShareClient());
+ 		clients.add(new PlaintextClient("Vanilla"));
+		clients.add(new CryptoClient("Standard", CryptoTechnique.CryptoType.STD));
+		clients.add(new CryptoClient("Deterministic", CryptoTechnique.CryptoType.DET));
+
+		System.out.println("Client created");
+
+		return clients;
+	}
+
+
+	protected void createTestTable(TestClient client) throws ZooKeeperConnectionException, IOException, Exception {
+		if(!client.checkTableExists(client.getTableName())) {
+			TableName tbname = TableName.valueOf(client.getTableName());
+			HTableDescriptor table = new HTableDescriptor(tbname);
+			HColumnDescriptor family = new HColumnDescriptor(columnDescriptor);
+			table.addFamily(family);
+			client.createTestTable(table);
+		}
 	}
 
 	protected void createAndFillTable(TestClient client, HTableInterface table,

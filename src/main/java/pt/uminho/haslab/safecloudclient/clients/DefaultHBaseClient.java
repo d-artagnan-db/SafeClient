@@ -31,18 +31,22 @@ public class DefaultHBaseClient implements TestClient {
 		admin = new HBaseAdmin(conf);
 	}
 
+	public String getTableName() {
+		return null;
+	}
+
 	public void createTestTable(HTableDescriptor testTable)
 			throws ZooKeeperConnectionException, IOException {
 		admin.createTable(testTable);
 	}
 
 	public HTableInterface createTableInterface(String tableName)
-			throws IOException, InvalidNumberOfBits {
-		Configuration conf = new Configuration();
+            throws IOException, InvalidNumberOfBits {
+        Configuration conf = new Configuration();
 		conf.addResource("def-hbase-client.xml");
 		// return new HTable(conf, tableName);
 		CryptoTable ct = new CryptoTable(conf, tableName, CryptoTechnique.CryptoType.STD);
-//		ct.cryptoProperties.setKey(readKeyFromFile("key.txt"));
+		// ct.cryptoProperties.setKey(readKeyFromFile("key.txt"));
 		return ct;
 	}
 
@@ -63,28 +67,6 @@ public class DefaultHBaseClient implements TestClient {
 
 	public void stopCluster() throws IOException {
 		clusters.tearDown();
-	}
-
-	public byte[] readKeyFromFile(String filename) throws IOException {
-		FileInputStream stream = new FileInputStream(filename);
-		try {
-
-			byte[] key = new byte[stream.available()];
-			int b;
-			int i = 0;
-			while ((b = stream.read()) != -1) {
-				key[i] = (byte) b;
-				i++;
-			}
-			System.out.println("readKeyFromFile: " + Arrays.toString(key));
-
-			return key;
-		} catch (Exception e) {
-			System.out.println("Exception. " + e.getMessage());
-		} finally {
-			stream.close();
-		}
-		return null;
 	}
 
 }

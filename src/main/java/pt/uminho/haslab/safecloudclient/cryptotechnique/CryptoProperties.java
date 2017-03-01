@@ -44,12 +44,10 @@ public class CryptoProperties {
 	}
 
 	public byte[] encode(byte[] content) {
-		System.out.println("Encode key: " + Arrays.toString(this.key));
 		return this.handler.encrypt(this.key, content);
 	}
 
 	public byte[] decode(byte[] content) {
-		System.out.println("decode key: " + Arrays.toString(this.key));
 		return this.handler.decrypt(this.key, content);
 	}
 

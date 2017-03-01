@@ -24,7 +24,7 @@ public class StandardResultScanner implements ResultScanner {
 	public byte[] compareValue;
 
 	public StandardResultScanner(CryptoProperties cp, byte[] startRow,
-									  byte[] endRow, ResultScanner encryptedScanner, Object filterResult) {
+			byte[] endRow, ResultScanner encryptedScanner, Object filterResult) {
 		this.scanner = encryptedScanner;
 		this.cProperties = cp;
 		this.startRow = startRow;
@@ -59,23 +59,21 @@ public class StandardResultScanner implements ResultScanner {
 
 	public int getPaddingSize(byte[] row) {
 		int paddingSize = row.length;
-		if(hasStartRow && hasEndRow) {
+		if (hasStartRow && hasEndRow) {
 			if (startRow.length > paddingSize)
 				paddingSize = startRow.length;
 			if (endRow.length > paddingSize)
 				paddingSize = endRow.length;
-		}
-		else if(hasStartRow && !hasEndRow) {
+		} else if (hasStartRow && !hasEndRow) {
 			if (startRow.length > paddingSize)
 				paddingSize = startRow.length;
-		}
-		else if (hasEndRow) {
+		} else if (hasEndRow) {
 			if (endRow.length > paddingSize)
 				paddingSize = endRow.length;
 		}
 
-		if(hasFilter) {
-			if(compareValue.length > paddingSize)
+		if (hasFilter) {
+			if (compareValue.length > paddingSize)
 				paddingSize = compareValue.length;
 		}
 		return paddingSize;
@@ -90,7 +88,8 @@ public class StandardResultScanner implements ResultScanner {
 			startRow = Utils.addPadding(startRow, paddingSize);
 			endRow = Utils.addPadding(endRow, paddingSize);
 
-			digest = (byteArrayComparator.compare(row, startRow) >= 0 && byteArrayComparator.compare(row, endRow) < 0);
+			digest = (byteArrayComparator.compare(row, startRow) >= 0 && byteArrayComparator
+					.compare(row, endRow) < 0);
 		} else if (hasStartRow && !hasEndRow) {
 			row = Utils.addPadding(row, paddingSize);
 			startRow = Utils.addPadding(startRow, paddingSize);

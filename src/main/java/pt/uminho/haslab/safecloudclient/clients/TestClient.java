@@ -3,13 +3,16 @@ package pt.uminho.haslab.safecloudclient.clients;
 import java.io.IOException;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HTableInterface;
+import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
 
 public interface TestClient {
+
+	public String getTableName();
 
 	public void createTestTable(HTableDescriptor testTable) throws Exception;
 
 	public abstract HTableInterface createTableInterface(String tableName)
-			throws Exception;
+			throws IOException, InvalidNumberOfBits;
 
 	public boolean checkTableExists(String tableName) throws Exception;
 
