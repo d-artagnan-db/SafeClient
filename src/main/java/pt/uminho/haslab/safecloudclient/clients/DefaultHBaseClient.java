@@ -1,7 +1,9 @@
 package pt.uminho.haslab.safecloudclient.clients;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -39,8 +41,10 @@ public class DefaultHBaseClient implements TestClient {
 		Configuration conf = new Configuration();
 		conf.addResource("def-hbase-client.xml");
 		// return new HTable(conf, tableName);
-		return new CryptoTable(conf, tableName, CryptoTechnique.CryptoType.STD);
-
+		CryptoTable ct = new CryptoTable(conf, tableName,
+				CryptoTechnique.CryptoType.DET);
+		ct.cryptoProperties.setKey(readKeyFromFile("key.txt"));
+		return ct;
 	}
 
 	public boolean checkTableExists(String tableName) throws IOException {
@@ -60,6 +64,28 @@ public class DefaultHBaseClient implements TestClient {
 
 	public void stopCluster() throws IOException {
 		clusters.tearDown();
+	}
+
+	public byte[] readKeyFromFile(String filename) throws IOException {
+		FileInputStream stream = new FileInputStream(filename);
+		try {
+
+			byte[] key = new byte[stream.available()];
+			int b;
+			int i = 0;
+			while ((b = stream.read()) != -1) {
+				key[i] = (byte) b;
+				i++;
+			}
+			System.out.println("readKeyFromFile: " + Arrays.toString(key));
+
+			return key;
+		} catch (Exception e) {
+			System.out.println("Exception. " + e.getMessage());
+		} finally {
+			stream.close();
+		}
+		return null;
 	}
 
 }

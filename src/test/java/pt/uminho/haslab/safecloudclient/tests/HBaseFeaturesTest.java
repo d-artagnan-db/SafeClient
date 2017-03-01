@@ -142,18 +142,17 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 		System.out.println("Test Scan:\n");
 
 		Scan s = new Scan();
-		// s.setStartRow(String.valueOf(2).getBytes());
-		s.setStopRow(String.valueOf(8).getBytes());
-		byte[] value = String.valueOf(6).getBytes();
+//		s.setStartRow(String.valueOf(2).getBytes());
+		s.setStopRow(String.valueOf(50).getBytes());
+		 byte[] value = String.valueOf(6).getBytes();
 
 		// System.out.println("Scan Properties: ");
 		// System.out.println("Start Row: "+ new String(s.getStartRow()));
 		// System.out.println("Stop Row: "+ new String(s.getStopRow()));
 		// System.out.println("Filter (<): "+ new String(value));
 
-		Filter filter = new RowFilter(CompareFilter.CompareOp.GREATER_OR_EQUAL,
-				new BinaryComparator(value));
-		s.setFilter(filter);
+		 Filter filter = new RowFilter(CompareFilter.CompareOp.GREATER_OR_EQUAL, new BinaryComparator(value));
+		 s.setFilter(filter);
 
 		ResultScanner rs = table.getScanner(s);
 

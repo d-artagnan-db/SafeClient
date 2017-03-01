@@ -2,11 +2,11 @@ package pt.uminho.haslab.safecloudclient.cryptotechnique;
 
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter;
+import org.apache.hadoop.hbase.util.Bytes;
+import pt.uminho.haslab.cryptoenv.Utils;
 
 import java.io.IOException;
-import java.math.BigInteger;
 import java.util.Iterator;
 
 /**
@@ -57,16 +57,50 @@ public class DeterministicResultScanner implements ResultScanner {
 		}
 	}
 
-	public boolean digestStartEndRow(byte[] row) {
+	public int getPaddingSize(byte[] row) {
+		int paddingSize = row.length;
+		if(hasStartRow && hasEndRow) {
+			if (startRow.length > paddingSize)
+				paddingSize = startRow.length;
+			if (endRow.length > paddingSize)
+				paddingSize = endRow.length;
+		}
+		else if(hasStartRow && !hasEndRow) {
+			if (startRow.length > paddingSize)
+				paddingSize = startRow.length;
+		}
+		else if (hasEndRow) {
+			if (endRow.length > paddingSize)
+				paddingSize = endRow.length;
+		}
+
+		if(hasFilter) {
+			if(compareValue.length > paddingSize)
+				paddingSize = compareValue.length;
+		}
+		return paddingSize;
+	}
+
+	public boolean digestStartEndRow(int paddingSize, byte[] row) {
 		boolean digest;
-		BinaryComparator binaryComparator = new BinaryComparator(row);
+		Bytes.ByteArrayComparator byteArrayComparator = new Bytes.ByteArrayComparator();
+
 		if (hasStartRow && hasEndRow) {
-			digest = (binaryComparator.compareTo(startRow) >= 0 && binaryComparator
-					.compareTo(endRow) < 0);
+			row = Utils.addPadding(row, paddingSize);
+			startRow = Utils.addPadding(startRow, paddingSize);
+			endRow = Utils.addPadding(endRow, paddingSize);
+
+			digest = (byteArrayComparator.compare(row, startRow) >= 0 && byteArrayComparator.compare(row, endRow) < 0);
 		} else if (hasStartRow && !hasEndRow) {
-			digest = (binaryComparator.compareTo(startRow) >= 0);
+			row = Utils.addPadding(row, paddingSize);
+			startRow = Utils.addPadding(startRow, paddingSize);
+
+			digest = (byteArrayComparator.compare(row, startRow) >= 0);
 		} else if (hasEndRow) {
-			digest = (binaryComparator.compareTo(endRow) < 0);
+			row = Utils.addPadding(row, paddingSize);
+			endRow = Utils.addPadding(endRow, paddingSize);
+
+			digest = (byteArrayComparator.compare(row, endRow) < 0);
 		} else {
 			digest = true;
 		}
@@ -74,25 +108,27 @@ public class DeterministicResultScanner implements ResultScanner {
 		return digest;
 	}
 
-	public boolean digestFilter(byte[] row, byte[] value) {
+	public boolean digestFilter(int paddingSize, byte[] row, byte[] value) {
 		boolean digest = true;
-		BinaryComparator binaryComparator = new BinaryComparator(row);
+		Bytes.ByteArrayComparator byteArrayComparator = new Bytes.ByteArrayComparator();
+		row = Utils.addPadding(row, paddingSize);
+		value = Utils.addPadding(value, paddingSize);
 
 		switch (this.compareOp) {
 			case EQUAL :
-				digest = (binaryComparator.compareTo(value) == 0);
+				digest = (byteArrayComparator.compare(row, value) == 0);
 				break;
 			case GREATER :
-				digest = (binaryComparator.compareTo(value) > 0);
+				digest = (byteArrayComparator.compare(row, value) > 0);
 				break;
 			case LESS :
-				digest = (binaryComparator.compareTo(value) < 0);
+				digest = (byteArrayComparator.compare(row, value) < 0);
 				break;
 			case GREATER_OR_EQUAL :
-				digest = (binaryComparator.compareTo(value) >= 0);
+				digest = (byteArrayComparator.compare(row, value) >= 0);
 				break;
 			case LESS_OR_EQUAL :
-				digest = (binaryComparator.compareTo(value) < 0);
+				digest = (byteArrayComparator.compare(row, value) < 0);
 				break;
 		}
 		return digest;
@@ -103,11 +139,12 @@ public class DeterministicResultScanner implements ResultScanner {
 		boolean digest;
 		if (res != null) {
 			byte[] row = this.cProperties.decode(res.getRow());
+			int paddingSize = getPaddingSize(row);
 
-			digest = digestStartEndRow(row);
+			digest = digestStartEndRow(paddingSize, row);
 
 			if (hasFilter && digest) {
-				digest = digestFilter(row, this.compareValue);
+				digest = digestFilter(paddingSize, row, this.compareValue);
 			}
 
 			if (digest)

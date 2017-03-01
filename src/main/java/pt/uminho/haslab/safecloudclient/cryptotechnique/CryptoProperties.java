@@ -12,6 +12,7 @@ import pt.uminho.haslab.cryptoenv.Utils;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -33,11 +34,22 @@ public class CryptoProperties {
 		this.formatSize = formatSize;
 	}
 
+	public byte[] getKey() {
+		return this.key;
+	}
+
+	public void setKey(byte[] key) {
+		this.key = key;
+		System.out.println("The key was setted. Key - " + Arrays.toString(key));
+	}
+
 	public byte[] encode(byte[] content) {
+		System.out.println("Encode key: " + Arrays.toString(this.key));
 		return this.handler.encrypt(this.key, content);
 	}
 
 	public byte[] decode(byte[] content) {
+		System.out.println("decode key: " + Arrays.toString(this.key));
 		return this.handler.decrypt(this.key, content);
 	}
 
