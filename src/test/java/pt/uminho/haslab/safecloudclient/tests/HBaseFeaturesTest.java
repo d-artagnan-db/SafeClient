@@ -34,19 +34,21 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 		HTableInterface table = client.createTableInterface(client.getTableName());
 		System.out.println(client.getTableName());
 
-//		putGetTest(table);
+		long quantity = timingPutTest(table, 10000);
+		System.out.println("Quantity: "+quantity);
 
-		testScan(table, null, null);
+		timingGetTest(table, 10000, quantity);
+	}
+
 
 //		 createTestTable(client);
-		 //testPut(table, cf, cq, this.utils.stringToByteArray("1234"));
-		 //testPut(table, cf, cq, this.utils.stringToByteArray("2000"));
+	//testPut(table, cf, cq, this.utils.stringToByteArray("1234"));
+	//testPut(table, cf, cq, this.utils.stringToByteArray("2000"));
 //		 testGetRow(table, cf, cq, this.utils.stringToByteArray("1234"));
 
 //		createAndFillTable(client, table, cf, cq);
 //		testScan(table);
 
-	}
 
 	public void testPut(HTableInterface table, byte[] cf, byte[] cq, byte[] value) {
 		System.out.println("Test Put: ");
@@ -77,11 +79,11 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 			Get get = new Get(value);
 			get.addColumn(cf, cq);
 			Result res = table.get(get);
-			if (res != null) {
-				byte[] storedKey = res.getRow();
-				System.out.println("Actual Key: " + new String(value));
-				System.out.println("Stored Key: " + new String(storedKey));
-			}
+//			if (res != null) {
+//				byte[] storedKey = res.getRow();
+//				System.out.println("Actual Key: " + new String(value));
+//				System.out.println("Stored Key: " + new String(storedKey));
+//			}
 
 		} catch (IOException e) {
 			System.out.println("HBaseFeaturesTest: testGet exception. " + e.getMessage());
@@ -156,18 +158,18 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 	}
 
 	public void putGetTest(HTableInterface table) {
-
+		int sizeofVolume = 1000;
 		byte[] cf = columnDescriptor.getBytes();
 		byte[] cq = "testQualifier".getBytes();
-		List<String> volume =generateVolume(100, 23);
+		List<String> volume =generateVolume(sizeofVolume, 23);
 
 		long start = System.currentTimeMillis();
-		for(int i = 0; i < 100; i++) {
+		for(int i = 0; i < sizeofVolume; i++) {
 
 			testPut(table, cf, cq, volume.get(i).getBytes());
 		}
 		long middle = System.currentTimeMillis();
-		for(int i = 0; i < 100; i++) {
+		for(int i = 0; i < sizeofVolume; i++) {
 			testGet(table, cf, cq, volume.get(i).getBytes());
 		}
 		long stop = System.currentTimeMillis();
@@ -177,6 +179,48 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 		System.out.println("Get execution: "+(stop-middle)+" ms.");
 
 	}
+
+	public long timingPutTest(HTableInterface table, int time) {
+		byte[] cf = columnDescriptor.getBytes();
+		byte[] cq = "testQualifier".getBytes();
+
+		long startTime = System.currentTimeMillis();
+
+		long data = 0;
+		while((System.currentTimeMillis() - startTime) < time) {
+			testPut(table, cf, cq, String.valueOf(data).getBytes());
+			data++;
+		}
+		System.out.println("Timing Put Test");
+		System.out.println("Operations: "+data);
+		System.out.println("Throughput: "+((data*1000)/time)+" ops/s");
+		return data;
+	}
+
+	public void timingGetTest(HTableInterface table, int time, long limit) {
+		byte[] cf = columnDescriptor.getBytes();
+		byte[] cq = "testQualifier".getBytes();
+
+		long startTime = System.currentTimeMillis();
+
+		long totalOps = 0;
+		long data = 0;
+		while((System.currentTimeMillis() - startTime) < time) {
+			testGet(table, cf, cq, String.valueOf(data).getBytes());
+			data++;
+			totalOps++;
+			if(data == limit) {
+				data = 0;
+				System.out.println("RESET.");
+			}
+		}
+		System.out.println("Timing Get Test");
+		System.out.println("Operations: "+totalOps);
+		System.out.println("Throughput: "+((totalOps*1000)/time)+" ops/s");
+	}
+
+
+
 	public String generateRandomKey(int size) {
 		Random r = new Random();
 		StringBuilder sb = new StringBuilder();

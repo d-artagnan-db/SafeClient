@@ -68,8 +68,9 @@ public abstract class SimpleHBaseTest {
 		System.out.println("Going to create client");
 //		clients.add(new ShareClient());
  		clients.add(new PlaintextClient("Vanilla"));
-		clients.add(new CryptoClient("Standard", CryptoTechnique.CryptoType.STD));
+//		clients.add(new CryptoClient("Standard", CryptoTechnique.CryptoType.STD));
 		clients.add(new CryptoClient("Deterministic", CryptoTechnique.CryptoType.DET));
+//		clients.add(new CryptoClient("OPE", CryptoTechnique.CryptoType.OPE));
 
 		System.out.println("Client created");
 
