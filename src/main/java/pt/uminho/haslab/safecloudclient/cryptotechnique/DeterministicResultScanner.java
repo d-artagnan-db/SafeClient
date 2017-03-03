@@ -57,6 +57,7 @@ public class DeterministicResultScanner implements ResultScanner {
 		}
 	}
 
+//	TODO para o paper, remover o padding size porque os valores vêm c/ tamanho fixo
 	public int getPaddingSize(byte[] row) {
 		int paddingSize = row.length;
 		if (hasStartRow && hasEndRow) {

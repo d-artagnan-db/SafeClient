@@ -51,6 +51,7 @@ public class CryptoClient implements TestClient {
 		byte[] key = CryptoProperties.readKeyFromFile("key.txt");
 		ct.cryptoProperties.setKey(key);
 
+		System.out.println("Table created Successfully");
 		return ct;
 	}
 

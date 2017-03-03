@@ -68,8 +68,10 @@ public abstract class SimpleHBaseTest {
 
 		System.out.println("Going to create client");
 
-		clients.add(new PlaintextClient("Vanilla", "col1"));
-		clients.add(new CryptoClient("Vanilla", CryptoTechnique.CryptoType.DET));
+		clients.add(new PlaintextClient("Vanilla"));
+//		clients.add(new CryptoClient("Vanilla", CryptoTechnique.CryptoType.DET));
+//		clients.add(new CryptoClient("Vanilla", CryptoTechnique.CryptoType.STD));
+//		clients.add(new CryptoClient("Vanilla", CryptoTechnique.CryptoType.OPE));
 
 		System.out.println("Client created");
 
@@ -84,7 +86,7 @@ public abstract class SimpleHBaseTest {
 			HColumnDescriptor family = new HColumnDescriptor(columnDescriptor);
 			table.addFamily(family);
 			client.createTestTable(table);
-		}
+                }
 	}
 
 	protected void createAndFillTable(TestClient client, HTableInterface table,
@@ -115,6 +117,7 @@ public abstract class SimpleHBaseTest {
 	public void testBoot() throws Exception {
 		for (TestClient client : clients) {
 			client.startCluster();
+			createTestTable(client);
 			testExecution(client);
 			client.stopCluster();
 
@@ -125,14 +128,9 @@ public abstract class SimpleHBaseTest {
 
 			HBaseAdmin admin = new HBaseAdmin(conf);
 			admin.disableTable(table);
+			System.out.println("Table disabled.");
 			admin.deleteTable(table);
-
-			TableName tbname = TableName.valueOf("Vanilla");
-			HTableDescriptor t = new HTableDescriptor(tbname);
-			HColumnDescriptor family = new HColumnDescriptor("col1");
-			t.addFamily(family);
-
-			admin.createTable(t);
+			System.out.println("Table dropped.");
 		}
 	}
 }

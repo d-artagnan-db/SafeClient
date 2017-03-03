@@ -1,0 +1,3 @@
+Timing Put Test
+Operations: 446
+Throughput: 446 ops/s

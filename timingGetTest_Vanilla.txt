@@ -1,0 +1,3 @@
+Timing Get Test
+Operations: 209244
+Throughput: 348 ops/s

@@ -36,10 +36,10 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
 			System.out.println(client.getTableName());
 
-			long quantity = timingPutTest(table, 60000);
+			long quantity = timingPutTest(table, 1000);
 			System.out.println("Quantity: " + quantity);
 
-			timingGetTest(table, 60000, quantity);
+			timingScanTest(table, 1000);
 
 		} catch (Exception e) {
 			System.out
@@ -130,18 +130,20 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 		if (startRow != null)
 			s.setStopRow(stopRow);
 
-		long start = System.currentTimeMillis();
+//		long start = System.currentTimeMillis();
 		ResultScanner rs = table.getScanner(s);
-		long stop = System.currentTimeMillis();
-
+//		long stop = System.currentTimeMillis();
+		int total = 0;
 		for (Result r = rs.next(); r != null; r = rs.next()) {
-			if (!r.isEmpty())
-				System.out.println("> Key:" + new String(r.getRow()));
-			else
-				System.out.println("No Match.");
+			if (!r.isEmpty()) {
+//				System.out.println("> Key:" + new String(r.getRow()));
+				total++;
+			}
 		}
 
-		System.out.println("Total Scan Time: " + (stop - start) + " ms.");
+		System.out.println("Total: "+total);
+
+//		System.out.println("Total Scan Time: " + (stop - start) + " ms.");
 	}
 
 	public void testFilter(HTableInterface table,
@@ -195,7 +197,8 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
 		long data = 0;
 		while ((System.currentTimeMillis() - startTime) < time) {
-			testPut(table, cf, cq, String.valueOf(data).getBytes());
+			byte[] padded = Utils.addPadding(String.valueOf(data).getBytes(), 7);
+			testPut(table, cf, cq, padded);
 			data++;
 		}
 		StringBuilder sb = new StringBuilder();
@@ -246,6 +249,25 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 				+ " ops/s\n");
 
 		printToFile(filename, sb.toString());
+	}
+
+	public void timingScanTest(HTableInterface table, int time) throws IOException {
+		Random r = new Random(12345);
+
+		long startTime = System.currentTimeMillis();
+		long data = 0;
+		while((System.currentTimeMillis() - startTime) < time) {
+			byte[] startRow = Utils.addPadding(String.valueOf(r.nextInt(100)).getBytes(), 7);
+			byte[] stopRow = Utils.addPadding(String.valueOf(r.nextInt(50000)).getBytes(),7);
+			System.out.println(new String(startRow)+"-"+new String(stopRow));
+			testScan(table, startRow, stopRow);
+			data++;
+		}
+
+		System.out.println("Operations: " + data);
+		System.out.println("Time: " + time);
+		System.out.println("Throughput: " + ((data * 1000) / time) + " ops/s\n");
+
 	}
 
 //	TODO this shouldn't be here (move/replacr in testingUtilities)

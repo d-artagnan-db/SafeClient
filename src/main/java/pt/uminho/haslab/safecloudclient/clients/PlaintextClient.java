@@ -39,7 +39,8 @@ public class PlaintextClient implements TestClient {
 			throws IOException, InvalidNumberOfBits {
 		Configuration conf = new Configuration();
 		conf.addResource("conf.xml");
-
+                
+		System.out.println("Table created Successfully");
 		return new HTable(conf, tableName);
 	}
 
