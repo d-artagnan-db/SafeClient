@@ -24,6 +24,8 @@ public abstract class MultiOP {
 	protected final List<HTable> connections;
 	protected final SharedClientConfiguration config;
 
+	protected Long uniqueRowId;
+
 	public MultiOP(SharedClientConfiguration config, List<HTable> connections,
 			long requestID, int targetPlayer) {
 		this.requestID = requestID;
@@ -45,7 +47,9 @@ public abstract class MultiOP {
 		Result resOne = results.get(0);
 		Result resTwo = results.get(1);
 		Result resThree = results.get(2);
-
+        LOG.debug("Row of match result is "+ new String(resOne.getRow()));
+        this.uniqueRowId = Long.valueOf(new String(resOne.getRow()));
+        
 		byte[] rowSecretOne = resOne.getValue(secretColFam, secretColQual);
 		byte[] rowSecretTwo = resTwo.getValue(secretColFam, secretColQual);
 		byte[] rowSecretThree = resThree.getValue(secretColFam, secretColQual);
@@ -72,8 +76,7 @@ public abstract class MultiOP {
 			byte[] cq = CellUtil.cloneQualifier(secondCell);
 
 			// Filter columns holding secrets
-			if (!(Arrays
-					.equals(cf, config.getShareKeyColumnFamily().getBytes()) && Arrays
+			if (!(Arrays.equals(cf, config.getShareKeyColumnFamily().getBytes()) && Arrays
 					.equals(cq, config.getShareKeyColumnQualifier().getBytes()))) {
 				List<byte[]> values = new ArrayList<byte[]>();
 				byte[] fValue = CellUtil.cloneValue(firstCell);
@@ -104,7 +107,7 @@ public abstract class MultiOP {
 			index += 1;
 		}
 
-		LOG.debug("Going to issue get request");
+		LOG.debug("Going to do request");
 		for (Thread t : calls) {
 			t.start();
 
@@ -114,7 +117,7 @@ public abstract class MultiOP {
 			t.join();
 		}
         
-		LOG.debug("Get calls terminated");
+		LOG.debug("Operation calls terminated");
 		threadsJoined(calls);
 	}
 
@@ -133,4 +136,8 @@ public abstract class MultiOP {
 		}
 
 	}
+
+	public Long getUniqueRowId(){
+	    return this.uniqueRowId;
+    }
 }

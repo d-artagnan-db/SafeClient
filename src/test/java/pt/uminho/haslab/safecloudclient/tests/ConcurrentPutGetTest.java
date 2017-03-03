@@ -37,7 +37,7 @@ public class ConcurrentPutGetTest extends ConcurrentSimpleHBaseTest {
 							new BigInteger(result.getRow()));
 
 				} catch (IOException ex) {
-					System.out.println(ex);
+					LOG.error(ex);
 					throw new IllegalArgumentException(ex);
 				}
 			}
@@ -47,7 +47,6 @@ public class ConcurrentPutGetTest extends ConcurrentSimpleHBaseTest {
 
 	@Override
 	protected Thread getExecutionThread(int i) {
-
 		String resource = "hbase-client.xml";
 		byte[] cf = columnDescriptor.getBytes();
 		byte[] cq = "testQualifier".getBytes();
@@ -55,13 +54,13 @@ public class ConcurrentPutGetTest extends ConcurrentSimpleHBaseTest {
 		try {
 			return new PutThread(resource, i, tableName, cf, cq);
 		} catch (IOException ex) {
-			System.out.println(ex);
+			LOG.error(ex);
 			throw new IllegalStateException(ex);
 		} catch (InvalidNumberOfBits ex) {
-			System.out.println(ex);
+			LOG.error(ex);
 			throw new IllegalStateException(ex);
 		} catch (Exception ex) {
-			System.out.println(ex);
+			LOG.error(ex);
 			throw new IllegalStateException(ex);
 		}
 	}

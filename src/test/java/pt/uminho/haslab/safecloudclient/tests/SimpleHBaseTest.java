@@ -1,5 +1,7 @@
 package pt.uminho.haslab.safecloudclient.tests;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import pt.uminho.haslab.safecloudclient.clients.tests.TestClient;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -18,10 +20,12 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
 import pt.uminho.haslab.testingutils.ValuesGenerator;
-import pt.uminho.haslab.safecloudclient.clients.tests.DefaultHBaseClient;
+import pt.uminho.haslab.safecloudclient.clients.tests.ShareClient;
 
 @RunWith(Parameterized.class)
 public abstract class SimpleHBaseTest {
+
+	static final Log LOG = LogFactory.getLog(SimpleHBaseTest.class.getName());
 
 	protected final String tableName = "TestPutGet";
 
@@ -39,10 +43,10 @@ public abstract class SimpleHBaseTest {
 			throws Exception {
 		testingValues = values;
 		clients = new ArrayList<TestClient>();
-		System.out.println("Going to create client");
-		// clients.add(new ShareClient());
-		clients.add(new DefaultHBaseClient());
-		System.out.println("Client created");
+		LOG.debug("Going to create client");
+		clients.add(new ShareClient());
+		//clients.add(new DefaultHBaseClient());
+		LOG.debug("Client created");
 	}
 
 	protected void createTestTable(TestClient client)
@@ -60,14 +64,14 @@ public abstract class SimpleHBaseTest {
 			Exception {
 		/*
 		 * Test that the creation of the table where the values are going to be
-		 * inserted was successfull.
+		 * inserted was successful.
 		 */
 		createTestTable(client);
 		Assert.assertEquals(true, client.checkTableExists(tableName));
 
 		BigInteger key = BigInteger.ZERO;
 		for (BigInteger value : testingValues) {
-			System.out.println("Going to insert value " + key);
+			LOG.debug("Going to insert value " + key);
 			Put put = new Put(key.toByteArray());
 			put.add(cf, cq, value.toByteArray());
 			table.put(put);

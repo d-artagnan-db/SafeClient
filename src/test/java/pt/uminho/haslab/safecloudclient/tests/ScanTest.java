@@ -3,6 +3,9 @@ package pt.uminho.haslab.safecloudclient.tests;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -10,14 +13,18 @@ import org.apache.hadoop.hbase.client.Scan;
 import pt.uminho.haslab.safecloudclient.clients.tests.TestClient;
 import pt.uminho.haslab.testingutils.ScanValidator;
 
+import static org.junit.Assert.assertEquals;
+
 public class ScanTest extends SimpleHBaseTest {
 
-	public ScanTest(int maxBits, List<BigInteger> values) throws Exception {
+    static final Log LOG = LogFactory.getLog(ScanTest.class.getName());
+
+    public ScanTest(int maxBits, List<BigInteger> values) throws Exception {
 		super(maxBits, values);
 	}
 
 	// Keys are being inserted in an increasing order on the table.
-	private List<BigInteger> genTableKeys() {
+	protected List<BigInteger> genTableKeys() {
 
 		List<BigInteger> keys = new ArrayList<BigInteger>();
 		BigInteger val = BigInteger.ZERO;
@@ -48,11 +55,11 @@ public class ScanTest extends SimpleHBaseTest {
 		for (Result result = scanner.next(); result != null; result = scanner
 				.next()) {
 			results.add(result);
-			System.out.println("Received key was "
+			LOG.debug("Received key was "
 					+ new BigInteger(result.getRow()));
 		}
 
-		// shelper.validateResults(results);
+		assertEquals(true, shelper.validateResults(results));
 
 	}
 

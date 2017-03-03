@@ -1,8 +1,9 @@
 package pt.uminho.haslab.safecloudclient.tests;
 
+import pt.uminho.haslab.testingutils.ScanValidator;
+
 import java.math.BigInteger;
 import java.util.List;
-import pt.uminho.haslab.testingutils.ScanValidator;
 
 public class ConcurrentPutScanWithoutKeysTest extends ConcurrentPutScanTest {
 
