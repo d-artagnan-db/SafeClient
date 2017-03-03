@@ -1,8 +1,14 @@
 package pt.uminho.haslab.safecloudclient.tests;
 
+<<<<<<< HEAD
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+=======
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.HConnection;
+>>>>>>> Uma rica (not) tarde de testes ...
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 import pt.uminho.haslab.safecloudclient.clients.CryptoClient;
 import pt.uminho.haslab.safecloudclient.clients.PlaintextClient;
@@ -41,12 +47,6 @@ public abstract class SimpleHBaseTest {
 
 	protected final String tableName = "TestPutGet";
 
-
-//	protected final String columnDescriptor = "values";
-
-//	protected final String tableName = "Standard";
-//	protected final String tableName = "Vanilla";
-
 	protected final String columnDescriptor = "col1";
 
 	@Parameterized.Parameters
@@ -57,7 +57,8 @@ public abstract class SimpleHBaseTest {
 	protected final List<BigInteger> testingValues;
 	private final List<TestClient> clients;
 
-	protected SimpleHBaseTest(int maxBits, List<BigInteger> values) throws Exception {
+	protected SimpleHBaseTest(int maxBits, List<BigInteger> values)
+			throws Exception {
 		testingValues = values;
 		clients = addClients();
 	}
@@ -66,20 +67,18 @@ public abstract class SimpleHBaseTest {
 		List<TestClient> clients = new ArrayList<TestClient>();
 
 		System.out.println("Going to create client");
-//		clients.add(new ShareClient());
- 		clients.add(new PlaintextClient("Vanilla"));
-//		clients.add(new CryptoClient("Standard", CryptoTechnique.CryptoType.STD));
-		clients.add(new CryptoClient("Deterministic", CryptoTechnique.CryptoType.DET));
-//		clients.add(new CryptoClient("OPE", CryptoTechnique.CryptoType.OPE));
+
+		clients.add(new PlaintextClient("Vanilla", "col1"));
+		clients.add(new CryptoClient("Vanilla", CryptoTechnique.CryptoType.DET));
 
 		System.out.println("Client created");
 
 		return clients;
 	}
 
-
-	protected void createTestTable(TestClient client) throws ZooKeeperConnectionException, IOException, Exception {
-		if(!client.checkTableExists(client.getTableName())) {
+	protected void createTestTable(TestClient client)
+			throws ZooKeeperConnectionException, IOException, Exception {
+		if (!client.checkTableExists(client.getTableName())) {
 			TableName tbname = TableName.valueOf(client.getTableName());
 			HTableDescriptor table = new HTableDescriptor(tbname);
 			HColumnDescriptor family = new HColumnDescriptor(columnDescriptor);
@@ -118,6 +117,22 @@ public abstract class SimpleHBaseTest {
 			client.startCluster();
 			testExecution(client);
 			client.stopCluster();
+
+			Configuration conf = new Configuration();
+			conf.addResource("conf.xml");
+
+			String table = client.getTableName();
+
+			HBaseAdmin admin = new HBaseAdmin(conf);
+			admin.disableTable(table);
+			admin.deleteTable(table);
+
+			TableName tbname = TableName.valueOf("Vanilla");
+			HTableDescriptor t = new HTableDescriptor(tbname);
+			HColumnDescriptor family = new HColumnDescriptor("col1");
+			t.addFamily(family);
+
+			admin.createTable(t);
 		}
 	}
 }

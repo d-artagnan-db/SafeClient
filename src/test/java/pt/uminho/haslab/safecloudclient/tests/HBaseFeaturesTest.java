@@ -8,13 +8,12 @@ import org.apache.hadoop.hbase.filter.RowFilter;
 import pt.uminho.haslab.cryptoenv.Utils;
 import pt.uminho.haslab.safecloudclient.clients.TestClient;
 
-import java.io.IOException;
+import java.io.*;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -30,67 +29,70 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 		this.utils = new Utils();
 	}
 
-	protected void testExecution(TestClient client) throws Exception {
-		HTableInterface table = client.createTableInterface(client.getTableName());
-		System.out.println(client.getTableName());
+	protected void testExecution(TestClient client) {
+		HTableInterface table = null;
+		try {
+			table = client.createTableInterface(client.getTableName());
 
-		long quantity = timingPutTest(table, 10000);
-		System.out.println("Quantity: "+quantity);
+			System.out.println(client.getTableName());
 
-		timingGetTest(table, 10000, quantity);
+			long quantity = timingPutTest(table, 60000);
+			System.out.println("Quantity: " + quantity);
+
+			timingGetTest(table, 60000, quantity);
+
+		} catch (Exception e) {
+			System.out
+					.println("Exception in test execution. " + e.getMessage());
+		}
+
 	}
 
-
-//		 createTestTable(client);
-	//testPut(table, cf, cq, this.utils.stringToByteArray("1234"));
-	//testPut(table, cf, cq, this.utils.stringToByteArray("2000"));
-//		 testGetRow(table, cf, cq, this.utils.stringToByteArray("1234"));
-
-//		createAndFillTable(client, table, cf, cq);
-//		testScan(table);
-
-
-	public void testPut(HTableInterface table, byte[] cf, byte[] cq, byte[] value) {
-		System.out.println("Test Put: ");
+	public void testPut(HTableInterface table, byte[] cf, byte[] cq,
+			byte[] value) {
+		// System.out.println("Test Put: ");
 		try {
 			Put put = new Put(value);
 			put.add(cf, cq, "Hello".getBytes());
 
 			table.put(put);
 
-//			Get get = new Get(value);
-//			get.addColumn(cf, cq);
-//			Result res = table.get(get);
-//			if (res != null) {
-//				byte[] storedKey = res.getRow();
-//				System.out.println("Key " + new String(value)
-//						+ " inserted successfully: " + res.toString());
-//			}
+			// Get get = new Get(value);
+			// get.addColumn(cf, cq);
+			// Result res = table.get(get);
+			// if (res != null) {
+			// byte[] storedKey = res.getRow();
+			// System.out.println("Key " + new String(value)
+			// + " inserted successfully: " + res.toString());
+			// }
 
-		} catch (IOException e) {
+		} catch (Exception e) {
 			System.out.println("HBaseFeaturesTest: testPut exception. "
 					+ e.getMessage());
 		}
 	}
 
-	public void testGet(HTableInterface table, byte[] cf, byte[] cq, byte[] value) {
-		System.out.println("Test Get: \n");
+	public void testGet(HTableInterface table, byte[] cf, byte[] cq,
+			byte[] value) {
+		// System.out.println("Test Get: \n");
 		try {
 			Get get = new Get(value);
 			get.addColumn(cf, cq);
 			Result res = table.get(get);
-//			if (res != null) {
-//				byte[] storedKey = res.getRow();
-//				System.out.println("Actual Key: " + new String(value));
-//				System.out.println("Stored Key: " + new String(storedKey));
-//			}
+			if (res != null) {
+				byte[] storedKey = res.getRow();
+				// System.out.println("Actual Key: " + new String(value));
+				// System.out.println("Stored Key: " + new String(storedKey));
+			}
 
-		} catch (IOException e) {
-			System.out.println("HBaseFeaturesTest: testGet exception. " + e.getMessage());
+		} catch (Exception e) {
+			System.out.println("HBaseFeaturesTest: testGet exception. "
+					+ e.getMessage());
 		}
 	}
 
-	public void testDelete(HTableInterface table, byte[] cf, byte[] cq, byte[] value) {
+	public void testDelete(HTableInterface table, byte[] cf, byte[] cq,
+			byte[] value) {
 		System.out.println("Test Delete:\n");
 
 		Delete del = new Delete(value);
@@ -101,10 +103,12 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 			get.addColumn(cf, cq);
 			Result res = table.get(get);
 			if (res != null) {
-				System.out.println("Key " + new String(value) + " not deleted.");
+				System.out
+						.println("Key " + new String(value) + " not deleted.");
 				deleted = false;
 			} else {
-				System.out.println("Key " + new String(value) + " does not exists.");
+				System.out.println("Key " + new String(value)
+						+ " does not exists.");
 				deleted = true;
 			}
 			assertTrue(deleted);
@@ -116,14 +120,14 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 	}
 
 
-//	TODO fazer um primeiro um pedido à bd (tipo ping) para remover o delay
-	public void testScan(HTableInterface table, byte[] startRow, byte[] stopRow) throws IOException {
+	public void testScan(HTableInterface table, byte[] startRow, byte[] stopRow)
+			throws IOException {
 		System.out.println("Test Scan:\n");
 
 		Scan s = new Scan();
-		if(startRow != null)
+		if (startRow != null)
 			s.setStartRow(startRow);
-		if(startRow != null)
+		if (startRow != null)
 			s.setStopRow(stopRow);
 
 		long start = System.currentTimeMillis();
@@ -137,14 +141,17 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 				System.out.println("No Match.");
 		}
 
-		System.out.println("Total Scan Time: "+(stop-start)+" ms.");
+		System.out.println("Total Scan Time: " + (stop - start) + " ms.");
 	}
 
-	public void testFilter(HTableInterface table, CompareFilter.CompareOp operation, byte[] compareValue) throws IOException {
+	public void testFilter(HTableInterface table,
+			CompareFilter.CompareOp operation, byte[] compareValue)
+			throws IOException {
 		System.out.println("Test Filter:\n");
 		Scan s = new Scan();
 
-		Filter filter = new RowFilter(operation, new BinaryComparator(compareValue));
+		Filter filter = new RowFilter(operation, new BinaryComparator(
+				compareValue));
 		s.setFilter(filter);
 
 		ResultScanner rs = table.getScanner(s);
@@ -158,25 +165,25 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 	}
 
 	public void putGetTest(HTableInterface table) {
-		int sizeofVolume = 1000;
+		int sizeofVolume = 100;
 		byte[] cf = columnDescriptor.getBytes();
 		byte[] cq = "testQualifier".getBytes();
-		List<String> volume =generateVolume(sizeofVolume, 23);
+		List<String> volume = generateVolume(sizeofVolume, 23);
 
 		long start = System.currentTimeMillis();
-		for(int i = 0; i < sizeofVolume; i++) {
+		for (int i = 0; i < sizeofVolume; i++) {
 
 			testPut(table, cf, cq, volume.get(i).getBytes());
 		}
 		long middle = System.currentTimeMillis();
-		for(int i = 0; i < sizeofVolume; i++) {
+		for (int i = 0; i < sizeofVolume; i++) {
 			testGet(table, cf, cq, volume.get(i).getBytes());
 		}
 		long stop = System.currentTimeMillis();
 
-		System.out.println("Total time of execution: "+(stop-start)+" ms.");
-		System.out.println("Put execution: "+(middle-start)+" ms.");
-		System.out.println("Get execution: "+(stop-middle)+" ms.");
+		System.out.println("Total time of execution: " + (stop - start) + " ms.");
+		System.out.println("Put execution: " + (middle - start) + " ms.");
+		System.out.println("Get execution: " + (stop - middle) + " ms.");
 
 	}
 
@@ -187,13 +194,24 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 		long startTime = System.currentTimeMillis();
 
 		long data = 0;
-		while((System.currentTimeMillis() - startTime) < time) {
+		while ((System.currentTimeMillis() - startTime) < time) {
 			testPut(table, cf, cq, String.valueOf(data).getBytes());
 			data++;
 		}
-		System.out.println("Timing Put Test");
-		System.out.println("Operations: "+data);
-		System.out.println("Throughput: "+((data*1000)/time)+" ops/s");
+		StringBuilder sb = new StringBuilder();
+		sb.append("Timing Put Test\n");
+		sb.append("Operations: ").append(data).append("\n");
+		sb.append("Throughput: ").append(((data * 1000) / time))
+				.append(" ops/s\n");
+
+		String filename = "timingPutTest" + table.getName() + ".txt";
+
+		System.out.println("Operations: " + data);
+		System.out.println("Time: " + time);
+		System.out
+				.println("Throughput: " + ((data * 1000) / time) + " ops/s\n");
+
+		printToFile(filename, sb.toString());
 		return data;
 	}
 
@@ -205,38 +223,63 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
 		long totalOps = 0;
 		long data = 0;
-		while((System.currentTimeMillis() - startTime) < time) {
+		while ((System.currentTimeMillis() - startTime) < time) {
 			testGet(table, cf, cq, String.valueOf(data).getBytes());
 			data++;
 			totalOps++;
-			if(data == limit) {
+			if (data == limit) {
 				data = 0;
 				System.out.println("RESET.");
 			}
 		}
-		System.out.println("Timing Get Test");
-		System.out.println("Operations: "+totalOps);
-		System.out.println("Throughput: "+((totalOps*1000)/time)+" ops/s");
+		StringBuilder sb = new StringBuilder();
+		sb.append("Timing Get Test\n");
+		sb.append("Operations: ").append(totalOps).append("\n");
+		sb.append("Throughput: ").append(((totalOps * 1000) / time))
+				.append(" ops/s\n");
+
+		String filename = "timingGetTest_" + table.getName() + ".txt";
+
+		System.out.println("Operations: " + totalOps);
+		System.out.println("Time: " + time);
+		System.out.println("Throughput: " + ((totalOps * 1000) / time)
+				+ " ops/s\n");
+
+		printToFile(filename, sb.toString());
 	}
 
-
-
+//	TODO this shouldn't be here (move/replacr in testingUtilities)
 	public String generateRandomKey(int size) {
 		Random r = new Random();
 		StringBuilder sb = new StringBuilder();
-		for(int i = 0; i < size; i++) {
+		for (int i = 0; i < size; i++) {
 			sb.append(String.valueOf(r.nextInt(9)));
 
 		}
 		return sb.toString();
 	}
 
+	//	TODO this shouldn't be here (move/replacr in testingUtilities)
 	public List<String> generateVolume(int sizeofVolume, int sizeofString) {
 		List<String> volume = new ArrayList<String>();
-		for(int i = 0; i < sizeofVolume; i++) {
+		for (int i = 0; i < sizeofVolume; i++) {
 			volume.add(generateRandomKey(sizeofString));
 		}
 		return volume;
+	}
+
+	public void printToFile(String filepath, String info) {
+		try {
+			PrintWriter pw = new PrintWriter(new FileOutputStream(filepath));
+			pw.write(info);
+			pw.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public static void main(String[] args) {
+
 	}
 
 }

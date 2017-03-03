@@ -9,6 +9,8 @@ import pt.uminho.haslab.cryptoenv.CryptoHandler;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 import pt.uminho.haslab.cryptoenv.Utils;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -34,23 +36,47 @@ public class CryptoProperties {
 		this.formatSize = formatSize;
 	}
 
+	/**
+	 * Get Encryption/Decryption Key from CryptoHandler
+	 * @return
+	 */
 	public byte[] getKey() {
 		return this.key;
 	}
 
+	/**
+	 * Set the Encryption/Decryption Key in the CryptoHandler
+	 * @param key
+	 */
 	public void setKey(byte[] key) {
 		this.key = key;
 		System.out.println("The key was setted. Key - " + Arrays.toString(key));
 	}
 
+	/**
+	 * Encode a given content, apart the CryptoType
+	 * @param content
+	 * @return
+	 */
 	public byte[] encode(byte[] content) {
 		return this.handler.encrypt(this.key, content);
 	}
 
+	/**
+	 * Decode a given content, apart the CryptoType
+	 * @param content
+	 * @return
+	 */
 	public byte[] decode(byte[] content) {
 		return this.handler.decrypt(this.key, content);
 	}
 
+	/**
+	 * Decode a Result given a row (key) and an encrypted result (value). Return the respective value decrypted.
+	 * @param row
+	 * @param res
+	 * @return
+	 */
 	public Result decodeResult(byte[] row, Result res) {
 		List<Cell> cellList = new ArrayList<Cell>();
 		while (res.advance()) {
@@ -68,6 +94,11 @@ public class CryptoProperties {
 		return Result.create(cellList);
 	}
 
+	/**
+	 * Convert a Scan operation in the respective Encrypted operation
+	 * @param s
+	 * @return
+	 */
 	public Scan encryptedScan(Scan s) {
 		byte[] startRow = s.getStartRow();
 		byte[] stopRow = s.getStopRow();
@@ -101,6 +132,11 @@ public class CryptoProperties {
 		return encScan;
 	}
 
+	/**
+	 * When setting a filter, parse it and handle it according the respective CryptoType
+	 * @param filter
+	 * @return
+	 */
 	public Object parseFilter(RowFilter filter) {
 		CompareFilter.CompareOp comp;
 		ByteArrayComparable bComp;
@@ -130,5 +166,35 @@ public class CryptoProperties {
 		} else
 			return null;
 	}
+
+//	TODO remove temporary Method
+	/**
+	 * This is only a temporary Method
+	 * @param filename
+	 * @return
+	 * @throws IOException
+	 */
+	public static byte[] readKeyFromFile(String filename) throws IOException {
+		FileInputStream stream = new FileInputStream(filename);
+		try {
+			byte[] key = new byte[stream.available()];
+			int b;
+			int i = 0;
+
+			while ((b = stream.read()) != -1) {
+				key[i] = (byte) b;
+				i++;
+			}
+			System.out.println("readKeyFromFile: " + Arrays.toString(key));
+
+			return key;
+		} catch (Exception e) {
+			System.out.println("Exception. " + e.getMessage());
+		} finally {
+			stream.close();
+		}
+		return null;
+	}
+
 
 }

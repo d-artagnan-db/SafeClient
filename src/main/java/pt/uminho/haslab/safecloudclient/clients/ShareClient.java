@@ -44,8 +44,8 @@ public class ShareClient implements TestClient {
 	}
 
 	public HTableInterface createTableInterface(String tableName)
-            throws IOException, InvalidNumberOfBits {
-        Configuration conf = new Configuration();
+			throws IOException, InvalidNumberOfBits {
+		Configuration conf = new Configuration();
 		conf.addResource("hbase-client.xml");
 		return new SharedTable(conf, tableName);
 	}
