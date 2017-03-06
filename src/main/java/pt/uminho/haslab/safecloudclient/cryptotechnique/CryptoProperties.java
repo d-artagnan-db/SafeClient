@@ -121,8 +121,7 @@ public class CryptoProperties {
 				}
 
 				if (s.hasFilter()) {
-					RowFilter encryptedFilter = (RowFilter) parseFilter((RowFilter) s
-							.getFilter());
+					RowFilter encryptedFilter = (RowFilter) parseFilter((RowFilter) s.getFilter());
 					encScan.setFilter(encryptedFilter);
 				}
 				break;
@@ -156,8 +155,7 @@ public class CryptoProperties {
 				case OPE :
 					comp = filter.getOperator();
 					bComp = filter.getComparator();
-					BinaryComparator encBC = new BinaryComparator(
-							this.encode(bComp.getValue()));
+					BinaryComparator encBC = new BinaryComparator(this.encode(bComp.getValue()));
 
 					return new RowFilter(comp, encBC);
 				default :

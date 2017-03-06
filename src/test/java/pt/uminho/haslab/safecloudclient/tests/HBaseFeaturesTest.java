@@ -1,5 +1,7 @@
 package pt.uminho.haslab.safecloudclient.tests;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter;
@@ -21,6 +23,8 @@ import static org.junit.Assert.assertTrue;
  */
 public class HBaseFeaturesTest extends SimpleHBaseTest {
 
+	static final Log LOG = LogFactory.getLog(HBaseFeaturesTest.class.getName());
+
 	public Utils utils;
 
 	public HBaseFeaturesTest(int maxBits, List<BigInteger> values)
@@ -33,17 +37,15 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 		HTableInterface table = null;
 		try {
 			table = client.createTableInterface(client.getTableName());
-
 			System.out.println(client.getTableName());
 
-			long quantity = timingPutTest(table, 1000);
+			long quantity = timingPutTest(table, 60000);
 			System.out.println("Quantity: " + quantity);
 
-			timingScanTest(table, 1000);
-
+//			timingScanTest(table, 60000, 100, 50000, 7);
+			timingGetTest(table, 60000, quantity);
 		} catch (Exception e) {
-			System.out
-					.println("Exception in test execution. " + e.getMessage());
+			System.out.println("Exception in test execution. " + e.getMessage());
 		}
 
 	}
@@ -166,108 +168,152 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 		}
 	}
 
-	public void putGetTest(HTableInterface table) {
-		int sizeofVolume = 100;
-		byte[] cf = columnDescriptor.getBytes();
-		byte[] cq = "testQualifier".getBytes();
-		List<String> volume = generateVolume(sizeofVolume, 23);
+	public void putGetTest(HTableInterface table, int sizeofVolume) {
+		try {
+			byte[] cf = columnDescriptor.getBytes();
+			byte[] cq = "testQualifier".getBytes();
+			List<String> volume = generateVolume(sizeofVolume, 23);
 
-		long start = System.currentTimeMillis();
-		for (int i = 0; i < sizeofVolume; i++) {
+			long start = System.currentTimeMillis();
+			for (int i = 0; i < sizeofVolume; i++) {
+				Put put = new Put(volume.get(i).getBytes());
+				put.add(cf, cq, "Hello".getBytes());
+				table.put(put);
+			}
 
-			testPut(table, cf, cq, volume.get(i).getBytes());
+			long middle = System.currentTimeMillis();
+			for (int i = 0; i < sizeofVolume; i++) {
+				Get get = new Get(volume.get(i).getBytes());
+				get.addColumn(cf, cq);
+				Result res = table.get(get);
+				if (res != null) {
+					byte[] storedKey = res.getRow();
+				}
+			}
+
+			long stop = System.currentTimeMillis();
+
+			StringBuilder sb = new StringBuilder();
+			sb.append("PutGetTest result:\n");
+			sb.append("Total time of execution: ").append((stop - start)).append(" ms\n");
+			sb.append("Put execution: ").append((middle - start)).append(" ms\n");
+			sb.append("Get execution: ").append((stop - middle)).append(" ms\n");
+
+			LOG.debug(sb.toString());
+
+		} catch (Exception e) {
+			LOG.error("Exception in putGetTest. "+e.getMessage());
 		}
-		long middle = System.currentTimeMillis();
-		for (int i = 0; i < sizeofVolume; i++) {
-			testGet(table, cf, cq, volume.get(i).getBytes());
-		}
-		long stop = System.currentTimeMillis();
-
-		System.out.println("Total time of execution: " + (stop - start) + " ms.");
-		System.out.println("Put execution: " + (middle - start) + " ms.");
-		System.out.println("Get execution: " + (stop - middle) + " ms.");
-
 	}
 
 	public long timingPutTest(HTableInterface table, int time) {
-		byte[] cf = columnDescriptor.getBytes();
-		byte[] cq = "testQualifier".getBytes();
+		try {
+			byte[] cf = columnDescriptor.getBytes();
+			byte[] cq = "testQualifier".getBytes();
 
-		long startTime = System.currentTimeMillis();
+			long startTime = System.currentTimeMillis();
 
-		long data = 0;
-		while ((System.currentTimeMillis() - startTime) < time) {
-			byte[] padded = Utils.addPadding(String.valueOf(data).getBytes(), 7);
-			testPut(table, cf, cq, padded);
-			data++;
+			long data = 0;
+			while ((System.currentTimeMillis() - startTime) < time) {
+				byte[] padded = Utils.addPadding(String.valueOf(data).getBytes(), 7);
+				Put put = new Put(padded);
+				put.add(cf, cq, "Hello".getBytes());
+				table.put(put);
+
+				data++;
+			}
+
+			StringBuilder sb = new StringBuilder();
+			sb.append("Timing Put Test\n");
+			sb.append("Operations: ").append(data).append("\n");
+			sb.append("Time: ").append(time).append("\n");
+			sb.append("Throughput: ").append((data * 1000) / time).append(" ops/s\n");
+
+			LOG.debug(sb.toString());
+
+			return data;
+
+		} catch(Exception e) {
+			LOG.error("Exception in timingPutTest. "+e.getMessage());
 		}
-		StringBuilder sb = new StringBuilder();
-		sb.append("Timing Put Test\n");
-		sb.append("Operations: ").append(data).append("\n");
-		sb.append("Throughput: ").append(((data * 1000) / time))
-				.append(" ops/s\n");
 
-		String filename = "timingPutTest" + table.getName() + ".txt";
-
-		System.out.println("Operations: " + data);
-		System.out.println("Time: " + time);
-		System.out
-				.println("Throughput: " + ((data * 1000) / time) + " ops/s\n");
-
-		printToFile(filename, sb.toString());
-		return data;
+		return 0;
 	}
 
 	public void timingGetTest(HTableInterface table, int time, long limit) {
-		byte[] cf = columnDescriptor.getBytes();
-		byte[] cq = "testQualifier".getBytes();
+		try {
+			byte[] cf = columnDescriptor.getBytes();
+			byte[] cq = "testQualifier".getBytes();
 
-		long startTime = System.currentTimeMillis();
+			long startTime = System.currentTimeMillis();
 
-		long totalOps = 0;
-		long data = 0;
-		while ((System.currentTimeMillis() - startTime) < time) {
-			testGet(table, cf, cq, String.valueOf(data).getBytes());
-			data++;
-			totalOps++;
-			if (data == limit) {
-				data = 0;
-				System.out.println("RESET.");
+			long totalOps = 0;
+			long data = 0;
+			while ((System.currentTimeMillis() - startTime) < time) {
+				Get get = new Get(String.valueOf(data).getBytes());
+				get.addColumn(cf, cq);
+				Result res = table.get(get);
+				if (res != null) {
+					byte[] storedKey = res.getRow();
+				}
+
+				data++;
+				totalOps++;
+				if (data == limit) {
+					data = 0;
+				}
 			}
+
+			StringBuilder sb = new StringBuilder();
+			sb.append("Timing Get Test\n");
+			sb.append("Operations: ").append(totalOps).append("\n");
+			sb.append("Time: ").append(time).append("\n");
+			sb.append("Throughput: ").append(((totalOps * 1000) / time)).append(" ops/s\n");
+
+			LOG.debug(sb.toString());
+
+		} catch(Exception e) {
+			LOG.error("Exception in timingGetTest."+e.getMessage());
 		}
-		StringBuilder sb = new StringBuilder();
-		sb.append("Timing Get Test\n");
-		sb.append("Operations: ").append(totalOps).append("\n");
-		sb.append("Throughput: ").append(((totalOps * 1000) / time))
-				.append(" ops/s\n");
-
-		String filename = "timingGetTest_" + table.getName() + ".txt";
-
-		System.out.println("Operations: " + totalOps);
-		System.out.println("Time: " + time);
-		System.out.println("Throughput: " + ((totalOps * 1000) / time)
-				+ " ops/s\n");
-
-		printToFile(filename, sb.toString());
 	}
 
-	public void timingScanTest(HTableInterface table, int time) throws IOException {
-		Random r = new Random(12345);
+	public void timingScanTest(HTableInterface table, int time, int startRowBound, int stopRowBound, int formatSize) {
+		try {
+			Random r = new Random(12345);
 
-		long startTime = System.currentTimeMillis();
-		long data = 0;
-		while((System.currentTimeMillis() - startTime) < time) {
-			byte[] startRow = Utils.addPadding(String.valueOf(r.nextInt(100)).getBytes(), 7);
-			byte[] stopRow = Utils.addPadding(String.valueOf(r.nextInt(50000)).getBytes(),7);
-			System.out.println(new String(startRow)+"-"+new String(stopRow));
-			testScan(table, startRow, stopRow);
-			data++;
+			long startTime = System.currentTimeMillis();
+			long data = 0;
+			while ((System.currentTimeMillis() - startTime) < time) {
+				byte[] startRow = Utils.addPadding(String.valueOf(r.nextInt(startRowBound)).getBytes(), formatSize);
+				byte[] stopRow = Utils.addPadding(String.valueOf(r.nextInt(stopRowBound)).getBytes(), formatSize);
+
+				Scan s = new Scan();
+				s.setStartRow(startRow);
+				s.setStopRow(stopRow);
+
+				ResultScanner rs = table.getScanner(s);
+				int total = 0;
+				for (Result result = rs.next(); result != null; result = rs.next()) {
+					if (!result.isEmpty()) {
+						total++;
+					}
+				}
+				data++;
+
+				LOG.debug("Scan Result [" + new String(startRow) + ", " + new String(stopRow) + ", " + total + "]");
+			}
+
+			StringBuilder sb = new StringBuilder();
+			sb.append("TimingScanTest\n");
+			sb.append("Operations: ").append(data).append("\n");
+			sb.append("Time: ").append(time).append("\n");
+			sb.append("Throughput: ").append(((data * 1000) / time)).append(" ops/s\n");
+
+			LOG.debug(sb.toString());
+
+		} catch (Exception e) {
+			LOG.error("Exception in timingScanTest. "+e.getMessage());
 		}
-
-		System.out.println("Operations: " + data);
-		System.out.println("Time: " + time);
-		System.out.println("Throughput: " + ((data * 1000) / time) + " ops/s\n");
-
 	}
 
 //	TODO this shouldn't be here (move/replacr in testingUtilities)
@@ -288,16 +334,6 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 			volume.add(generateRandomKey(sizeofString));
 		}
 		return volume;
-	}
-
-	public void printToFile(String filepath, String info) {
-		try {
-			PrintWriter pw = new PrintWriter(new FileOutputStream(filepath));
-			pw.write(info);
-			pw.close();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
 	}
 
 	public static void main(String[] args) {

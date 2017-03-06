@@ -1,5 +1,7 @@
 package pt.uminho.haslab.safecloudclient.cryptotechnique;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellScanner;
@@ -17,6 +19,7 @@ import java.util.Arrays;
  * Created by rgmacedo on 2/20/17.
  */
 public class CryptoTable extends HTable {
+	static final Log LOG = LogFactory.getLog(CryptoTable.class.getName());
 
 	public CryptoProperties cryptoProperties;
 	public ResultScannerFactory resultScannerFactory;
@@ -48,8 +51,8 @@ public class CryptoTable extends HTable {
 			}
 			super.put(encPut);
 
-		} catch (IOException e) {
-			System.out.println("CryptoTable: Exception in put method - " + e.getMessage());
+		} catch (Exception e) {
+			LOG.error("Exception in put method. "+e.getMessage());
 		}
 	}
 
@@ -88,9 +91,8 @@ public class CryptoTable extends HTable {
 					break;
 			}
 
-		} catch (IOException e) {
-			System.out.println("CryptoTable: Exception in get method. "
-					+ e.getMessage());
+		} catch (Exception e) {
+			LOG.error("Exception in get method. "+e.getMessage());
 		}
 		return getResult;
 	}
@@ -111,7 +113,6 @@ public class CryptoTable extends HTable {
 						if (Arrays.equals(row, resultValue)) {
 							Delete del = new Delete(r.getRow());
 							super.delete(del);
-							System.out.println("Row deleted: " + new String(row));
 						}
 					}
 					break;
@@ -119,14 +120,12 @@ public class CryptoTable extends HTable {
 				case OPE :
 					Delete encDelete = new Delete(this.cryptoProperties.encode(row));
 					super.delete(encDelete);
-					System.out.println("Row deleted: " + new String(row));
 					break;
 				default :
 					break;
 			}
 		} catch (Exception e) {
-			System.out.println("CryptoTable: Exception in delete method. "
-					+ e.getMessage());
+			LOG.error("Exception in delete method. "+e.getMessage());
 		}
 	}
 
@@ -148,8 +147,7 @@ public class CryptoTable extends HTable {
 					this.cryptoProperties.parseFilter((RowFilter) scan.getFilter()));
 			
 		} catch (Exception e) {
-			System.out.println("CryptoTable: Exception in scan method. "
-					+ e.getMessage());
+			LOG.error("Exception in scan method. "+e.getMessage());
 		}
 		return null;
 	}
