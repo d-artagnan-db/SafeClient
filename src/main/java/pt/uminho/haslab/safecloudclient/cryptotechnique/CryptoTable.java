@@ -29,7 +29,8 @@ public class CryptoTable extends HTable {
 		this.resultScannerFactory = new ResultScannerFactory();
 	}
 
-	public CryptoTable(Configuration conf, String tableName, CryptoTechnique.CryptoType cType) throws IOException {
+	public CryptoTable(Configuration conf, String tableName,
+			CryptoTechnique.CryptoType cType) throws IOException {
 		super(conf, TableName.valueOf(tableName));
 		this.cryptoProperties = new CryptoProperties(cType, 23);
 		this.resultScannerFactory = new ResultScannerFactory();
@@ -52,7 +53,7 @@ public class CryptoTable extends HTable {
 			super.put(encPut);
 
 		} catch (Exception e) {
-			LOG.error("Exception in put method. "+e.getMessage());
+			LOG.error("Exception in put method. " + e.getMessage());
 		}
 	}
 
@@ -66,15 +67,13 @@ public class CryptoTable extends HTable {
 			switch (this.cryptoProperties.cType) {
 				case STD :
 					ResultScanner encScan = super.getScanner(getScan);
-					for (Result r = encScan.next(); r != null; r = encScan.next()) {
-						// TODO fazer o decode Result no if(arrays equal),
-						// primeiro fazer apenas decode à row
-						Result res = this.cryptoProperties.decodeResult(
-								r.getRow(), r);
-						byte[] aux = res.getRow();
+					for (Result r = encScan.next(); r != null; r = encScan
+							.next()) {
+						byte[] aux = this.cryptoProperties.decode(r.getRow());
 
 						if (Arrays.equals(row, aux)) {
-							getResult = res;
+							getResult = this.cryptoProperties.decodeResult(
+									r.getRow(), r);
 							break;
 						}
 					}
@@ -84,7 +83,8 @@ public class CryptoTable extends HTable {
 					Get encGet = new Get(this.cryptoProperties.encode(row));
 					Result res = super.get(encGet);
 					if (!res.isEmpty()) {
-						getResult = this.cryptoProperties.decodeResult(res.getRow(), res);
+						getResult = this.cryptoProperties.decodeResult(
+								res.getRow(), res);
 					}
 					return getResult;
 				default :
@@ -92,7 +92,7 @@ public class CryptoTable extends HTable {
 			}
 
 		} catch (Exception e) {
-			LOG.error("Exception in get method. "+e.getMessage());
+			LOG.error("Exception in get method. " + e.getMessage());
 		}
 		return getResult;
 	}
@@ -105,10 +105,10 @@ public class CryptoTable extends HTable {
 			switch (this.cryptoProperties.cType) {
 				case STD :
 					ResultScanner encScan = super.getScanner(deleteScan);
-					for (Result r = encScan.next(); r != null; r = encScan.next()) {
-//						TODO apply the decodeResult, after the comparison between byte arrays
-						Result res = this.cryptoProperties.decodeResult(r.getRow(), r);
-						byte[] resultValue = res.getRow();
+					for (Result r = encScan.next(); r != null; r = encScan
+							.next()) {
+						byte[] resultValue = this.cryptoProperties.decode(r
+								.getRow());
 
 						if (Arrays.equals(row, resultValue)) {
 							Delete del = new Delete(r.getRow());
@@ -118,14 +118,15 @@ public class CryptoTable extends HTable {
 					break;
 				case DET :
 				case OPE :
-					Delete encDelete = new Delete(this.cryptoProperties.encode(row));
+					Delete encDelete = new Delete(
+							this.cryptoProperties.encode(row));
 					super.delete(encDelete);
 					break;
 				default :
 					break;
 			}
 		} catch (Exception e) {
-			LOG.error("Exception in delete method. "+e.getMessage());
+			LOG.error("Exception in delete method. " + e.getMessage());
 		}
 	}
 
@@ -139,15 +140,13 @@ public class CryptoTable extends HTable {
 			ResultScanner encryptedResultScanner = super.getScanner(encScan);
 
 			return this.resultScannerFactory.getResultScanner(
-					this.cryptoProperties.cType,
-					this.cryptoProperties,
-					startRow,
-					endRow,
-					encryptedResultScanner,
-					this.cryptoProperties.parseFilter((RowFilter) scan.getFilter()));
-			
+					this.cryptoProperties.cType, this.cryptoProperties,
+					startRow, endRow, encryptedResultScanner,
+					this.cryptoProperties.parseFilter((RowFilter) scan
+							.getFilter()));
+
 		} catch (Exception e) {
-			LOG.error("Exception in scan method. "+e.getMessage());
+			LOG.error("Exception in scan method. " + e.getMessage());
 		}
 		return null;
 	}

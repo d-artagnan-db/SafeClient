@@ -67,5 +67,4 @@ public class CryptoClient implements TestClient {
 		System.out.println("Stoped CLuster");
 	}
 
-
 }

@@ -57,47 +57,47 @@ public class DeterministicResultScanner implements ResultScanner {
 		}
 	}
 
-//	TODO para o paper, remover o padding size porque os valores vêm c/ tamanho fixo
-//	public int getPaddingSize(byte[] row) {
-//		int paddingSize = row.length;
-//		if (hasStartRow && hasEndRow) {
-//			if (startRow.length > paddingSize)
-//				paddingSize = startRow.length;
-//			if (endRow.length > paddingSize)
-//				paddingSize = endRow.length;
-//		} else if (hasStartRow && !hasEndRow) {
-//			if (startRow.length > paddingSize)
-//				paddingSize = startRow.length;
-//		} else if (hasEndRow) {
-//			if (endRow.length > paddingSize)
-//				paddingSize = endRow.length;
-//		}
-//
-//		if (hasFilter) {
-//			if (compareValue.length > paddingSize)
-//				paddingSize = compareValue.length;
-//		}
-//		return paddingSize;
-//	}
+	// public int getPaddingSize(byte[] row) {
+	// int paddingSize = row.length;
+	// if (hasStartRow && hasEndRow) {
+	// if (startRow.length > paddingSize)
+	// paddingSize = startRow.length;
+	// if (endRow.length > paddingSize)
+	// paddingSize = endRow.length;
+	// } else if (hasStartRow && !hasEndRow) {
+	// if (startRow.length > paddingSize)
+	// paddingSize = startRow.length;
+	// } else if (hasEndRow) {
+	// if (endRow.length > paddingSize)
+	// paddingSize = endRow.length;
+	// }
+	//
+	// if (hasFilter) {
+	// if (compareValue.length > paddingSize)
+	// paddingSize = compareValue.length;
+	// }
+	// return paddingSize;
+	// }
 
 	public boolean digestStartEndRow(int paddingSize, byte[] row) {
 		boolean digest;
 		Bytes.ByteArrayComparator byteArrayComparator = new Bytes.ByteArrayComparator();
 
 		if (hasStartRow && hasEndRow) {
-//			row = Utils.addPadding(row, paddingSize);
-//			startRow = Utils.addPadding(startRow, paddingSize);
-//			endRow = Utils.addPadding(endRow, paddingSize);
+			// row = Utils.addPadding(row, paddingSize);
+			// startRow = Utils.addPadding(startRow, paddingSize);
+			// endRow = Utils.addPadding(endRow, paddingSize);
 
-			digest = (byteArrayComparator.compare(row, startRow) >= 0 && byteArrayComparator.compare(row, endRow) < 0);
+			digest = (byteArrayComparator.compare(row, startRow) >= 0 && byteArrayComparator
+					.compare(row, endRow) < 0);
 		} else if (hasStartRow && !hasEndRow) {
-//			row = Utils.addPadding(row, paddingSize);
-//			startRow = Utils.addPadding(startRow, paddingSize);
+			// row = Utils.addPadding(row, paddingSize);
+			// startRow = Utils.addPadding(startRow, paddingSize);
 
 			digest = (byteArrayComparator.compare(row, startRow) >= 0);
 		} else if (hasEndRow) {
-//			row = Utils.addPadding(row, paddingSize);
-//			endRow = Utils.addPadding(endRow, paddingSize);
+			// row = Utils.addPadding(row, paddingSize);
+			// endRow = Utils.addPadding(endRow, paddingSize);
 
 			digest = (byteArrayComparator.compare(row, endRow) < 0);
 		} else {
@@ -110,11 +110,12 @@ public class DeterministicResultScanner implements ResultScanner {
 	public boolean digestFilter(int paddingSize, byte[] row, byte[] value) {
 		boolean digest = true;
 		Bytes.ByteArrayComparator byteArrayComparator = new Bytes.ByteArrayComparator();
-//		row = Utils.addPadding(row, paddingSize);
-//		value = Utils.addPadding(value, paddingSize);
+		// row = Utils.addPadding(row, paddingSize);
+		// value = Utils.addPadding(value, paddingSize);
 
 		switch (this.compareOp) {
 			case EQUAL :
+				// TODO Otimização - Fazer um get em vez de scan
 				digest = (byteArrayComparator.compare(row, value) == 0);
 				break;
 			case GREATER :
@@ -138,7 +139,7 @@ public class DeterministicResultScanner implements ResultScanner {
 		boolean digest;
 		if (res != null) {
 			byte[] row = this.cProperties.decode(res.getRow());
-//			int paddingSize = getPaddingSize(row);
+			// int paddingSize = getPaddingSize(row);
 
 			digest = digestStartEndRow(0, row);
 

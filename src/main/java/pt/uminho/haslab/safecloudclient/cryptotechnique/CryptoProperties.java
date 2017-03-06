@@ -38,6 +38,7 @@ public class CryptoProperties {
 
 	/**
 	 * Get Encryption/Decryption Key from CryptoHandler
+	 * 
 	 * @return
 	 */
 	public byte[] getKey() {
@@ -46,6 +47,7 @@ public class CryptoProperties {
 
 	/**
 	 * Set the Encryption/Decryption Key in the CryptoHandler
+	 * 
 	 * @param key
 	 */
 	public void setKey(byte[] key) {
@@ -55,6 +57,7 @@ public class CryptoProperties {
 
 	/**
 	 * Encode a given content, apart the CryptoType
+	 * 
 	 * @param content
 	 * @return
 	 */
@@ -64,6 +67,7 @@ public class CryptoProperties {
 
 	/**
 	 * Decode a given content, apart the CryptoType
+	 * 
 	 * @param content
 	 * @return
 	 */
@@ -72,7 +76,9 @@ public class CryptoProperties {
 	}
 
 	/**
-	 * Decode a Result given a row (key) and an encrypted result (value). Return the respective value decrypted.
+	 * Decode a Result given a row (key) and an encrypted result (value). Return
+	 * the respective value decrypted.
+	 * 
 	 * @param row
 	 * @param res
 	 * @return
@@ -96,6 +102,7 @@ public class CryptoProperties {
 
 	/**
 	 * Convert a Scan operation in the respective Encrypted operation
+	 * 
 	 * @param s
 	 * @return
 	 */
@@ -121,7 +128,8 @@ public class CryptoProperties {
 				}
 
 				if (s.hasFilter()) {
-					RowFilter encryptedFilter = (RowFilter) parseFilter((RowFilter) s.getFilter());
+					RowFilter encryptedFilter = (RowFilter) parseFilter((RowFilter) s
+							.getFilter());
 					encScan.setFilter(encryptedFilter);
 				}
 				break;
@@ -132,7 +140,9 @@ public class CryptoProperties {
 	}
 
 	/**
-	 * When setting a filter, parse it and handle it according the respective CryptoType
+	 * When setting a filter, parse it and handle it according the respective
+	 * CryptoType
+	 * 
 	 * @param filter
 	 * @return
 	 */
@@ -155,7 +165,8 @@ public class CryptoProperties {
 				case OPE :
 					comp = filter.getOperator();
 					bComp = filter.getComparator();
-					BinaryComparator encBC = new BinaryComparator(this.encode(bComp.getValue()));
+					BinaryComparator encBC = new BinaryComparator(
+							this.encode(bComp.getValue()));
 
 					return new RowFilter(comp, encBC);
 				default :
@@ -165,9 +176,10 @@ public class CryptoProperties {
 			return null;
 	}
 
-//	TODO remove temporary Method
+	// TODO remove temporary Method
 	/**
 	 * This is only a temporary Method
+	 * 
 	 * @param filename
 	 * @return
 	 * @throws IOException
@@ -193,6 +205,5 @@ public class CryptoProperties {
 		}
 		return null;
 	}
-
 
 }

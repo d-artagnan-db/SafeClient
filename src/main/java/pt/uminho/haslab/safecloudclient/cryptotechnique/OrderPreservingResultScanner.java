@@ -13,8 +13,7 @@ public class OrderPreservingResultScanner implements ResultScanner {
 	public CryptoProperties cProperties;
 	public ResultScanner encryptedScanner;
 
-	public OrderPreservingResultScanner(CryptoProperties cp,
-			ResultScanner encryptedScanner) {
+	public OrderPreservingResultScanner(CryptoProperties cp, ResultScanner encryptedScanner) {
 		this.cProperties = cp;
 		this.encryptedScanner = encryptedScanner;
 	}

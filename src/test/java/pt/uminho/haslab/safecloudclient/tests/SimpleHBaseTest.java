@@ -68,10 +68,10 @@ public abstract class SimpleHBaseTest {
 
 		System.out.println("Going to create client");
 
-		clients.add(new PlaintextClient("Vanilla"));
+//		clients.add(new PlaintextClient("Vanilla"));
 //		clients.add(new CryptoClient("Deterministic", CryptoTechnique.CryptoType.DET));
 //		clients.add(new CryptoClient("Standard", CryptoTechnique.CryptoType.STD));
-//		clients.add(new CryptoClient("OPE", CryptoTechnique.CryptoType.OPE));
+		clients.add(new CryptoClient("OPE", CryptoTechnique.CryptoType.OPE));
 
 		System.out.println("Client created");
 
@@ -86,7 +86,7 @@ public abstract class SimpleHBaseTest {
 			HColumnDescriptor family = new HColumnDescriptor(columnDescriptor);
 			table.addFamily(family);
 			client.createTestTable(table);
-                }
+		}
 	}
 
 	protected void createAndFillTable(TestClient client, HTableInterface table,
