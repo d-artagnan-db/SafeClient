@@ -40,7 +40,7 @@ public abstract class QueryThread extends Thread {
 			query();
 		} catch (IOException ex) {
 			LOG.debug(ex);
-            throw new IllegalStateException(ex);
+			throw new IllegalStateException(ex);
 		}
 
 	}

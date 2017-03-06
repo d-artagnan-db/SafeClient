@@ -18,7 +18,7 @@ import pt.uminho.haslab.safecloudclient.shareclient.ClientCacheImpl;
 import pt.uminho.haslab.safecloudclient.shareclient.ResultPlayerLoadBalancerImpl;
 
 public class ShareClient implements TestClient {
-    static final Log LOG = LogFactory.getLog(ShareClient.class.getName());
+	static final Log LOG = LogFactory.getLog(ShareClient.class.getName());
 
 	private ShareCluster clusters;
 	private SharedAdmin admin;
@@ -26,8 +26,8 @@ public class ShareClient implements TestClient {
 	public ShareClient() {
 		LOG.debug("Going to start Shareclient ");
 		System.setProperty("hadoop.home.dir", "/");
-        SharedTable.initalizeCache(new ClientCacheImpl(50));
-        SharedTable.initializeLoadBalancer(new ResultPlayerLoadBalancerImpl());
+		SharedTable.initalizeCache(new ClientCacheImpl(50));
+		SharedTable.initializeLoadBalancer(new ResultPlayerLoadBalancerImpl());
 		clusters = null;
 		admin = null;
 
@@ -72,7 +72,8 @@ public class ShareClient implements TestClient {
 		Thread.sleep(30000);
 		Configuration conf = new Configuration();
 		conf.addResource("hbase-client.xml");
-        System.out.println("props " +conf.get("hbase.client.operation.timeout"));
+		System.out.println("props "
+				+ conf.get("hbase.client.operation.timeout"));
 		admin = new SharedAdmin(conf);
 	}
 

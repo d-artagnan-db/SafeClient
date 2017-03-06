@@ -8,37 +8,35 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class RowLocksImpl implements RowLocks {
 
-    private final Map<String, Map<byte[], ReadWriteLock>> locks;
+	private final Map<String, Map<byte[], ReadWriteLock>> locks;
 
+	public RowLocksImpl() {
 
-    public RowLocksImpl() {
+		locks = new HashMap<String, Map<byte[], ReadWriteLock>>();
+	}
 
-        locks = new HashMap<String, Map<byte[], ReadWriteLock>>();
-    }
+	private ReadWriteLock getLock(String tableName, byte[] row) {
 
+		if (!locks.containsKey(tableName)) {
+			Map<byte[], ReadWriteLock> tLocks = new HashMap<byte[], ReadWriteLock>();
+			locks.put(tableName, tLocks);
+		}
 
-    private ReadWriteLock getLock(String tableName, byte[] row) {
+		if (locks.containsKey(tableName)
+				&& !locks.get(tableName).containsKey(row)) {
+			Map<byte[], ReadWriteLock> tLocks = locks.get(tableName);
+			ReadWriteLock lock = new ReentrantReadWriteLock(true);
+			tLocks.put(row, lock);
+		}
 
-        if (!locks.containsKey(tableName)) {
-            Map<byte[], ReadWriteLock> tLocks = new HashMap<byte[], ReadWriteLock>();
-            locks.put(tableName, tLocks);
-        }
+		return locks.get(tableName).get(row);
+	}
 
-        if (locks.containsKey(tableName) &&
-                !locks.get(tableName).containsKey(row)) {
-            Map<byte[], ReadWriteLock> tLocks = locks.get(tableName);
-            ReadWriteLock lock = new ReentrantReadWriteLock(true);
-            tLocks.put(row, lock);
-        }
+	public synchronized Lock readLock(String tableName, byte[] row) {
+		return getLock(tableName, row).readLock();
+	}
 
-        return locks.get(tableName).get(row);
-    }
-
-    public synchronized Lock readLock(String tableName, byte[] row) {
-        return getLock(tableName, row).readLock();
-    }
-
-    public synchronized Lock writeLock(String tableName, byte[] row) {
-        return getLock(tableName, row).writeLock();
-    }
+	public synchronized Lock writeLock(String tableName, byte[] row) {
+		return getLock(tableName, row).writeLock();
+	}
 }

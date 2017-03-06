@@ -13,7 +13,7 @@ import pt.uminho.haslab.safecloudclient.shareclient.SharedClientConfiguration;
 
 public class MultiScan extends MultiOP implements ResultScanner {
 
-    static final Log LOG = LogFactory.getLog(MultiScan.class.getName());
+	static final Log LOG = LogFactory.getLog(MultiScan.class.getName());
 
 	private final List<byte[]> startRow;
 	private final List<byte[]> stopRow;
@@ -33,29 +33,29 @@ public class MultiScan extends MultiOP implements ResultScanner {
 	protected Thread queryThread(SharedClientConfiguration config,
 			HTable table, int index) {
 		try {
-            LOG.debug(startRow.isEmpty());
-            LOG.debug(stopRow.isEmpty());
+			LOG.debug(startRow.isEmpty());
+			LOG.debug(stopRow.isEmpty());
 			if (!startRow.isEmpty() && !stopRow.isEmpty()) {
-                LOG.debug("1");
+				LOG.debug("1");
 				Thread t = new ResultScannerThread(config, table, requestID,
 						targetPlayer, startRow.get(index), stopRow.get(index));
 				scans.add(t);
 				return t;
 			} else if (!startRow.isEmpty() && stopRow.isEmpty()) {
-                LOG.debug("2");
+				LOG.debug("2");
 				Thread t = new ResultScannerThread(config, table, requestID,
 						targetPlayer, startRow.get(index), new byte[0]);
-                LOG.debug("Thread is null? "+ t);
+				LOG.debug("Thread is null? " + t);
 				scans.add(t);
-                return t;
+				return t;
 			} else if (startRow.isEmpty() && !stopRow.isEmpty()) {
-                LOG.debug("3");
+				LOG.debug("3");
 				Thread t = new ResultScannerThread(config, table, requestID,
 						targetPlayer, new byte[0], stopRow.get(index));
 				scans.add(t);
 				return t;
 			} else if (startRow.isEmpty() && stopRow.isEmpty()) {
-                LOG.debug(4);
+				LOG.debug(4);
 				Thread t = new ResultScannerThread(config, table, requestID,
 						targetPlayer, new byte[0], new byte[0]);
 				scans.add(t);

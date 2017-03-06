@@ -41,7 +41,7 @@ public class SharedClientConfiguration {
 		return conf.getInt("smhbase.nbits", -1);
 	}
 
-	public int getCacheSize(){
+	public int getCacheSize() {
 		return conf.getInt("smhbase.client.cache.size", 100);
 	}
 

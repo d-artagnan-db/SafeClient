@@ -45,7 +45,7 @@ public abstract class SimpleHBaseTest {
 		clients = new ArrayList<TestClient>();
 		LOG.debug("Going to create client");
 		clients.add(new ShareClient());
-		//clients.add(new DefaultHBaseClient());
+		// clients.add(new DefaultHBaseClient());
 		LOG.debug("Client created");
 	}
 

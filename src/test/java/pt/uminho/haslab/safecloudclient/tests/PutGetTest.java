@@ -35,11 +35,11 @@ public class PutGetTest extends SimpleHBaseTest {
 			get.addColumn(cf, cq);
 			Result res = table.get(get);
 			byte[] storedValue = res.getValue(cf, cq);
-            System.out.println("Row key is " + new BigInteger(res.getRow()));
+			System.out.println("Row key is " + new BigInteger(res.getRow()));
 			System.out.println("first val" + value);
 			System.out.println("stored value " + new BigInteger(storedValue));
 			assertEquals(value, new BigInteger(storedValue));
-            assertEquals(key, new BigInteger(res.getRow()));
+			assertEquals(key, new BigInteger(res.getRow()));
 			key = key.add(BigInteger.ONE);
 
 		}

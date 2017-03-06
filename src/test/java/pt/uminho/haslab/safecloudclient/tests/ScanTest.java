@@ -17,9 +17,9 @@ import static org.junit.Assert.assertEquals;
 
 public class ScanTest extends SimpleHBaseTest {
 
-    static final Log LOG = LogFactory.getLog(ScanTest.class.getName());
+	static final Log LOG = LogFactory.getLog(ScanTest.class.getName());
 
-    public ScanTest(int maxBits, List<BigInteger> values) throws Exception {
+	public ScanTest(int maxBits, List<BigInteger> values) throws Exception {
 		super(maxBits, values);
 	}
 
@@ -55,8 +55,7 @@ public class ScanTest extends SimpleHBaseTest {
 		for (Result result = scanner.next(); result != null; result = scanner
 				.next()) {
 			results.add(result);
-			LOG.debug("Received key was "
-					+ new BigInteger(result.getRow()));
+			LOG.debug("Received key was " + new BigInteger(result.getRow()));
 		}
 
 		assertEquals(true, shelper.validateResults(results));

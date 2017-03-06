@@ -19,17 +19,15 @@ public class ResultScannerThread extends QueryThread implements ResultScanner {
 			throws IOException {
 		super(config, table, requestID, targetPlayer);
 		Scan scan = new Scan();
-        LOG.debug("Start row size is "+ startRow.length);
-        LOG.debug("Stop row size is "+ stopRow.length);
+		LOG.debug("Start row size is " + startRow.length);
+		LOG.debug("Stop row size is " + stopRow.length);
 
-        
-        if(startRow.length != 0){
-            scan.setStartRow(startRow);
-        }
-        if(stopRow.length != 0){
-            scan.setStopRow(stopRow);
-        }
-        
+		if (startRow.length != 0) {
+			scan.setStartRow(startRow);
+		}
+		if (stopRow.length != 0) {
+			scan.setStopRow(stopRow);
+		}
 
 		scan.setAttribute("requestID", ("" + requestID).getBytes());
 		scan.setAttribute("targetPlayer", ("" + targetPlayer).getBytes());

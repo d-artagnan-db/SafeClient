@@ -17,7 +17,8 @@ import pt.uminho.haslab.smhbase.sharemindImp.SharemindSharedSecret;
 
 public abstract class MultiOP {
 
-    static final org.apache.commons.logging.Log LOG = LogFactory.getLog(MultiOP.class.getName());
+	static final org.apache.commons.logging.Log LOG = LogFactory
+			.getLog(MultiOP.class.getName());
 
 	protected final long requestID;
 	protected final int targetPlayer;
@@ -47,9 +48,9 @@ public abstract class MultiOP {
 		Result resOne = results.get(0);
 		Result resTwo = results.get(1);
 		Result resThree = results.get(2);
-        LOG.debug("Row of match result is "+ new String(resOne.getRow()));
-        this.uniqueRowId = Long.valueOf(new String(resOne.getRow()));
-        
+		LOG.debug("Row of match result is " + new String(resOne.getRow()));
+		this.uniqueRowId = Long.valueOf(new String(resOne.getRow()));
+
 		byte[] rowSecretOne = resOne.getValue(secretColFam, secretColQual);
 		byte[] rowSecretTwo = resTwo.getValue(secretColFam, secretColQual);
 		byte[] rowSecretThree = resThree.getValue(secretColFam, secretColQual);
@@ -76,7 +77,8 @@ public abstract class MultiOP {
 			byte[] cq = CellUtil.cloneQualifier(secondCell);
 
 			// Filter columns holding secrets
-			if (!(Arrays.equals(cf, config.getShareKeyColumnFamily().getBytes()) && Arrays
+			if (!(Arrays
+					.equals(cf, config.getShareKeyColumnFamily().getBytes()) && Arrays
 					.equals(cq, config.getShareKeyColumnQualifier().getBytes()))) {
 				List<byte[]> values = new ArrayList<byte[]>();
 				byte[] fValue = CellUtil.cloneValue(firstCell);
@@ -116,7 +118,7 @@ public abstract class MultiOP {
 		for (Thread t : calls) {
 			t.join();
 		}
-        
+
 		LOG.debug("Operation calls terminated");
 		threadsJoined(calls);
 	}
@@ -137,7 +139,7 @@ public abstract class MultiOP {
 
 	}
 
-	public Long getUniqueRowId(){
-	    return this.uniqueRowId;
-    }
+	public Long getUniqueRowId() {
+		return this.uniqueRowId;
+	}
 }

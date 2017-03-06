@@ -13,9 +13,10 @@ public class MultiGet extends MultiOP {
 	private Result result;
 	private final boolean isCached;
 	private final byte[] cachedID;
-    
+
 	public MultiGet(SharedClientConfiguration config, List<HTable> connections,
-			List<byte[]> secrets, long requestID, int targetPlayer, boolean isCached, byte[] cachedID) {
+			List<byte[]> secrets, long requestID, int targetPlayer,
+			boolean isCached, byte[] cachedID) {
 		super(config, connections, requestID, targetPlayer);
 		this.secrets = secrets;
 		result = Result.EMPTY_RESULT;
@@ -47,10 +48,10 @@ public class MultiGet extends MultiOP {
 		results.add(resThree);
 
 		if (results.get(0).isEmpty()) {
-            LOG.debug("Multi Get returned empty result");
+			LOG.debug("Multi Get returned empty result");
 			result = Result.EMPTY_RESULT;
 		} else {
-            LOG.debug("Multi Get found result");
+			LOG.debug("Multi Get found result");
 			result = decodeResult(results);
 		}
 

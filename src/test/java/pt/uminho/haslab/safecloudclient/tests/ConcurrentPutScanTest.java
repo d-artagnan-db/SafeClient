@@ -13,7 +13,6 @@ import pt.uminho.haslab.testingutils.ScanValidator;
 
 public abstract class ConcurrentPutScanTest extends ConcurrentSimpleHBaseTest {
 
-
 	private final List<BigInteger> allIds;
 
 	public ConcurrentPutScanTest(List<BigInteger> testingValues,
@@ -51,15 +50,15 @@ public abstract class ConcurrentPutScanTest extends ConcurrentSimpleHBaseTest {
 					byte[] startRow = getStartKey(shelper);
 					byte[] stopRow = getStopKey(shelper);
 					Scan scan = new Scan();
-                    if(startRow !=null ){
-                        LOG.debug("Set start row");
-                        scan.setStartRow(startRow);
-                    
-                    }
-                    if(stopRow != null){
-                        LOG.debug("setting stop row");
-                        scan.setStopRow(stopRow);
-                    }
+					if (startRow != null) {
+						LOG.debug("Set start row");
+						scan.setStartRow(startRow);
+
+					}
+					if (stopRow != null) {
+						LOG.debug("setting stop row");
+						scan.setStopRow(stopRow);
+					}
 					LOG.debug("Starting scanner");
 					ResultScanner scanner = table.getScanner(scan);
 
