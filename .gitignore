@@ -29,6 +29,12 @@ buildNumber.properties
 !/.mvn/wrapper/maven-wrapper.jar
 /nbproject/
 
-# inteij files
+#IDE files
 .idea
 *.iml
+
+#result filtes
+*.txt
+
+#logs
+log/
