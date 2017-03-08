@@ -1,6 +1,5 @@
 package pt.uminho.haslab.safecloudclient.tests;
 
-import pt.uminho.haslab.safecloudclient.clients.tests.TestClient;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.List;
@@ -10,6 +9,7 @@ import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.client.Result;
 import static org.junit.Assert.assertEquals;
+import pt.uminho.haslab.safecloudclient.clients.TestClient;
 import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
 
 public class SingleColumnValueFilterTest extends SimpleHBaseTest {
@@ -20,8 +20,8 @@ public class SingleColumnValueFilterTest extends SimpleHBaseTest {
 	}
 
 	@Override
-	public void testExecution(TestClient client) throws IOException,
-			InvalidNumberOfBits, Exception {
+	public void testExecution(TestClient client, String tableName)
+			throws IOException, InvalidNumberOfBits, Exception {
 
 		HTableInterface table = client.createTableInterface(tableName);
 

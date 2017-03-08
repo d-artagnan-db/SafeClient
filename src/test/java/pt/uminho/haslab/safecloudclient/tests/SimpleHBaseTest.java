@@ -1,23 +1,12 @@
 package pt.uminho.haslab.safecloudclient.tests;
 
-<<<<<<< HEAD
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-=======
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HConnection;
->>>>>>> Uma rica (not) tarde de testes ...
-import pt.uminho.haslab.cryptoenv.CryptoTechnique;
-import pt.uminho.haslab.safecloudclient.clients.CryptoClient;
-import pt.uminho.haslab.safecloudclient.clients.PlaintextClient;
+
 import pt.uminho.haslab.safecloudclient.clients.TestClient;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -29,23 +18,26 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import pt.uminho.haslab.safecloudclient.clients.tests.ShareClient;
-import pt.uminho.haslab.safecloudclient.clients.tests.TestClient;
 import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
 import pt.uminho.haslab.testingutils.ValuesGenerator;
-
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import static pt.uminho.haslab.cryptoenv.CryptoTechnique.CryptoType.DET;
+import static pt.uminho.haslab.cryptoenv.CryptoTechnique.CryptoType.OPE;
+import static pt.uminho.haslab.cryptoenv.CryptoTechnique.CryptoType.STD;
+import pt.uminho.haslab.cryptoenv.Utils;
+import pt.uminho.haslab.safecloudclient.clients.CryptoClient;
+import pt.uminho.haslab.safecloudclient.clients.PlaintextClient;
+import pt.uminho.haslab.safecloudclient.clients.ShareClient;
 
 @RunWith(Parameterized.class)
 public abstract class SimpleHBaseTest {
 
 	static final Log LOG = LogFactory.getLog(SimpleHBaseTest.class.getName());
-
-	protected final String tableName = "TestPutGet";
 
 	protected final String columnDescriptor = "col1";
 
@@ -55,7 +47,8 @@ public abstract class SimpleHBaseTest {
 	}
 
 	protected final List<BigInteger> testingValues;
-	private final List<TestClient> clients;
+
+	private final Map<TestClient, String> clients;
 
 	protected SimpleHBaseTest(int maxBits, List<BigInteger> values)
 			throws Exception {
@@ -63,25 +56,26 @@ public abstract class SimpleHBaseTest {
 		clients = addClients();
 	}
 
-	public List<TestClient> addClients() throws IOException {
-		List<TestClient> clients = new ArrayList<TestClient>();
+	public Map<TestClient, String> addClients() throws IOException {
+		Map<TestClient, String> theClients = new HashMap<TestClient, String>();
 
-		System.out.println("Going to create client");
+		LOG.debug("Creating clients");
 
-//		clients.add(new PlaintextClient("Vanilla"));
-//		clients.add(new CryptoClient("Deterministic", CryptoTechnique.CryptoType.DET));
-//		clients.add(new CryptoClient("Standard", CryptoTechnique.CryptoType.STD));
-		clients.add(new CryptoClient("OPE", CryptoTechnique.CryptoType.OPE));
-
+                theClients.put(new PlaintextClient(), "Vanilla");
+		//theClients.put(new CryptoClient(DET), "Deterministic");
+		//theClients.put(new CryptoClient(STD), "Standard");
+                theClients.put(new CryptoClient(OPE), "OPE");
+                theClients.put(new ShareClient(), "ShareClient");
 		System.out.println("Client created");
 
-		return clients;
+		return theClients;
 	}
 
-	protected void createTestTable(TestClient client)
+	protected void createTestTable(TestClient client, String tableName)
 			throws ZooKeeperConnectionException, IOException, Exception {
-		if (!client.checkTableExists(client.getTableName())) {
-			TableName tbname = TableName.valueOf(client.getTableName());
+
+		if (!client.checkTableExists(tableName)) {
+			TableName tbname = TableName.valueOf(tableName);
 			HTableDescriptor table = new HTableDescriptor(tbname);
 			HColumnDescriptor family = new HColumnDescriptor(columnDescriptor);
 			table.addFamily(family);
@@ -96,41 +90,52 @@ public abstract class SimpleHBaseTest {
 		 * Test that the creation of the table where the values are going to be
 		 * inserted was successful.
 		 */
-		createTestTable(client);
+		String tableName = clients.get(client);
+		createTestTable(client, tableName);
 		Assert.assertEquals(true, client.checkTableExists(tableName));
 
 		BigInteger key = BigInteger.ZERO;
 		for (BigInteger value : testingValues) {
-			LOG.debug("Going to insert value " + key);
-			Put put = new Put(key.toByteArray());
-
-			//Put put = new Put(String.valueOf(key).getBytes());
+			LOG.debug("PUT  " + key  + " <-> " +value);
+                        Put put;
+                        
+                        if(!tableName.contains("Share")){
+                            put = new Put(Utils.addPadding(key.toByteArray(), 2));
+                        }else{
+                            put = new Put(key.toByteArray());
+                        }
+                        
 			put.add(cf, cq, value.toByteArray());
 			table.put(put);
 			key = key.add(BigInteger.ONE);
 		}
 	}
 
-	protected abstract void testExecution(TestClient client) throws Exception;
+	protected abstract void testExecution(TestClient client, String tableName)
+			throws Exception;
 
 	@Test
 	public void testBoot() throws Exception {
-		for (TestClient client : clients) {
+		for (TestClient client : clients.keySet()) {
+			String tableName = clients.get(client);
 			client.startCluster();
-			createTestTable(client);
-			testExecution(client);
-			client.stopCluster();
+			createTestTable(client, tableName);
+			testExecution(client, tableName);
 
-			Configuration conf = new Configuration();
-			conf.addResource("conf.xml");
+                        
+                        if(!tableName.contains("Share")){
+                            Configuration conf = new Configuration();
+                            conf.addResource("conf.xml");
 
-			String table = client.getTableName();
+                            HBaseAdmin admin = new HBaseAdmin(conf);
+                            admin.disableTable(tableName);
+                            LOG.debug("Table disabled.");
+                            admin.deleteTable(tableName);
+                            LOG.debug("Table dropped.");
+                        }
+                        
+                        client.stopCluster();
 
-			HBaseAdmin admin = new HBaseAdmin(conf);
-			admin.disableTable(table);
-			System.out.println("Table disabled.");
-			admin.deleteTable(table);
-			System.out.println("Table dropped.");
 		}
 	}
 }

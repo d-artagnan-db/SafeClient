@@ -10,7 +10,7 @@ import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.RowFilter;
 import org.apache.hadoop.hbase.filter.WhileMatchFilter;
-import pt.uminho.haslab.safecloudclient.clients.tests.TestClient;
+import pt.uminho.haslab.safecloudclient.clients.TestClient;
 
 public class WhileMatchFilterTest extends SimpleHBaseTest {
 
@@ -20,7 +20,8 @@ public class WhileMatchFilterTest extends SimpleHBaseTest {
 	}
 
 	@Override
-	protected void testExecution(TestClient client) throws Exception {
+	protected void testExecution(TestClient client, String tableName)
+			throws Exception {
 		HTableInterface table = client.createTableInterface(tableName);
 
 		byte[] cf = columnDescriptor.getBytes();

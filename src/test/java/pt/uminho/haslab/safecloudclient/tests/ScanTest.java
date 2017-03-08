@@ -10,10 +10,10 @@ import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
-import pt.uminho.haslab.safecloudclient.clients.tests.TestClient;
 import pt.uminho.haslab.testingutils.ScanValidator;
 
 import static org.junit.Assert.assertEquals;
+import pt.uminho.haslab.safecloudclient.clients.TestClient;
 
 public class ScanTest extends SimpleHBaseTest {
 
@@ -35,7 +35,8 @@ public class ScanTest extends SimpleHBaseTest {
 		return keys;
 	}
 	@Override
-	protected void testExecution(TestClient client) throws Exception {
+	protected void testExecution(TestClient client, String tableName)
+			throws Exception {
 
 		HTableInterface table = client.createTableInterface(tableName);
 

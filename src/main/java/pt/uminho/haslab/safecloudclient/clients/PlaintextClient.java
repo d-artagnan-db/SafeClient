@@ -10,24 +10,14 @@ import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
 
 import java.io.IOException;
 
-/**
- * Created by rgmacedo on 3/1/17.
- */
 public class PlaintextClient implements TestClient {
 
 	private final HBaseAdmin admin;
-	private final String tablename;
 
-	public PlaintextClient(String tName) throws ZooKeeperConnectionException,
-			IOException {
+	public PlaintextClient() throws ZooKeeperConnectionException, IOException {
 		Configuration conf = new Configuration();
 		conf.addResource("conf.xml");
 		admin = new HBaseAdmin(conf);
-		this.tablename = tName;
-	}
-
-	public String getTableName() {
-		return this.tablename;
 	}
 
 	public void createTestTable(HTableDescriptor testTable)

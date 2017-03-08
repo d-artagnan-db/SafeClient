@@ -12,12 +12,9 @@ import org.apache.hadoop.hbase.filter.*;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 
 import java.io.IOException;
-import java.math.BigInteger;
 import java.util.Arrays;
 
-/**
- * Created by rgmacedo on 2/20/17.
- */
+
 public class CryptoTable extends HTable {
 	static final Log LOG = LogFactory.getLog(CryptoTable.class.getName());
 
@@ -52,7 +49,7 @@ public class CryptoTable extends HTable {
 			}
 			super.put(encPut);
 
-		} catch (Exception e) {
+		} catch (IOException e) {
 			LOG.error("Exception in put method. " + e.getMessage());
 		}
 	}
@@ -60,7 +57,8 @@ public class CryptoTable extends HTable {
 	@Override
 	public Result get(Get get) {
 		Scan getScan = new Scan();
-		Result getResult = null;
+		Result getResult = Result.EMPTY_RESULT;
+                LOG.debug("On get");
 
 		try {
 			byte[] row = get.getRow();
@@ -83,17 +81,20 @@ public class CryptoTable extends HTable {
 					Get encGet = new Get(this.cryptoProperties.encode(row));
 					Result res = super.get(encGet);
 					if (!res.isEmpty()) {
+                                                LOG.debug("Found result");
 						getResult = this.cryptoProperties.decodeResult(
 								res.getRow(), res);
 					}
+                                        LOG.debug("Going to return OPE");
 					return getResult;
 				default :
 					break;
 			}
 
-		} catch (Exception e) {
+		} catch (IOException e) {
 			LOG.error("Exception in get method. " + e.getMessage());
 		}
+                LOG.debug("Going to return result "+ getResult);
 		return getResult;
 	}
 

@@ -6,7 +6,6 @@ import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
-import pt.uminho.haslab.safecloudclient.clients.tests.TestClient;
 import pt.uminho.haslab.safecloudclient.tests.ScanTest;
 import pt.uminho.haslab.testingutils.ScanValidator;
 
@@ -15,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import pt.uminho.haslab.safecloudclient.clients.TestClient;
 
 public class LoadBalancerScanTest extends ScanTest {
 
@@ -26,7 +26,9 @@ public class LoadBalancerScanTest extends ScanTest {
 		super(maxBits, values);
 	}
 
-	protected void testExecution(TestClient client) throws Exception {
+	@Override
+	protected void testExecution(TestClient client, String tableName)
+			throws Exception {
 
 		HTableInterface table = client.createTableInterface(tableName);
 

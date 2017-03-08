@@ -5,36 +5,23 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTableInterface;
-import pt.uminho.haslab.cryptoenv.CryptoTechnique;
+import pt.uminho.haslab.cryptoenv.CryptoTechnique.CryptoType;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoTable;
 import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
-import pt.uminho.haslab.testingutils.ShareCluster;
-
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Arrays;
 
-/**
- * Created by rgmacedo on 3/1/17.
- */
 public class CryptoClient implements TestClient {
 
 	private final HBaseAdmin admin;
-	private final String tablename;
-	private final CryptoTechnique.CryptoType cryptoType;
+	private final CryptoType cryptoType;
 
-	public CryptoClient(String tName, CryptoTechnique.CryptoType cType)
-			throws ZooKeeperConnectionException, IOException {
+	public CryptoClient(CryptoType cType) throws ZooKeeperConnectionException,
+			IOException {
 		Configuration conf = new Configuration();
 		conf.addResource("conf.xml");
 		admin = new HBaseAdmin(conf);
-		tablename = tName;
 		cryptoType = cType;
-	}
-
-	public String getTableName() {
-		return this.tablename;
 	}
 
 	public void createTestTable(HTableDescriptor testTable)
@@ -47,7 +34,7 @@ public class CryptoClient implements TestClient {
 		Configuration conf = new Configuration();
 		conf.addResource("conf.xml");
 
-		CryptoTable ct = new CryptoTable(conf, this.tablename, this.cryptoType);
+		CryptoTable ct = new CryptoTable(conf, tableName, this.cryptoType);
 		byte[] key = CryptoProperties.readKeyFromFile("key.txt");
 		ct.cryptoProperties.setKey(key);
 
@@ -60,11 +47,10 @@ public class CryptoClient implements TestClient {
 	}
 
 	public void startCluster() throws Exception {
-		System.out.println("Started CLuster");
+		System.out.println("Started Cluster");
 	}
 
 	public void stopCluster() throws IOException {
-		System.out.println("Stoped CLuster");
+		System.out.println("Stoped Cluster");
 	}
-
 }

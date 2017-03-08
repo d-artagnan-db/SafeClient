@@ -1,5 +1,6 @@
 package pt.uminho.haslab.safecloudclient.tests;
 
+import java.io.IOException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.*;
@@ -7,11 +8,9 @@ import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.RowFilter;
-import org.junit.Assert;
 import pt.uminho.haslab.cryptoenv.Utils;
 import pt.uminho.haslab.safecloudclient.clients.TestClient;
 
-import java.io.*;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,10 +19,8 @@ import java.util.Random;
 
 import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertTrue;
+import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
 
-/**
- * Created by rgmacedo on 2/21/17.
- */
 public class HBaseFeaturesTest extends SimpleHBaseTest {
 
 	static final Log LOG = LogFactory.getLog(HBaseFeaturesTest.class.getName());
@@ -36,13 +33,12 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 		this.utils = new Utils();
 	}
 
-	protected void testExecution(TestClient client) {
+	protected void testExecution(TestClient client, String tableName) {
 		HTableInterface table;
 		int time = 10000;
 		try {
-			table = client.createTableInterface(client.getTableName());
-			System.out.println(client.getTableName());
-			LOG.debug("Test Execution [" + client.getTableName() + "]\n");
+			table = client.createTableInterface(tableName);
+			LOG.debug("Test Execution [" + tableName + "]\n");
 
 			long quantity = timingPutTest(table, time);
 			System.out.println("Quantity: " + quantity);
@@ -63,7 +59,9 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 			timingScanTest(table, time, 100, 4000);
 			putGetTest(table, 100);
 
-		} catch (Exception e) {
+		} catch (IOException e) {
+			LOG.error("Exception in test execution. " + e.getMessage());
+		} catch (InvalidNumberOfBits e) {
 			LOG.error("Exception in test execution. " + e.getMessage());
 		}
 
@@ -98,7 +96,7 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
 			LOG.debug(sb.toString());
 
-		} catch (Exception e) {
+		} catch (IOException e) {
 			LOG.error("TestPut exception. " + e.getMessage());
 		}
 	}
@@ -126,8 +124,8 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 			sb.append("Time: ").append((stop - start)).append("ms\n");
 
 			LOG.debug(sb.toString());
-		} catch (Exception e) {
-			System.out.println("HBaseFeaturesTest: testGet exception. "
+		} catch (IOException e) {
+			LOG.debug("HBaseFeaturesTest: testGet exception. "
 					+ e.getMessage());
 		}
 	}
@@ -175,7 +173,7 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
 			LOG.debug(sb.toString());
 
-		} catch (Exception e) {
+		} catch (IOException e) {
 			LOG.error("HBaseFeaturesTest: testDelete exception. "
 					+ e.getMessage());
 		}
@@ -216,7 +214,7 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
 			LOG.debug(sb.toString());
 
-		} catch (Exception e) {
+		} catch (IOException e) {
 			LOG.error("Exception in testScan. " + e.getMessage());
 		}
 	}
@@ -250,7 +248,7 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
 			LOG.debug(sb.toString());
 
-		} catch (Exception e) {
+		} catch (IOException e) {
 			LOG.error("Exception in testFilter. " + e.getMessage());
 		}
 	}
@@ -293,7 +291,7 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
 			LOG.debug(sb.toString());
 
-		} catch (Exception e) {
+		} catch (IOException e) {
 			LOG.error("Exception in putGetTest. " + e.getMessage());
 		}
 	}
@@ -327,7 +325,7 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
 			return data;
 
-		} catch (Exception e) {
+		} catch (IOException e) {
 			LOG.error("Exception in timingPutTest. " + e.getMessage());
 		}
 
@@ -368,7 +366,7 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
 			LOG.debug(sb.toString());
 
-		} catch (Exception e) {
+		} catch (IOException e) {
 			LOG.error("Exception in timingGetTest." + e.getMessage());
 		}
 	}
@@ -415,7 +413,7 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
 			LOG.debug(sb.toString());
 
-		} catch (Exception e) {
+		} catch (IOException e) {
 			LOG.error("Exception in timingScanTest. " + e.getMessage());
 		}
 	}
@@ -438,10 +436,6 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 			volume.add(generateRandomKey(sizeofString));
 		}
 		return volume;
-	}
-
-	public static void main(String[] args) {
-
 	}
 
 }

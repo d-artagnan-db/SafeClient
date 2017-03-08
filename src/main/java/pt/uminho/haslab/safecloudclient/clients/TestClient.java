@@ -7,8 +7,6 @@ import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
 
 public interface TestClient {
 
-	public String getTableName();
-
 	public void createTestTable(HTableDescriptor testTable) throws Exception;
 
 	public abstract HTableInterface createTableInterface(String tableName)

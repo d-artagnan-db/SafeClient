@@ -13,8 +13,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import pt.uminho.haslab.safecloudclient.clients.tests.ShareClient;
-import pt.uminho.haslab.safecloudclient.clients.tests.TestClient;
 import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
 import pt.uminho.haslab.testingutils.ValuesGenerator;
 
@@ -26,6 +24,8 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import static org.junit.Assert.assertEquals;
+import pt.uminho.haslab.safecloudclient.clients.ShareClient;
+import pt.uminho.haslab.safecloudclient.clients.TestClient;
 
 @RunWith(Parameterized.class)
 public abstract class ConcurrentSimpleHBaseTest {
