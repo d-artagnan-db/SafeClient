@@ -1,4 +1,4 @@
-package pt.uminho.haslab.safecloudclient.cryptotechnique;
+package pt.uminho.haslab.safecloudclient.schema;
 
 import org.dom4j.*;
 import org.dom4j.io.SAXReader;

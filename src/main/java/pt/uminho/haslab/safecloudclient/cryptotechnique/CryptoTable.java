@@ -10,6 +10,7 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.*;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
+import pt.uminho.haslab.safecloudclient.schema.SchemaParser;
 
 import java.io.IOException;
 import java.util.Arrays;
