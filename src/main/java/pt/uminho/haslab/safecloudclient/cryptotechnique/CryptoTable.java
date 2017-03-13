@@ -31,14 +31,12 @@ public class CryptoTable extends HTable {
 		this.cryptoProperties = new CryptoProperties(cType, 23);
 		this.resultScannerFactory = new ResultScannerFactory();
 
-		this.init(conf);
+		this.init("conf.xml");
 	}
 
-	public void init(Configuration conf) {
-		System.out.println("Init Config");
-		System.out.println("> " + conf.get("formatsize"));
-		// System.out.println("> "+conf.get("key", "formatsize"));
-
+	public void init(String filename) {
+		SchemaParser schemaParser = new SchemaParser();
+		schemaParser.parse(filename);
 	}
 
 	@Override

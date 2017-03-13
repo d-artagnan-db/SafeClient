@@ -1,5 +1,6 @@
 package pt.uminho.haslab.safecloudclient.cryptotechnique;
 
+import com.sun.tools.javac.util.Name;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 
 import java.util.HashMap;
@@ -15,6 +16,12 @@ public class TableSchema {
     private CryptoTechnique.CryptoType key;
 //    The Column Families and the respective Column Qualifiers and CryptoTechniques
     private Map<String, Map<String, CryptoTechnique.CryptoType>> columnFamilies;
+
+    public TableSchema() {
+        this.tablename = "";
+        this.key = null;
+        this.columnFamilies = new HashMap<String, Map<String, CryptoTechnique.CryptoType>>();
+    }
 
     public TableSchema(String tablename, CryptoTechnique.CryptoType key, Map<String, Map<String, CryptoTechnique.CryptoType>> families) {
         this.tablename = tablename;
