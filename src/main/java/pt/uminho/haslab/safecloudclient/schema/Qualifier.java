@@ -8,9 +8,9 @@ import pt.uminho.haslab.cryptoenv.CryptoTechnique;
  */
 public class Qualifier {
 
-    public String qualifierName;
-    public CryptoTechnique.CryptoType cryptoType;
-    public int formatSize;
+    private String qualifierName;
+    private CryptoTechnique.CryptoType cryptoType;
+    private int formatSize;
 
     public Qualifier() {
         this.qualifierName = "";

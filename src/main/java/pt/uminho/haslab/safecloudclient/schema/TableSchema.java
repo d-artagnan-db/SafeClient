@@ -14,6 +14,11 @@ import java.util.Map;
 public class TableSchema {
 //    The name of the table
     private String tablename;
+//    Default values
+    private CryptoTechnique.CryptoType defaultKeyCryptoType;
+    private CryptoTechnique.CryptoType defaultColumnsCryptoType;
+    private int defaultFormatSize;
+
 //    The CryptoTechnique to use in the keys
     private Key key;
 //    The Column Families and the respective Column Qualifiers and CryptoTechniques
@@ -21,18 +26,36 @@ public class TableSchema {
 
     public TableSchema() {
         this.tablename = "";
+        this.defaultKeyCryptoType = CryptoTechnique.CryptoType.STD;
+        this.defaultColumnsCryptoType = CryptoTechnique.CryptoType.STD;
+        this.defaultFormatSize = 0;
         this.key = null;
         this.columnFamilies = new ArrayList<Family>();
     }
 
-    public TableSchema(String tablename, Key key, List<Family> families) {
+    public TableSchema(String tablename, CryptoTechnique.CryptoType defKey, CryptoTechnique.CryptoType defColumns, int defFormat, Key key, List<Family> families) {
         this.tablename = tablename;
+        this.defaultKeyCryptoType = defKey;
+        this.defaultColumnsCryptoType = defColumns;
+        this.defaultFormatSize = defFormat;
         this.key = key;
         this.columnFamilies = families;
     }
 
     public String getTablename() {
         return this.tablename;
+    }
+
+    public CryptoTechnique.CryptoType getDefaultKeyCryptoType() {
+        return this.defaultKeyCryptoType;
+    }
+
+    public CryptoTechnique.CryptoType getDefaultColumnsCryptoType() {
+        return this.defaultColumnsCryptoType;
+    }
+
+    public int getDefaultFormatSize() {
+        return this.defaultFormatSize;
     }
 
     public Key getKey() {
@@ -52,6 +75,18 @@ public class TableSchema {
         this.tablename = tablename;
     }
 
+    public void setDefaultKeyCryptoType(CryptoTechnique.CryptoType cType) {
+        this.defaultKeyCryptoType = cType;
+    }
+
+    public void setDefaultColumnsCryptoType(CryptoTechnique.CryptoType cType) {
+        this.defaultColumnsCryptoType = cType;
+    }
+
+    public void setDefaultFormatSize(int formatSize) {
+        this.defaultFormatSize = formatSize;
+    }
+
     public void setKey(Key key) {
         this.key = key;
     }
@@ -63,24 +98,40 @@ public class TableSchema {
             this.columnFamilies.add(family);
     }
 
-//    public void addFamily(String family) {
-//        if (!this.columnFamilies.containsKey(family)) {
-//            this.columnFamilies.put(family, new HashMap<String, CryptoTechnique.CryptoType>());
-//        }
-//    }
-//
-//    public void addFamily(String family, Map<String, CryptoTechnique.CryptoType> qualifiers) {
-//        if (!this.columnFamilies.containsKey(family)) {
-//            this.columnFamilies.put(family, qualifiers);
-//        }
-//    }
-//
-//    public void addQualifier(String family, String qualifier, CryptoTechnique.CryptoType cryptoType) {
-//        Map<String, CryptoTechnique.CryptoType> qualifierTemp = this.columnFamilies.get(family);
-//        qualifierTemp.put(qualifier, cryptoType);
-//        this.columnFamilies.put(family, qualifierTemp);
-//    }
 
+    public void addFamily(String familyName, CryptoTechnique.CryptoType cType, int formatSize, List<Qualifier> qualifiers) {
+        Family family = new Family();
+        family.setFamilyName(familyName);
+
+        if(cType == null)
+            family.setCryptoType(defaultColumnsCryptoType);
+        else
+            family.setCryptoType(cType);
+
+        if(formatSize <= 0)
+            family.setFormatSize(defaultFormatSize);
+        else
+            family.setFormatSize(formatSize);
+
+        for(Qualifier q : qualifiers)
+            family.addQualifier(q);
+
+        this.columnFamilies.add(family);
+    }
+
+    public void addFamily(Family fam) {
+        if(fam.getCryptoType() == null)
+            fam.setCryptoType(defaultColumnsCryptoType);
+
+        if(fam.getFormatSize() <= 0)
+            fam.setFormatSize(defaultFormatSize);
+
+        this.columnFamilies.add(fam);
+    }
+
+//    public void addQualifier(String familyName, Qualifier q) {
+//
+//    }
 
     public String toString() {
         StringBuilder sb = new StringBuilder();

@@ -11,10 +11,10 @@ import java.util.List;
  */
 public class Family {
 
-    public String familyName;
-    public CryptoTechnique.CryptoType cryptoType;
-    public int formatSize;
-    public List<Qualifier> qualifiers;
+    private String familyName;
+    private CryptoTechnique.CryptoType cryptoType;
+    private int formatSize;
+    private List<Qualifier> qualifiers;
 
     public Family() {
         this.familyName = "";
@@ -68,5 +68,37 @@ public class Family {
         }
     }
 
+    /**
+     * Add a new qualifier to the Qualifiers list. If both format size and cryptoType is not defined, the qualifier
+     * assume both values from is parent, the column family.
+     * @param qualifierName
+     * @param cryptoType
+     * @param formatSize
+     */
+    public void addQualifier(String qualifierName, CryptoTechnique.CryptoType cryptoType, int formatSize) {
+        CryptoTechnique.CryptoType cType;
+        int fSize = 0;
 
+        if(cryptoType != null)
+            cType = cryptoType;
+        else
+            cType = this.cryptoType;
+
+        if(formatSize > 0)
+            fSize = formatSize;
+        else
+            fSize = this.formatSize;
+
+        this.qualifiers.add(new Qualifier(qualifierName, cryptoType, formatSize));
+    }
+
+    public void addQualifier(Qualifier qualifier) {
+        if(qualifier.getCryptoType() == null)
+            qualifier.setCryptoType(this.cryptoType);
+
+        if(qualifier.getFormatSize() == 0)
+            qualifier.setFormatSize(this.formatSize);
+
+        this.qualifiers.add(qualifier);
+    }
 }

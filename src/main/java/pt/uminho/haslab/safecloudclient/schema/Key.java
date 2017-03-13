@@ -7,8 +7,8 @@ import pt.uminho.haslab.cryptoenv.CryptoTechnique;
  */
 public class Key {
 
-    public CryptoTechnique.CryptoType cryptoType;
-    public int formatSize;
+    private CryptoTechnique.CryptoType cryptoType;
+    private int formatSize;
 
     public Key() {
         this.cryptoType = CryptoTechnique.CryptoType.STD;
