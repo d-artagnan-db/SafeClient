@@ -61,11 +61,11 @@ public abstract class SimpleHBaseTest {
 
 		LOG.debug("Creating clients");
 
-                theClients.put(new PlaintextClient(), "Vanilla");
-		//theClients.put(new CryptoClient(DET), "Deterministic");
-		//theClients.put(new CryptoClient(STD), "Standard");
-                theClients.put(new CryptoClient(OPE), "OPE");
-                theClients.put(new ShareClient(), "ShareClient");
+//		theClients.put(new PlaintextClient(), "Vanilla");
+		theClients.put(new CryptoClient(DET), "Deterministic");
+		// theClients.put(new CryptoClient(STD), "Standard");
+//		theClients.put(new CryptoClient(OPE), "OPE");
+//		theClients.put(new ShareClient(), "ShareClient");
 		System.out.println("Client created");
 
 		return theClients;
@@ -96,15 +96,15 @@ public abstract class SimpleHBaseTest {
 
 		BigInteger key = BigInteger.ZERO;
 		for (BigInteger value : testingValues) {
-			LOG.debug("PUT  " + key  + " <-> " +value);
-                        Put put;
-                        
-                        if(!tableName.contains("Share")){
-                            put = new Put(Utils.addPadding(key.toByteArray(), 2));
-                        }else{
-                            put = new Put(key.toByteArray());
-                        }
-                        
+			LOG.debug("PUT  " + key + " <-> " + value);
+			Put put;
+
+			if (!tableName.contains("Share")) {
+				put = new Put(Utils.addPadding(key.toByteArray(), 2));
+			} else {
+				put = new Put(key.toByteArray());
+			}
+
 			put.add(cf, cq, value.toByteArray());
 			table.put(put);
 			key = key.add(BigInteger.ONE);
@@ -122,19 +122,18 @@ public abstract class SimpleHBaseTest {
 			createTestTable(client, tableName);
 			testExecution(client, tableName);
 
-                        
-                        if(!tableName.contains("Share")){
-                            Configuration conf = new Configuration();
-                            conf.addResource("conf.xml");
+			if (!tableName.contains("Share")) {
+				Configuration conf = new Configuration();
+				conf.addResource("conf.xml");
 
-                            HBaseAdmin admin = new HBaseAdmin(conf);
-                            admin.disableTable(tableName);
-                            LOG.debug("Table disabled.");
-                            admin.deleteTable(tableName);
-                            LOG.debug("Table dropped.");
-                        }
-                        
-                        client.stopCluster();
+				HBaseAdmin admin = new HBaseAdmin(conf);
+				admin.disableTable(tableName);
+				LOG.debug("Table disabled.");
+				admin.deleteTable(tableName);
+				LOG.debug("Table dropped.");
+			}
+
+			client.stopCluster();
 
 		}
 	}

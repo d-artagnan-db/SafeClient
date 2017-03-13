@@ -33,16 +33,15 @@ public class PutGetTest extends SimpleHBaseTest {
 
 		BigInteger key = BigInteger.ZERO;
 		for (BigInteger value : testingValues) {
-			LOG.debug("GET "+ key + " <-> " + value);
-                        Get get;
-                        
-                        
-                        if(!tableName.contains("Share")){
-                            get = new Get(Utils.addPadding(key.toByteArray(), 23));
-                        }else{
-                            get = new Get(key.toByteArray());
-                        }
-                        
+			LOG.debug("GET " + key + " <-> " + value);
+			Get get;
+
+			if (!tableName.contains("Share")) {
+				get = new Get(Utils.addPadding(key.toByteArray(), 23));
+			} else {
+				get = new Get(key.toByteArray());
+			}
+
 			get.addColumn(cf, cq);
 			Result res = table.get(get);
 			if (!res.isEmpty()) {

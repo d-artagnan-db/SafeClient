@@ -1,0 +1,35 @@
+<table>
+  <name>usertable</name>
+  <key>
+    <formatsize>23</formatsize>
+    <cryptotechnique>STD</cryptotechnique>
+  </key>
+  <columns>
+    <family>
+      <name>Name</name>
+      <qualifiers>
+        <qualifier>
+          <name>First</name>
+          <crypto>DET</crypto>
+        </qualifier>
+        <qualifier>
+          <name>Last</name>
+          <crypto>DET</crypto>
+        </qualifier>
+      </qualifiers>
+    </family>
+    <family>
+      <name>Age</name>
+      <qualifiers>
+        <qualifier>
+          <name>Birthday</name>
+          <crypto>OPE</crypto>
+        </qualifier>
+        <qualifier>
+          <name>Age</name>
+          <crypto>OPE</crypto>
+        </qualifier>
+      </qualifiers>
+    </family>
+  </columns>
+</schema>

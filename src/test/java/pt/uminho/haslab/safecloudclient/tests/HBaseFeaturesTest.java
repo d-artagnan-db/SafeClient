@@ -40,10 +40,10 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 			table = client.createTableInterface(tableName);
 			LOG.debug("Test Execution [" + tableName + "]\n");
 
-			long quantity = timingPutTest(table, time);
-			System.out.println("Quantity: " + quantity);
-
-			timingGetTest(table, time, quantity);
+//			long quantity = timingPutTest(table, time);
+//			System.out.println("Quantity: " + quantity);
+//
+//			timingGetTest(table, time, quantity);
 
 			byte[] cf = columnDescriptor.getBytes();
 			byte[] cq = "testQualifier".getBytes();
@@ -51,13 +51,13 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
 			testPut(table, cf, cq, value);
 			testGet(table, cf, cq, value);
-			testDelete(table, cf, cq, value);
-			testScan(table, null, null);
-			testFilter(table, CompareFilter.CompareOp.GREATER,
-					Utils.addPadding("5555".getBytes(), formatSize));
-
-			timingScanTest(table, time, 100, 4000);
-			putGetTest(table, 100);
+//			testDelete(table, cf, cq, value);
+//			testScan(table, null, null);
+//			testFilter(table, CompareFilter.CompareOp.GREATER,
+//					Utils.addPadding("5555".getBytes(), formatSize));
+//
+//			timingScanTest(table, time, 100, 4000);
+//			putGetTest(table, 100);
 
 		} catch (IOException e) {
 			LOG.error("Exception in test execution. " + e.getMessage());
@@ -125,8 +125,7 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
 			LOG.debug(sb.toString());
 		} catch (IOException e) {
-			LOG.debug("HBaseFeaturesTest: testGet exception. "
-					+ e.getMessage());
+			LOG.debug("HBaseFeaturesTest: testGet exception. " + e.getMessage());
 		}
 	}
 

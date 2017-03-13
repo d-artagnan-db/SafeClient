@@ -14,7 +14,6 @@ import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 import java.io.IOException;
 import java.util.Arrays;
 
-
 public class CryptoTable extends HTable {
 	static final Log LOG = LogFactory.getLog(CryptoTable.class.getName());
 
@@ -31,6 +30,15 @@ public class CryptoTable extends HTable {
 		super(conf, TableName.valueOf(tableName));
 		this.cryptoProperties = new CryptoProperties(cType, 23);
 		this.resultScannerFactory = new ResultScannerFactory();
+
+		this.init(conf);
+	}
+
+	public void init(Configuration conf) {
+		System.out.println("Init Config");
+		System.out.println("> " + conf.get("formatsize"));
+		// System.out.println("> "+conf.get("key", "formatsize"));
+
 	}
 
 	@Override
@@ -58,7 +66,7 @@ public class CryptoTable extends HTable {
 	public Result get(Get get) {
 		Scan getScan = new Scan();
 		Result getResult = Result.EMPTY_RESULT;
-                LOG.debug("On get");
+		LOG.debug("On get");
 
 		try {
 			byte[] row = get.getRow();
@@ -81,11 +89,11 @@ public class CryptoTable extends HTable {
 					Get encGet = new Get(this.cryptoProperties.encode(row));
 					Result res = super.get(encGet);
 					if (!res.isEmpty()) {
-                                                LOG.debug("Found result");
+						LOG.debug("Found result");
 						getResult = this.cryptoProperties.decodeResult(
 								res.getRow(), res);
 					}
-                                        LOG.debug("Going to return OPE");
+					LOG.debug("Going to return OPE");
 					return getResult;
 				default :
 					break;
@@ -94,7 +102,7 @@ public class CryptoTable extends HTable {
 		} catch (IOException e) {
 			LOG.error("Exception in get method. " + e.getMessage());
 		}
-                LOG.debug("Going to return result "+ getResult);
+		LOG.debug("Going to return result " + getResult);
 		return getResult;
 	}
 
