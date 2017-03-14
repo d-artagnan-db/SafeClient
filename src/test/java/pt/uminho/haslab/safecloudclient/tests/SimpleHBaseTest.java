@@ -18,6 +18,9 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import pt.uminho.haslab.safecloudclient.schema.Family;
+import pt.uminho.haslab.safecloudclient.schema.SchemaParser;
+import pt.uminho.haslab.safecloudclient.schema.TableSchema;
 import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
 import pt.uminho.haslab.testingutils.ValuesGenerator;
 import java.io.IOException;
@@ -62,7 +65,7 @@ public abstract class SimpleHBaseTest {
 		LOG.debug("Creating clients");
 
 		// theClients.put(new PlaintextClient(), "Vanilla");
-		theClients.put(new CryptoClient(DET), "Deterministic");
+		theClients.put(new CryptoClient(DET), "usertable");
 		// theClients.put(new CryptoClient(STD), "Standard");
 		// theClients.put(new CryptoClient(OPE), "OPE");
 		// theClients.put(new ShareClient(), "ShareClient");
@@ -75,11 +78,24 @@ public abstract class SimpleHBaseTest {
 			throws ZooKeeperConnectionException, IOException, Exception {
 
 		if (!client.checkTableExists(tableName)) {
-			TableName tbname = TableName.valueOf(tableName);
+//			TableName tbname = TableName.valueOf(tableName);
+//			HTableDescriptor table = new HTableDescriptor(tbname);
+//			HColumnDescriptor family = new HColumnDescriptor(columnDescriptor);
+//			table.addFamily(family);
+//			client.createTestTable(table);
+
+			SchemaParser schema = new SchemaParser();
+			schema.parse("conf.xml");
+			TableSchema ts = schema.getTableSchema();
+
+			TableName tbname = TableName.valueOf(ts.getTablename());
 			HTableDescriptor table = new HTableDescriptor(tbname);
-			HColumnDescriptor family = new HColumnDescriptor(columnDescriptor);
-			table.addFamily(family);
+			for(Family f : ts.getColumnFamilies()) {
+				HColumnDescriptor family = new HColumnDescriptor(f.getFamilyName());
+				table.addFamily(family);
+			}
 			client.createTestTable(table);
+
 		}
 	}
 
@@ -126,11 +142,11 @@ public abstract class SimpleHBaseTest {
 				Configuration conf = new Configuration();
 				conf.addResource("conf.xml");
 
-				HBaseAdmin admin = new HBaseAdmin(conf);
-				admin.disableTable(tableName);
-				LOG.debug("Table disabled.");
-				admin.deleteTable(tableName);
-				LOG.debug("Table dropped.");
+//				HBaseAdmin admin = new HBaseAdmin(conf);
+//				admin.disableTable(tableName);
+//				LOG.debug("Table disabled.");
+//				admin.deleteTable(tableName);
+//				LOG.debug("Table dropped.");
 			}
 
 			client.stopCluster();

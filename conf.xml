@@ -2,17 +2,17 @@
   <name>usertable</name>
   <default>
     <key>STD</key>
-    <columns>PLT</columns>
+    <columns>STD</columns>
     <formatsize>23</formatsize>
   </default>
   <key>
     <formatsize>23</formatsize>
-    <cryptotechnique>STD</cryptotechnique>
+    <cryptotechnique>DET</cryptotechnique>
   </key>
   <columns>
     <family>
       <name>Name</name>
-      <cryptotechnique>PLT</cryptotechnique>
+      <cryptotechnique>STD</cryptotechnique>
       <formatsize>10</formatsize>
       <qualifier>
         <name>First</name>

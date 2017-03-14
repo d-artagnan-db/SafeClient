@@ -137,7 +137,7 @@ public class StandardResultScanner implements ResultScanner {
 		Result res = this.scanner.next();
 		boolean digest;
 		if (res != null) {
-			byte[] row = this.cProperties.decode(res.getRow());
+			byte[] row = this.cProperties.decodeRow(res.getRow());
 			// int paddingSize = getPaddingSize(row);
 
 			digest = digestStartEndRow(0, row);

@@ -36,7 +36,10 @@ public class CryptoClient implements TestClient {
 
 		CryptoTable ct = new CryptoTable(conf, tableName, this.cryptoType);
 		byte[] key = CryptoProperties.readKeyFromFile("key.txt");
-		ct.cryptoProperties.setKey(key);
+
+		ct.cryptoProperties.setKey(CryptoType.STD, key);
+		ct.cryptoProperties.setKey(CryptoType.DET, key);
+		ct.cryptoProperties.setKey(CryptoType.OPE, key);
 
 		System.out.println("Table created Successfully");
 		return ct;

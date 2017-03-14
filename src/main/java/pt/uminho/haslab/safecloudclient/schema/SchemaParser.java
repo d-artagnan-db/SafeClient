@@ -18,6 +18,10 @@ public class SchemaParser {
 		this.tableSchema = new TableSchema();
 	}
 
+	public TableSchema getTableSchema() {
+		return this.tableSchema;
+	}
+
 	public void parse(String filename) {
 		try {
 			long starttime = System.currentTimeMillis();

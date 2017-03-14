@@ -40,17 +40,17 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 			table = client.createTableInterface(tableName);
 			LOG.debug("Test Execution [" + tableName + "]\n");
 
-			// long quantity = timingPutTest(table, time);
-			// System.out.println("Quantity: " + quantity);
-			//
-			// timingGetTest(table, time, quantity);
+			 long quantity = timingPutTest(table, time);
+			 System.out.println("Quantity: " + quantity);
 
-			byte[] cf = columnDescriptor.getBytes();
-			byte[] cq = "testQualifier".getBytes();
-			byte[] value = Utils.addPadding("1122330".getBytes(), formatSize);
+			 timingGetTest(table, time, quantity);
 
-			testPut(table, cf, cq, value);
-			testGet(table, cf, cq, value);
+//			byte[] cf = columnDescriptor.getBytes();
+//			byte[] cq = "testQualifier".getBytes();
+//			byte[] value = Utils.addPadding("1122330".getBytes(), formatSize);
+//
+//			testPut(table, cf, cq, value);
+//			testGet(table, cf, cq, value);
 			// testDelete(table, cf, cq, value);
 			// testScan(table, null, null);
 			// testFilter(table, CompareFilter.CompareOp.GREATER,
@@ -297,8 +297,8 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
 	public long timingPutTest(HTableInterface table, int time) {
 		try {
-			byte[] cf = columnDescriptor.getBytes();
-			byte[] cq = "testQualifier".getBytes();
+			byte[] cf = "Name".getBytes();
+			byte[] cq = "First".getBytes();
 
 			long startTime = System.currentTimeMillis();
 
@@ -333,8 +333,8 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
 	public void timingGetTest(HTableInterface table, int time, long limit) {
 		try {
-			byte[] cf = columnDescriptor.getBytes();
-			byte[] cq = "testQualifier".getBytes();
+			byte[] cf = "Name".getBytes();
+			byte[] cq = "First".getBytes();
 
 			long startTime = System.currentTimeMillis();
 

@@ -149,6 +149,24 @@ public class TableSchema {
 		}
 	}
 
+	public CryptoTechnique.CryptoType getCryptoTypeFromQualifer(String family,
+			String qualifier) {
+		CryptoTechnique.CryptoType cType = null;
+		for (Family f : this.columnFamilies) {
+			if (f.getFamilyName().equals(family)) {
+				for (Qualifier q : f.getQualifiers()) {
+					if (q.getName().equals(qualifier)) {
+						cType = q.getCryptoType();
+						break;
+					}
+				}
+				break;
+			}
+		}
+
+		return cType;
+	}
+
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Table Schema\n");

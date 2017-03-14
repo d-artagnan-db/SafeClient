@@ -8,6 +8,7 @@ import org.apache.hadoop.hbase.filter.*;
 import pt.uminho.haslab.cryptoenv.CryptoHandler;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 import pt.uminho.haslab.cryptoenv.Utils;
+import pt.uminho.haslab.safecloudclient.schema.TableSchema;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -22,27 +23,62 @@ import java.util.List;
  */
 public class CryptoProperties {
 
-	public CryptoHandler handler;
-	public CryptoTechnique.CryptoType cType;
-	public byte[] key;
+	// public CryptoHandler handler;
+	// public CryptoTechnique.CryptoType cType;
+	// public byte[] key;
 	public Utils utils;
-	public int formatSize;
+	// public int formatSize;
+	//
+	public TableSchema tableSchema;
 
-	public CryptoProperties(CryptoTechnique.CryptoType cType, int formatSize) {
-		this.cType = cType;
-		this.handler = new CryptoHandler(cType);
-		this.key = this.handler.gen();
+	public CryptoHandler stdHandler;
+	public CryptoHandler detHandler;
+	public CryptoHandler opeHandler;
+
+	public byte[] stdKey;
+	public byte[] detKey;
+	public byte[] opeKey;
+
+	public CryptoProperties(TableSchema ts) {
+		this.tableSchema = ts;
+		this.stdHandler = new CryptoHandler(CryptoTechnique.CryptoType.STD);
+		this.stdKey = this.stdHandler.gen();
+
+		this.detHandler = new CryptoHandler(CryptoTechnique.CryptoType.DET);
+		this.detKey = this.detHandler.gen();
+
+		this.opeHandler = new CryptoHandler(CryptoTechnique.CryptoType.OPE);
+		this.opeKey = this.opeHandler.gen();
+
 		this.utils = new Utils();
-		this.formatSize = formatSize;
 	}
+
+	// public CryptoProperties(CryptoTechnique.CryptoType cType, int formatSize)
+	// {
+	// this.cType = cType;
+	// this.handler = new CryptoHandler(cType);
+	// this.key = this.handler.gen();
+	// this.utils = new Utils();
+	// this.formatSize = formatSize;
+	// }
 
 	/**
 	 * Get Encryption/Decryption Key from CryptoHandler
 	 * 
 	 * @return
 	 */
-	public byte[] getKey() {
-		return this.key;
+	public byte[] getKey(CryptoTechnique.CryptoType cType) {
+		switch (cType) {
+			case STD :
+				return stdKey;
+			case DET :
+				return detKey;
+			case OPE :
+				return opeKey;
+			default :
+				return null;
+		}
+
 	}
 
 	/**
@@ -50,8 +86,21 @@ public class CryptoProperties {
 	 * 
 	 * @param key
 	 */
-	public void setKey(byte[] key) {
-		this.key = key;
+	public void setKey(CryptoTechnique.CryptoType cType, byte[] key) {
+		switch (cType) {
+			case STD :
+				this.stdKey = key;
+				break;
+			case DET :
+				this.detKey = key;
+				break;
+			case OPE :
+				this.opeKey = key;
+				break;
+			default :
+				break;
+		}
+
 		System.out.println("The key was setted. Key - " + Arrays.toString(key));
 	}
 
@@ -61,8 +110,18 @@ public class CryptoProperties {
 	 * @param content
 	 * @return
 	 */
-	public byte[] encode(byte[] content) {
-		return this.handler.encrypt(this.key, content);
+	public byte[] encodeRow(byte[] content) {
+		switch (this.tableSchema.getKey().getCryptoType()) {
+			case STD :
+				return this.stdHandler.encrypt(this.stdKey, content);
+			case DET :
+				return this.detHandler.encrypt(this.detKey, content);
+			case OPE :
+				return this.opeHandler.encrypt(this.opeKey, content);
+			default :
+				return content;
+		}
+		// return this.handler.encrypt(this.key, content);
 	}
 
 	/**
@@ -71,8 +130,48 @@ public class CryptoProperties {
 	 * @param content
 	 * @return
 	 */
-	public byte[] decode(byte[] content) {
-		return this.handler.decrypt(this.key, content);
+	public byte[] decodeRow(byte[] content) {
+		switch (this.tableSchema.getKey().getCryptoType()) {
+			case STD :
+				return this.stdHandler.decrypt(this.stdKey, content);
+			case DET :
+				return this.detHandler.decrypt(this.detKey, content);
+			case OPE :
+				return this.opeHandler.decrypt(this.opeKey, content);
+			default :
+				return content;
+		}
+		// return this.handler.decrypt(this.key, content);
+	}
+
+	public byte[] encodeValue(byte[] family, byte[] qualifier, byte[] value) {
+		String f = new String(family);
+		String q = new String(qualifier);
+		switch (this.tableSchema.getCryptoTypeFromQualifer(f, q)) {
+			case STD :
+				return this.stdHandler.encrypt(this.stdKey, value);
+			case DET :
+				return this.detHandler.encrypt(this.detKey, value);
+			case OPE :
+				return this.opeHandler.encrypt(this.opeKey, value);
+			default :
+				return value;
+		}
+	}
+
+	public byte[] decodeValue(byte[] family, byte[] qualifier, byte[] value) {
+		String f = new String(family);
+		String q = new String(qualifier);
+		switch (this.tableSchema.getCryptoTypeFromQualifer(f, q)) {
+			case STD :
+				return this.stdHandler.decrypt(this.stdKey, value);
+			case DET :
+				return this.detHandler.decrypt(this.detKey, value);
+			case OPE :
+				return this.opeHandler.decrypt(this.opeKey, value);
+			default :
+				return value;
+		}
 	}
 
 	/**
@@ -93,8 +192,8 @@ public class CryptoProperties {
 			long timestamp = cell.getTimestamp();
 			byte type = cell.getTypeByte();
 
-			Cell decCell = CellUtil.createCell(this.decode(row), cf, cq,
-					timestamp, type, value);
+			Cell decCell = CellUtil.createCell(this.decodeRow(row), cf, cq,
+					timestamp, type, this.decodeValue(cf, cq, value));
 			cellList.add(decCell);
 		}
 		return Result.create(cellList);
@@ -111,7 +210,7 @@ public class CryptoProperties {
 		byte[] stopRow = s.getStopRow();
 		Scan encScan = null;
 
-		switch (this.cType) {
+		switch (this.tableSchema.getKey().getCryptoType()) {
 			case STD :
 			case DET :
 				encScan = new Scan();
@@ -119,12 +218,12 @@ public class CryptoProperties {
 			case OPE :
 				encScan = new Scan();
 				if (startRow.length != 0 && stopRow.length != 0) {
-					encScan.setStartRow(this.encode(startRow));
-					encScan.setStopRow(this.encode(stopRow));
+					encScan.setStartRow(this.encodeRow(startRow));
+					encScan.setStopRow(this.encodeRow(stopRow));
 				} else if (startRow.length != 0 && stopRow.length == 0) {
-					encScan.setStartRow(this.encode(startRow));
+					encScan.setStartRow(this.encodeRow(startRow));
 				} else if (startRow.length == 0 && stopRow.length != 0) {
-					encScan.setStopRow(this.encode(stopRow));
+					encScan.setStopRow(this.encodeRow(stopRow));
 				}
 
 				if (s.hasFilter()) {
@@ -151,7 +250,7 @@ public class CryptoProperties {
 		ByteArrayComparable bComp;
 
 		if (filter != null) {
-			switch (this.cType) {
+			switch (this.tableSchema.getKey().getCryptoType()) {
 				case STD :
 				case DET :
 					comp = filter.getOperator();
@@ -166,7 +265,7 @@ public class CryptoProperties {
 					comp = filter.getOperator();
 					bComp = filter.getComparator();
 					BinaryComparator encBC = new BinaryComparator(
-							this.encode(bComp.getValue()));
+							this.encodeRow(bComp.getValue()));
 
 					return new RowFilter(comp, encBC);
 				default :
