@@ -40,17 +40,18 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 			table = client.createTableInterface(tableName);
 			LOG.debug("Test Execution [" + tableName + "]\n");
 
-			 long quantity = timingPutTest(table, time);
-			 System.out.println("Quantity: " + quantity);
+			long quantity = timingPutTest(table, time);
+			System.out.println("Quantity: " + quantity);
 
-			 timingGetTest(table, time, quantity);
+			timingGetTest(table, time, quantity);
 
-//			byte[] cf = columnDescriptor.getBytes();
-//			byte[] cq = "testQualifier".getBytes();
-//			byte[] value = Utils.addPadding("1122330".getBytes(), formatSize);
-//
-//			testPut(table, cf, cq, value);
-//			testGet(table, cf, cq, value);
+			// byte[] cf = columnDescriptor.getBytes();
+			// byte[] cq = "testQualifier".getBytes();
+			// byte[] value = Utils.addPadding("1122330".getBytes(),
+			// formatSize);
+			//
+			// testPut(table, cf, cq, value);
+			// testGet(table, cf, cq, value);
 			// testDelete(table, cf, cq, value);
 			// testScan(table, null, null);
 			// testFilter(table, CompareFilter.CompareOp.GREATER,
@@ -347,6 +348,7 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 				Result res = table.get(get);
 				if (res != null) {
 					byte[] storedKey = res.getRow();
+					LOG.debug("> Key : " + new String(storedKey));
 				}
 
 				data++;

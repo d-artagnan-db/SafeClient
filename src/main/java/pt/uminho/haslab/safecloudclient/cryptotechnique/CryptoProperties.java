@@ -111,16 +111,20 @@ public class CryptoProperties {
 	 * @return
 	 */
 	public byte[] encodeRow(byte[] content) {
-		switch (this.tableSchema.getKey().getCryptoType()) {
-			case STD :
-				return this.stdHandler.encrypt(this.stdKey, content);
-			case DET :
-				return this.detHandler.encrypt(this.detKey, content);
-			case OPE :
-				return this.opeHandler.encrypt(this.opeKey, content);
-			default :
-				return content;
-		}
+		// TODO mudar isto - retirar o if e por um PLT no CryptoType
+		if (this.tableSchema.getKey().getCryptoType() != null) {
+			switch (this.tableSchema.getKey().getCryptoType()) {
+				case STD :
+					return this.stdHandler.encrypt(this.stdKey, content);
+				case DET :
+					return this.detHandler.encrypt(this.detKey, content);
+				case OPE :
+					return this.opeHandler.encrypt(this.opeKey, content);
+				default :
+					return content;
+			}
+		} else
+			return content;
 		// return this.handler.encrypt(this.key, content);
 	}
 
@@ -131,16 +135,20 @@ public class CryptoProperties {
 	 * @return
 	 */
 	public byte[] decodeRow(byte[] content) {
-		switch (this.tableSchema.getKey().getCryptoType()) {
-			case STD :
-				return this.stdHandler.decrypt(this.stdKey, content);
-			case DET :
-				return this.detHandler.decrypt(this.detKey, content);
-			case OPE :
-				return this.opeHandler.decrypt(this.opeKey, content);
-			default :
-				return content;
-		}
+		// TODO mudar isto - retirar o if e por um PLT no CryptoType
+		if (this.tableSchema.getKey().getCryptoType() != null) {
+			switch (this.tableSchema.getKey().getCryptoType()) {
+				case STD :
+					return this.stdHandler.decrypt(this.stdKey, content);
+				case DET :
+					return this.detHandler.decrypt(this.detKey, content);
+				case OPE :
+					return this.opeHandler.decrypt(this.opeKey, content);
+				default :
+					return content;
+			}
+		} else
+			return content;
 		// return this.handler.decrypt(this.key, content);
 	}
 

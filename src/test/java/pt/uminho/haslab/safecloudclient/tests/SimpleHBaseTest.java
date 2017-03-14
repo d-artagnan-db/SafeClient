@@ -78,11 +78,12 @@ public abstract class SimpleHBaseTest {
 			throws ZooKeeperConnectionException, IOException, Exception {
 
 		if (!client.checkTableExists(tableName)) {
-//			TableName tbname = TableName.valueOf(tableName);
-//			HTableDescriptor table = new HTableDescriptor(tbname);
-//			HColumnDescriptor family = new HColumnDescriptor(columnDescriptor);
-//			table.addFamily(family);
-//			client.createTestTable(table);
+			// TableName tbname = TableName.valueOf(tableName);
+			// HTableDescriptor table = new HTableDescriptor(tbname);
+			// HColumnDescriptor family = new
+			// HColumnDescriptor(columnDescriptor);
+			// table.addFamily(family);
+			// client.createTestTable(table);
 
 			SchemaParser schema = new SchemaParser();
 			schema.parse("conf.xml");
@@ -90,8 +91,9 @@ public abstract class SimpleHBaseTest {
 
 			TableName tbname = TableName.valueOf(ts.getTablename());
 			HTableDescriptor table = new HTableDescriptor(tbname);
-			for(Family f : ts.getColumnFamilies()) {
-				HColumnDescriptor family = new HColumnDescriptor(f.getFamilyName());
+			for (Family f : ts.getColumnFamilies()) {
+				HColumnDescriptor family = new HColumnDescriptor(
+						f.getFamilyName());
 				table.addFamily(family);
 			}
 			client.createTestTable(table);
@@ -142,11 +144,11 @@ public abstract class SimpleHBaseTest {
 				Configuration conf = new Configuration();
 				conf.addResource("conf.xml");
 
-//				HBaseAdmin admin = new HBaseAdmin(conf);
-//				admin.disableTable(tableName);
-//				LOG.debug("Table disabled.");
-//				admin.deleteTable(tableName);
-//				LOG.debug("Table dropped.");
+				// HBaseAdmin admin = new HBaseAdmin(conf);
+				// admin.disableTable(tableName);
+				// LOG.debug("Table disabled.");
+				// admin.deleteTable(tableName);
+				// LOG.debug("Table dropped.");
 			}
 
 			client.stopCluster();

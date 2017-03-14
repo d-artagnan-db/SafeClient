@@ -31,7 +31,7 @@ public class CryptoTable extends HTable {
 	public CryptoTable(Configuration conf, String tableName,
 			CryptoTechnique.CryptoType cType) throws IOException {
 		super(conf, TableName.valueOf(tableName));
-		this.tableSchema = this.init("conf.xml");
+		this.tableSchema = this.init("schema.xml");
 		// this.cryptoProperties = new CryptoProperties(cType, 23);
 		this.cryptoProperties = new CryptoProperties(this.tableSchema);
 		this.resultScannerFactory = new ResultScannerFactory();
@@ -78,36 +78,41 @@ public class CryptoTable extends HTable {
 
 		try {
 			byte[] row = get.getRow();
-			switch (this.cryptoProperties.tableSchema.getKey().getCryptoType()) {
-				case STD :
-					ResultScanner encScan = super.getScanner(getScan);
-					for (Result r = encScan.next(); r != null; r = encScan
-							.next()) {
-						byte[] aux = this.cryptoProperties
-								.decodeRow(r.getRow());
+			// TODO mudar isto - retirar o if e por um PLT no CryptoType
+			if (this.cryptoProperties.tableSchema.getKey().getCryptoType() != null) {
+				switch (this.cryptoProperties.tableSchema.getKey()
+						.getCryptoType()) {
+					case STD :
+						ResultScanner encScan = super.getScanner(getScan);
+						for (Result r = encScan.next(); r != null; r = encScan
+								.next()) {
+							byte[] aux = this.cryptoProperties.decodeRow(r
+									.getRow());
 
-						if (Arrays.equals(row, aux)) {
-							getResult = this.cryptoProperties.decodeResult(
-									r.getRow(), r);
-							break;
+							if (Arrays.equals(row, aux)) {
+								getResult = this.cryptoProperties.decodeResult(
+										r.getRow(), r);
+								break;
+							}
 						}
-					}
-					return getResult;
-				case DET :
-				case OPE :
-					Get encGet = new Get(this.cryptoProperties.encodeRow(row));
-					Result res = super.get(encGet);
-					if (!res.isEmpty()) {
-						LOG.debug("Found result");
-						getResult = this.cryptoProperties.decodeResult(
-								res.getRow(), res);
-					}
-					LOG.debug("Going to return OPE");
-					return getResult;
-				default :
-					break;
-			}
-
+						return getResult;
+					case DET :
+					case OPE :
+						Get encGet = new Get(
+								this.cryptoProperties.encodeRow(row));
+						Result res = super.get(encGet);
+						if (!res.isEmpty()) {
+							LOG.debug("Found result");
+							getResult = this.cryptoProperties.decodeResult(
+									res.getRow(), res);
+						}
+						LOG.debug("Going to return OPE");
+						return getResult;
+					default :
+						break;
+				}
+			} else
+				return super.get(get);
 		} catch (IOException e) {
 			LOG.error("Exception in get method. " + e.getMessage());
 		}
