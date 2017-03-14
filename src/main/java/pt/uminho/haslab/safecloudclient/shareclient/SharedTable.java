@@ -42,7 +42,8 @@ public class SharedTable implements HTableInterface {
 	private static ResultPlayerLoadBalancer LB = new ResultPlayerLoadBalancerImpl();
 	private static ClientCache CACHE;
 	private static final TableLock TABLE_LOCKS = new TableLockImpl();
-
+       
+        
 	public static void initializeLoadBalancer(
 			ResultPlayerLoadBalancer loadBalancer) {
 		LB = loadBalancer;

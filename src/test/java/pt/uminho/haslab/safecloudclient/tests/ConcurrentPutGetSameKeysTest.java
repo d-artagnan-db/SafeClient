@@ -18,8 +18,8 @@ public class ConcurrentPutGetSameKeysTest extends ConcurrentPutGetTest {
 	 */
 	@Parameterized.Parameters
 	public static Collection valueGenerator() {
-		nThreads = 10;
-		nValues = 100;
+		nThreads = 2;
+		nValues = 20;
 		LOG.debug("Going to generate values with " + nThreads + " nClients "
 				+ nValues + " nVals");
 		return ValuesGenerator.concurrentPutGetGenerator(nValues, nThreads);

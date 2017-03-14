@@ -78,7 +78,8 @@ public abstract class ConcurrentSimpleHBaseTest {
 		createTestTable();
 		assertEquals(true, testClient.checkTableExists(tableName));
 		List<Thread> threads = new ArrayList<Thread>();
-
+                
+                Long start = System.nanoTime();
 		for (int i = 0; i < nThreads; i++) {
 			LOG.debug("Creating execution thread " + i);
 			Thread t = getExecutionThread(i);
@@ -94,7 +95,9 @@ public abstract class ConcurrentSimpleHBaseTest {
 			LOG.debug("Going to join client thread");
 			t.join();
 		}
-
+                Long stop = System.nanoTime();
+                
+                LOG.debug("Execution time was "+(stop-start));
 		for (Thread t : threads) {
 			LOG.debug("Going to check result of client thread");
 			Assert.assertEquals(true, ((ConcurrentClient) t).getTestPassed());

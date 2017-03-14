@@ -13,6 +13,7 @@ import pt.uminho.haslab.safecloudclient.shareclient.ClientCacheImpl;
 import pt.uminho.haslab.safecloudclient.shareclient.ResultPlayerLoadBalancerImpl;
 import pt.uminho.haslab.safecloudclient.shareclient.SharedAdmin;
 import pt.uminho.haslab.safecloudclient.shareclient.SharedTable;
+import pt.uminho.haslab.safecloudclient.shareclient.VoidCache;
 import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
 import pt.uminho.haslab.testingutils.ShareCluster;
 
@@ -26,7 +27,8 @@ public class ShareClient implements TestClient {
 	public ShareClient() {
 		LOG.debug("Going to start Shareclient ");
 		System.setProperty("hadoop.home.dir", "/");
-		SharedTable.initalizeCache(new ClientCacheImpl(50));
+		SharedTable.initalizeCache(new ClientCacheImpl(30));
+                //SharedTable.initalizeCache(new VoidCache());
 		SharedTable.initializeLoadBalancer(new ResultPlayerLoadBalancerImpl());
 		clusters = null;
 		admin = null;
