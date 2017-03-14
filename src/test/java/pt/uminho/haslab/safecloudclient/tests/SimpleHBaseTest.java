@@ -61,11 +61,11 @@ public abstract class SimpleHBaseTest {
 
 		LOG.debug("Creating clients");
 
-//		theClients.put(new PlaintextClient(), "Vanilla");
+		// theClients.put(new PlaintextClient(), "Vanilla");
 		theClients.put(new CryptoClient(DET), "Deterministic");
 		// theClients.put(new CryptoClient(STD), "Standard");
-//		theClients.put(new CryptoClient(OPE), "OPE");
-//		theClients.put(new ShareClient(), "ShareClient");
+		// theClients.put(new CryptoClient(OPE), "OPE");
+		// theClients.put(new ShareClient(), "ShareClient");
 		System.out.println("Client created");
 
 		return theClients;
