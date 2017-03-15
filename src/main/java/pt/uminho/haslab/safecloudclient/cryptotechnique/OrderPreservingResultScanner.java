@@ -22,10 +22,9 @@ public class OrderPreservingResultScanner implements ResultScanner {
 	public Result next() throws IOException {
 		Result encryptedResult = this.encryptedScanner.next();
 		if (encryptedResult != null)
-			return this.cProperties.decodeResult(encryptedResult.getRow(),
-					encryptedResult);
+			return this.cProperties.decodeResult(encryptedResult.getRow(), encryptedResult);
 		else
-			return null;
+			return Result.EMPTY_RESULT;
 	}
 
 	public Result[] next(int i) throws IOException {

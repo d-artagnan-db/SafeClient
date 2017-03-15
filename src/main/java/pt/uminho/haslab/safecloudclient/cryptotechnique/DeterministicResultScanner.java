@@ -150,7 +150,7 @@ public class DeterministicResultScanner implements ResultScanner {
 			if (digest)
 				return this.cProperties.decodeResult(res.getRow(), res);
 			else
-				return new Result();
+				return Result.EMPTY_RESULT;
 
 		} else
 			return null;
