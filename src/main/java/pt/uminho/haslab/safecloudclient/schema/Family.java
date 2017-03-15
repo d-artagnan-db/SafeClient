@@ -18,11 +18,10 @@ public class Family {
 
 	public Family() {
 		this.familyName = "";
-		this.cryptoType = CryptoTechnique.CryptoType.STD;
+		this.cryptoType = CryptoTechnique.CryptoType.PLT;
 		this.formatSize = 0;
-		this.qualifiers = new ArrayList<Qualifier>();
+		this.qualifiers = new ArrayList<>();
 	}
-
 	public Family(String familyName, CryptoTechnique.CryptoType cType, int formatSize) {
         this.familyName = familyName;
         this.cryptoType = cType;
@@ -115,6 +114,17 @@ public class Family {
 			qualifier.setFormatSize(this.formatSize);
 
 		this.qualifiers.add(qualifier);
+	}
+
+	public boolean containsQualifier(String qualifier) {
+		boolean contains = false;
+		for (Qualifier q : this.qualifiers) {
+			if (q.getName().equals(qualifier)) {
+				contains = true;
+				break;
+			}
+		}
+		return contains;
 	}
 
 	public String toString() {

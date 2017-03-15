@@ -145,6 +145,7 @@ public class CryptoProperties {
 	public byte[] encodeRow(byte[] content) {
 		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getKey()
 				.getCryptoType();
+		System.out.println("Encode Row: " + cryptoType);
 		return encodeCryptoType(cryptoType, content);
 	}
 
@@ -157,6 +158,7 @@ public class CryptoProperties {
 	public byte[] decodeRow(byte[] content) {
 		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getKey()
 				.getCryptoType();
+		System.out.println("Decode Row: " + cryptoType);
 		return decodeCryptoType(cryptoType, content);
 	}
 
@@ -165,6 +167,7 @@ public class CryptoProperties {
 		String q = new String(qualifier);
 		CryptoTechnique.CryptoType cryptoType = this.tableSchema
 				.getCryptoTypeFromQualifer(f, q);
+		System.out.println("Encode Value (" + f + "," + q + "): " + cryptoType);
 		return encodeCryptoType(cryptoType, value);
 	}
 
@@ -173,6 +176,7 @@ public class CryptoProperties {
 		String q = new String(qualifier);
 		CryptoTechnique.CryptoType cryptoType = this.tableSchema
 				.getCryptoTypeFromQualifer(f, q);
+		System.out.println("Decode Value (" + f + "," + q + "): " + cryptoType);
 		return decodeCryptoType(cryptoType, value);
 	}
 
@@ -185,6 +189,7 @@ public class CryptoProperties {
 	 * @return
 	 */
 	public Result decodeResult(byte[] row, Result res) {
+		byte[] decodedRow = this.decodeRow(row);
 		List<Cell> cellList = new ArrayList<Cell>();
 		while (res.advance()) {
 			Cell cell = res.current();
@@ -194,8 +199,8 @@ public class CryptoProperties {
 			long timestamp = cell.getTimestamp();
 			byte type = cell.getTypeByte();
 
-			Cell decCell = CellUtil.createCell(this.decodeRow(row), cf, cq,
-					timestamp, type, this.decodeValue(cf, cq, value));
+			Cell decCell = CellUtil.createCell(decodedRow, cf, cq, timestamp,
+					type, this.decodeValue(cf, cq, value));
 			cellList.add(decCell);
 		}
 		return Result.create(cellList);

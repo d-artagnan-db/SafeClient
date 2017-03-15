@@ -13,7 +13,7 @@ public class Qualifier {
 
 	public Qualifier() {
 		this.qualifierName = "";
-		this.cryptoType = CryptoTechnique.CryptoType.STD;
+		this.cryptoType = CryptoTechnique.CryptoType.PLT;
 		this.formatSize = 0;
 	}
 

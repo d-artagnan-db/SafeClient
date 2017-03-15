@@ -13,7 +13,7 @@ public class ResultScannerFactory {
 			ResultScanner rs, Object filterResult) {
 		switch (cType) {
 			case PLT :
-				return rs;
+				return new PlaintextResultScanner(cp, rs);
 			case STD :
 				return new StandardResultScanner(cp, startRow, stopRow, rs,
 						filterResult);

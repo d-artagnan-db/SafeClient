@@ -11,7 +11,7 @@ public class Key {
 	private int formatSize;
 
 	public Key() {
-		this.cryptoType = CryptoTechnique.CryptoType.STD;
+		this.cryptoType = CryptoTechnique.CryptoType.PLT;
 		this.formatSize = 0;
 	}
 

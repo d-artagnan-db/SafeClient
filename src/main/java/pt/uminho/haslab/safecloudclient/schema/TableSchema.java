@@ -27,13 +27,12 @@ public class TableSchema {
 
 	public TableSchema() {
 		this.tablename = "";
-		this.defaultKeyCryptoType = CryptoTechnique.CryptoType.STD;
-		this.defaultColumnsCryptoType = CryptoTechnique.CryptoType.STD;
+		this.defaultKeyCryptoType = CryptoTechnique.CryptoType.PLT;
+		this.defaultColumnsCryptoType = CryptoTechnique.CryptoType.PLT;
 		this.defaultFormatSize = 0;
-		this.key = null;
-		this.columnFamilies = new ArrayList<Family>();
+		this.key = new Key();
+		this.columnFamilies = new ArrayList<>();
 	}
-
 	public TableSchema(String tablename, CryptoTechnique.CryptoType defKey,
 			CryptoTechnique.CryptoType defColumns, int defFormat, Key key,
 			List<Family> families) {
@@ -91,7 +90,15 @@ public class TableSchema {
 	}
 
 	public void setKey(Key key) {
-		this.key = key;
+		if (key.getCryptoType() == null)
+			this.key.setCryptoType(this.defaultKeyCryptoType);
+		else
+			this.key.setCryptoType(key.getCryptoType());
+
+		if (key.getFormatSize() <= 0)
+			this.key.setFormatSize(this.defaultFormatSize);
+		else
+			this.key.setFormatSize(key.getFormatSize());
 	}
 
 	public void setColumnFamilies(List<Family> families) {
@@ -165,6 +172,19 @@ public class TableSchema {
 		}
 
 		return cType;
+	}
+
+	public String whichFamilyContainsQualifier(String qualifier) {
+		String family = "";
+
+		for (Family f : columnFamilies) {
+			if (f.containsQualifier(qualifier)) {
+				family = f.getFamilyName();
+				break;
+			}
+		}
+
+		return family;
 	}
 
 	public String toString() {
