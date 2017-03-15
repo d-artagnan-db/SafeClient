@@ -104,6 +104,38 @@ public class CryptoProperties {
 		System.out.println("The key was setted. Key - " + Arrays.toString(key));
 	}
 
+	public byte[] encodeCryptoType(CryptoTechnique.CryptoType cType,
+			byte[] content) {
+		switch (cType) {
+			case PLT :
+				return content;
+			case STD :
+				return this.stdHandler.encrypt(this.stdKey, content);
+			case DET :
+				return this.detHandler.encrypt(this.detKey, content);
+			case OPE :
+				return this.opeHandler.encrypt(this.opeKey, content);
+			default :
+				return null;
+		}
+	}
+
+	public byte[] decodeCryptoType(CryptoTechnique.CryptoType cType,
+			byte[] ciphertext) {
+		switch (cType) {
+			case PLT :
+				return ciphertext;
+			case STD :
+				return this.stdHandler.decrypt(this.stdKey, ciphertext);
+			case DET :
+				return this.detHandler.decrypt(this.detKey, ciphertext);
+			case OPE :
+				return this.opeHandler.decrypt(this.opeKey, ciphertext);
+			default :
+				return null;
+		}
+	}
+
 	/**
 	 * Encode a given content, apart the CryptoType
 	 * 
@@ -111,21 +143,9 @@ public class CryptoProperties {
 	 * @return
 	 */
 	public byte[] encodeRow(byte[] content) {
-		// TODO mudar isto - retirar o if e por um PLT no CryptoType
-		if (this.tableSchema.getKey().getCryptoType() != null) {
-			switch (this.tableSchema.getKey().getCryptoType()) {
-				case STD :
-					return this.stdHandler.encrypt(this.stdKey, content);
-				case DET :
-					return this.detHandler.encrypt(this.detKey, content);
-				case OPE :
-					return this.opeHandler.encrypt(this.opeKey, content);
-				default :
-					return content;
-			}
-		} else
-			return content;
-		// return this.handler.encrypt(this.key, content);
+		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getKey()
+				.getCryptoType();
+		return encodeCryptoType(cryptoType, content);
 	}
 
 	/**
@@ -135,51 +155,25 @@ public class CryptoProperties {
 	 * @return
 	 */
 	public byte[] decodeRow(byte[] content) {
-		// TODO mudar isto - retirar o if e por um PLT no CryptoType
-		if (this.tableSchema.getKey().getCryptoType() != null) {
-			switch (this.tableSchema.getKey().getCryptoType()) {
-				case STD :
-					return this.stdHandler.decrypt(this.stdKey, content);
-				case DET :
-					return this.detHandler.decrypt(this.detKey, content);
-				case OPE :
-					return this.opeHandler.decrypt(this.opeKey, content);
-				default :
-					return content;
-			}
-		} else
-			return content;
-		// return this.handler.decrypt(this.key, content);
+		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getKey()
+				.getCryptoType();
+		return decodeCryptoType(cryptoType, content);
 	}
 
 	public byte[] encodeValue(byte[] family, byte[] qualifier, byte[] value) {
 		String f = new String(family);
 		String q = new String(qualifier);
-		switch (this.tableSchema.getCryptoTypeFromQualifer(f, q)) {
-			case STD :
-				return this.stdHandler.encrypt(this.stdKey, value);
-			case DET :
-				return this.detHandler.encrypt(this.detKey, value);
-			case OPE :
-				return this.opeHandler.encrypt(this.opeKey, value);
-			default :
-				return value;
-		}
+		CryptoTechnique.CryptoType cryptoType = this.tableSchema
+				.getCryptoTypeFromQualifer(f, q);
+		return encodeCryptoType(cryptoType, value);
 	}
 
 	public byte[] decodeValue(byte[] family, byte[] qualifier, byte[] value) {
 		String f = new String(family);
 		String q = new String(qualifier);
-		switch (this.tableSchema.getCryptoTypeFromQualifer(f, q)) {
-			case STD :
-				return this.stdHandler.decrypt(this.stdKey, value);
-			case DET :
-				return this.detHandler.decrypt(this.detKey, value);
-			case OPE :
-				return this.opeHandler.decrypt(this.opeKey, value);
-			default :
-				return value;
-		}
+		CryptoTechnique.CryptoType cryptoType = this.tableSchema
+				.getCryptoTypeFromQualifer(f, q);
+		return decodeCryptoType(cryptoType, value);
 	}
 
 	/**
@@ -219,6 +213,7 @@ public class CryptoProperties {
 		Scan encScan = null;
 
 		switch (this.tableSchema.getKey().getCryptoType()) {
+			case PLT :
 			case STD :
 			case DET :
 				encScan = new Scan();

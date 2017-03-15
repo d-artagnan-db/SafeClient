@@ -64,11 +64,8 @@ public abstract class SimpleHBaseTest {
 
 		LOG.debug("Creating clients");
 
-		// theClients.put(new PlaintextClient(), "Vanilla");
-		theClients.put(new CryptoClient(DET), "usertable");
-		// theClients.put(new CryptoClient(STD), "Standard");
-		// theClients.put(new CryptoClient(OPE), "OPE");
-		// theClients.put(new ShareClient(), "ShareClient");
+		theClients.put(new CryptoClient("schema.xml"), "usertable");
+
 		System.out.println("Client created");
 
 		return theClients;
@@ -78,15 +75,8 @@ public abstract class SimpleHBaseTest {
 			throws ZooKeeperConnectionException, IOException, Exception {
 
 		if (!client.checkTableExists(tableName)) {
-			// TableName tbname = TableName.valueOf(tableName);
-			// HTableDescriptor table = new HTableDescriptor(tbname);
-			// HColumnDescriptor family = new
-			// HColumnDescriptor(columnDescriptor);
-			// table.addFamily(family);
-			// client.createTestTable(table);
-
 			SchemaParser schema = new SchemaParser();
-			schema.parse("conf.xml");
+			schema.parse("schema.xml");
 			TableSchema ts = schema.getTableSchema();
 
 			TableName tbname = TableName.valueOf(ts.getTablename());

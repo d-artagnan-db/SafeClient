@@ -12,6 +12,8 @@ public class ResultScannerFactory {
 			CryptoProperties cp, byte[] startRow, byte[] stopRow,
 			ResultScanner rs, Object filterResult) {
 		switch (cType) {
+			case PLT :
+				return rs;
 			case STD :
 				return new StandardResultScanner(cp, startRow, stopRow, rs,
 						filterResult);

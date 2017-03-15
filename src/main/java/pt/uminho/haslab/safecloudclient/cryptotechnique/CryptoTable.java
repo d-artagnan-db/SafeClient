@@ -23,19 +23,20 @@ public class CryptoTable extends HTable {
 	public ResultScannerFactory resultScannerFactory;
 	public TableSchema tableSchema;
 
-	// public CryptoTable(CryptoTechnique.CryptoType cType) {
-	// this.cryptoProperties = new CryptoProperties(cType, 23);
-	// this.resultScannerFactory = new ResultScannerFactory();
-	// }
-
 	public CryptoTable(Configuration conf, String tableName,
-			CryptoTechnique.CryptoType cType) throws IOException {
+			String schemaFilename) throws IOException {
 		super(conf, TableName.valueOf(tableName));
-		this.tableSchema = this.init("schema.xml");
-		// this.cryptoProperties = new CryptoProperties(cType, 23);
+		this.tableSchema = this.init(schemaFilename);
 		this.cryptoProperties = new CryptoProperties(this.tableSchema);
 		this.resultScannerFactory = new ResultScannerFactory();
+	}
 
+	public CryptoTable(Configuration conf, String tableName, TableSchema schema)
+			throws IOException {
+		super(conf, TableName.valueOf(tableName));
+		this.tableSchema = schema;
+		this.cryptoProperties = new CryptoProperties(this.tableSchema);
+		this.resultScannerFactory = new ResultScannerFactory();
 	}
 
 	public TableSchema init(String filename) {
@@ -49,6 +50,7 @@ public class CryptoTable extends HTable {
 	public void put(Put put) {
 		try {
 			byte[] row = put.getRow();
+
 			Put encPut = new Put(this.cryptoProperties.encodeRow(row));
 
 			CellScanner cs = put.cellScanner();
@@ -78,41 +80,38 @@ public class CryptoTable extends HTable {
 
 		try {
 			byte[] row = get.getRow();
-			// TODO mudar isto - retirar o if e por um PLT no CryptoType
-			if (this.cryptoProperties.tableSchema.getKey().getCryptoType() != null) {
-				switch (this.cryptoProperties.tableSchema.getKey()
-						.getCryptoType()) {
-					case STD :
-						ResultScanner encScan = super.getScanner(getScan);
-						for (Result r = encScan.next(); r != null; r = encScan
-								.next()) {
-							byte[] aux = this.cryptoProperties.decodeRow(r
-									.getRow());
+			switch (this.cryptoProperties.tableSchema.getKey().getCryptoType()) {
+				case PLT :
+					return super.get(get);
+				case STD :
+					ResultScanner encScan = super.getScanner(getScan);
+					for (Result r = encScan.next(); r != null; r = encScan
+							.next()) {
+						byte[] aux = this.cryptoProperties
+								.decodeRow(r.getRow());
 
-							if (Arrays.equals(row, aux)) {
-								getResult = this.cryptoProperties.decodeResult(
-										r.getRow(), r);
-								break;
-							}
-						}
-						return getResult;
-					case DET :
-					case OPE :
-						Get encGet = new Get(
-								this.cryptoProperties.encodeRow(row));
-						Result res = super.get(encGet);
-						if (!res.isEmpty()) {
-							LOG.debug("Found result");
+						if (Arrays.equals(row, aux)) {
 							getResult = this.cryptoProperties.decodeResult(
-									res.getRow(), res);
+									r.getRow(), r);
+							break;
 						}
-						LOG.debug("Going to return OPE");
-						return getResult;
-					default :
-						break;
-				}
-			} else
-				return super.get(get);
+					}
+					return getResult;
+				case DET :
+				case OPE :
+					Get encGet = new Get(this.cryptoProperties.encodeRow(row));
+					Result res = super.get(encGet);
+					if (!res.isEmpty()) {
+						LOG.debug("Found result");
+						getResult = this.cryptoProperties.decodeResult(
+								res.getRow(), res);
+					}
+					LOG.debug("Going to return OPE");
+					return getResult;
+				default :
+					break;
+			}
+
 		} catch (IOException e) {
 			LOG.error("Exception in get method. " + e.getMessage());
 		}
@@ -126,6 +125,9 @@ public class CryptoTable extends HTable {
 		try {
 			byte[] row = delete.getRow();
 			switch (this.cryptoProperties.tableSchema.getKey().getCryptoType()) {
+				case PLT :
+					super.delete(delete);
+					break;
 				case STD :
 					ResultScanner encScan = super.getScanner(deleteScan);
 					for (Result r = encScan.next(); r != null; r = encScan

@@ -138,8 +138,9 @@ public class SchemaParser {
 					return CryptoTechnique.CryptoType.DET;
 				case "OPE" :
 					return CryptoTechnique.CryptoType.OPE;
+				case "PLT" :
 				default :
-					return null;
+					return CryptoTechnique.CryptoType.PLT;
 			}
 	}
 
