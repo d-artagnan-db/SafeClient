@@ -156,8 +156,7 @@ public class TableSchema {
 		}
 	}
 
-	public CryptoTechnique.CryptoType getCryptoTypeFromQualifer(String family,
-			String qualifier) {
+	public CryptoTechnique.CryptoType getCryptoTypeFromQualifer(String family, String qualifier) {
 		CryptoTechnique.CryptoType cType = null;
 		for (Family f : this.columnFamilies) {
 			if (f.getFamilyName().equals(family)) {
@@ -170,7 +169,6 @@ public class TableSchema {
 				break;
 			}
 		}
-
 		return cType;
 	}
 

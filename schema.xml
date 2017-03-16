@@ -17,10 +17,18 @@
       <qualifier>
         <name>First</name>
         <cryptotechnique>DET</cryptotechnique>
+        <misc>
+          <property>GENERATOR</property>
+          <type>String</type>
+        </misc>
       </qualifier>
       <qualifier>
         <name>Last</name>
         <cryptotechnique>DET</cryptotechnique>
+        <misc>
+          <property>GENERATOR</property>
+          <type>String</type>
+        </misc>
       </qualifier>
     </family>
     <family>
@@ -28,11 +36,18 @@
       <qualifier>
         <name>Birthday</name>
         <cryptotechnique>OPE</cryptotechnique>
+        <misc>
+          <property>GENERATOR</property>
+          <type>Date</type>
+        </misc>
       </qualifier>
       <qualifier>
         <name>Age</name>
         <cryptotechnique>OPE</cryptotechnique>
-        <formatsize>3</formatsize>
+        <formatsize>3</formatsize><misc>
+          <property>GENERATOR</property>
+          <type>Integer</type>
+        </misc>
       </qualifier>
     </family>
   </columns>

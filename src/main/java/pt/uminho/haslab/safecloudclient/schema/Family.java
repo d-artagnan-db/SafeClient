@@ -5,6 +5,7 @@ import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by rgmacedo on 3/13/17.
@@ -83,8 +84,7 @@ public class Family {
 	 * @param cryptoType
 	 * @param formatSize
 	 */
-	public void addQualifier(String qualifierName,
-			CryptoTechnique.CryptoType cryptoType, int formatSize) {
+	public void addQualifier(String qualifierName, CryptoTechnique.CryptoType cryptoType, int formatSize, Map<String,String> properties) {
 		CryptoTechnique.CryptoType cType;
 		int fSize = 0;
 
@@ -103,7 +103,7 @@ public class Family {
 					+ this.formatSize);
 		}
 
-		this.qualifiers.add(new Qualifier(qualifierName, cType, fSize));
+		this.qualifiers.add(new Qualifier(qualifierName, cType, fSize, properties));
 	}
 
 	public void addQualifier(Qualifier qualifier) {

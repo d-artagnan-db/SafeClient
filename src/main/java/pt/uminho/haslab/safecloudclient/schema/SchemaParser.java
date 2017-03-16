@@ -5,8 +5,9 @@ import org.dom4j.io.SAXReader;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 
 import java.io.File;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by rgmacedo on 3/13/17.
@@ -30,8 +31,7 @@ public class SchemaParser {
 			SAXReader reader = new SAXReader();
 			Document document = reader.read(inputFile);
 
-			System.out.println("Root Element: "
-					+ document.getRootElement().getName());
+			System.out.println("Root Element: " + document.getRootElement().getName());
 
 			Element rootElement = document.getRootElement();
 
@@ -82,8 +82,7 @@ public class SchemaParser {
 			String formatsize = keyElement.elementText("formatsize");
 			String cryptotechnique = keyElement.elementText("cryptotechnique");
 
-			Key key = new Key(switchCryptoType(cryptotechnique),
-					formatSizeIntegerValue(formatsize));
+			Key key = new Key(switchCryptoType(cryptotechnique), formatSizeIntegerValue(formatsize));
 
 			this.tableSchema.setKey(key);
 
@@ -97,34 +96,45 @@ public class SchemaParser {
 			for (Element family : familiesElement) {
 				if (family != null) {
 					String familyName = family.elementText("name");
-					String cryptotechnique = family
-							.elementText("cryptotechnique");
+					String cryptotechnique = family.elementText("cryptotechnique");
 					String formatsize = family.elementText("formatsize");
 
-					Family f = new Family(familyName,
+					Family f = new Family(
+							familyName,
 							switchCryptoType(cryptotechnique),
 							formatSizeIntegerValue(formatsize));
 
 					this.tableSchema.addFamily(f);
 
-					List<Element> qualifiersElement = family
-							.elements("qualifier");
+					List<Element> qualifiersElement = family.elements("qualifier");
 					for (Element qualifier : qualifiersElement) {
 						String qualifierName = qualifier.elementText("name");
-						String cryptotechniqueQualifier = qualifier
-								.elementText("cryptotechnique");
-						String qualifierFormatsize = qualifier
-								.elementText("formatsize");
+						String cryptotechniqueQualifier = qualifier.elementText("cryptotechnique");
+						String qualifierFormatsize = qualifier.elementText("formatsize");
 
-						Qualifier q = new Qualifier(qualifierName,
+						List<Element> misc = qualifier.elements("misc");
+						Map<String,String> properties = parseMiscellaneous(misc);
+
+						Qualifier q = new Qualifier(
+								qualifierName,
 								switchCryptoType(cryptotechniqueQualifier),
-								formatSizeIntegerValue(qualifierFormatsize));
+								formatSizeIntegerValue(qualifierFormatsize),
+								properties);
 
 						this.tableSchema.addQualifier(familyName, q);
 					}
 				}
 			}
 		}
+	}
+
+//		TODO falta por o default
+	public Map<String,String> parseMiscellaneous(List<Element> properties) {
+		Map<String, String > result = new HashMap<>();
+		for(Element property : properties) {
+			result.put(property.elementText("property"), property.elementText("type"));
+		}
+		return result;
 	}
 
 	public CryptoTechnique.CryptoType switchCryptoType(String cType) {
