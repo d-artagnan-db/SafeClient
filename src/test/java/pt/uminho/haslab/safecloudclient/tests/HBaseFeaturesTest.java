@@ -50,8 +50,10 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 			// testGet(table, cf, cq, value);
 			// testDelete(table, cf, cq, value);
 			// testScan(table, null, null);
-			 testFilter(table, CompareFilter.CompareOp.GREATER,
-			 Utils.addPadding("5555".getBytes(), formatSize));
+
+			testFilter(table, "RowFilter", CompareFilter.CompareOp.GREATER, Utils.addPadding("1500".getBytes(), formatSize));
+
+			testFilter(table, "SingleColumnValueFilter", CompareFilter.CompareOp.GREATER, Utils.addPadding("50000".getBytes(), formatSize));
 			//
 			// timingScanTest(table, time, 100, 4000);
 			// putGetTest(table, 100);
@@ -211,25 +213,32 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 		}
 	}
 
-	public void testFilter(HTableInterface table, CompareFilter.CompareOp operation, byte[] compareValue) {
+	public Filter buildFilter(String filterType, CompareFilter.CompareOp operation, byte[] compareValue) {
+		Filter filter = null;
+
+		if(filterType.equals("RowFilter"))
+			filter = new RowFilter(operation, new BinaryComparator(compareValue));
+		else if(filterType.equals("SingleColumnValueFilter"))
+			filter = new SingleColumnValueFilter("Name".getBytes(), "First".getBytes(), operation, new BinaryComparator(compareValue));
+
+		return filter;
+	}
+
+	public void testFilter(HTableInterface table, String filterType, CompareFilter.CompareOp operation, byte[] compareValue) {
 		try {
 			Scan s = new Scan();
-//			Filter filter = new RowFilter(operation, new BinaryComparator(compareValue));
-//			s.setFilter(filter);
-
-			Filter filter = new SingleColumnValueFilter("Name".getBytes(), "First".getBytes(), operation, new BinaryComparator(compareValue));
-			s.setFilter(filter);
+			s.setFilter(buildFilter(filterType, operation, compareValue));
 
 			long start = System.currentTimeMillis();
 			ResultScanner rs = table.getScanner(s);
 			int total = 0;
 			for (Result r = rs.next(); r != null; r = rs.next()) {
 				if (!r.isEmpty()) {
-					LOG.debug("Key [" +
-							new String(r.getRow())+
-							":"+
-							new String(r.getValue("Name".getBytes(), "First".getBytes())) +
-							"]\n");
+//					LOG.debug("Key [" +
+//							new String(r.getRow())+
+//							":"+
+//							new String(r.getValue("Name".getBytes(), "First".getBytes())) +
+//							"]\n");
 					total++;
 				}
 			}

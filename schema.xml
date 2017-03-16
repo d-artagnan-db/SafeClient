@@ -16,7 +16,7 @@
       <formatsize>10</formatsize>
       <qualifier>
         <name>First</name>
-        <cryptotechnique>STD</cryptotechnique>
+        <cryptotechnique>DET</cryptotechnique>
       </qualifier>
       <qualifier>
         <name>Last</name>
