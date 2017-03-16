@@ -170,7 +170,7 @@ public class CryptoTable extends HTable {
 					this.cryptoProperties.tableSchema.getKey().getCryptoType(),
 					this.cryptoProperties, startRow, endRow,
 					encryptedResultScanner, this.cryptoProperties
-							.parseFilter((RowFilter) scan.getFilter()));
+							.parseFilter(scan.getFilter()));
 
 		} catch (Exception e) {
 			LOG.error("Exception in scan method. " + e.getMessage());

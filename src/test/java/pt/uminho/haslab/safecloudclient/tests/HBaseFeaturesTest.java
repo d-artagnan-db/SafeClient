@@ -43,7 +43,7 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 			long quantity = timingPutTest(table, time);
 			System.out.println("Quantity: " + quantity);
 
-			timingGetTest(table, time, quantity);
+//			timingGetTest(table, time, quantity);
 
 			// byte[] cf = columnDescriptor.getBytes();
 			// byte[] cq = "testQualifier".getBytes();
@@ -54,8 +54,8 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 			// testGet(table, cf, cq, value);
 			// testDelete(table, cf, cq, value);
 			// testScan(table, null, null);
-			// testFilter(table, CompareFilter.CompareOp.GREATER,
-			// Utils.addPadding("5555".getBytes(), formatSize));
+			 testFilter(table, CompareFilter.CompareOp.GREATER,
+			 Utils.addPadding("5555".getBytes(), formatSize));
 			//
 			// timingScanTest(table, time, 100, 4000);
 			// putGetTest(table, 100);
@@ -223,8 +223,7 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 			CompareFilter.CompareOp operation, byte[] compareValue) {
 		try {
 			Scan s = new Scan();
-			Filter filter = new RowFilter(operation, new BinaryComparator(
-					compareValue));
+			Filter filter = new RowFilter(operation, new BinaryComparator(compareValue));
 			s.setFilter(filter);
 
 			long start = System.currentTimeMillis();
@@ -232,8 +231,12 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 			int total = 0;
 			for (Result r = rs.next(); r != null; r = rs.next()) {
 				if (!r.isEmpty()) {
-					// LOG.debug("Key [" + new String(r.getRow()) + "]\n");
+					LOG.debug("Not empty");
+					LOG.debug("Key [" + new String(r.getRow()) + "]\n");
 					total++;
+				}
+				else {
+					LOG.debug("Is Empty");
 				}
 			}
 			long stop = System.currentTimeMillis();

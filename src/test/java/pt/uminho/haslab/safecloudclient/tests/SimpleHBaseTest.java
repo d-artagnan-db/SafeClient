@@ -134,11 +134,11 @@ public abstract class SimpleHBaseTest {
 				Configuration conf = new Configuration();
 				conf.addResource("conf.xml");
 
-				// HBaseAdmin admin = new HBaseAdmin(conf);
-				// admin.disableTable(tableName);
-				// LOG.debug("Table disabled.");
-				// admin.deleteTable(tableName);
-				// LOG.debug("Table dropped.");
+				 HBaseAdmin admin = new HBaseAdmin(conf);
+				 admin.disableTable(tableName);
+				 LOG.debug("Table disabled.");
+				 admin.deleteTable(tableName);
+				 LOG.debug("Table dropped.");
 			}
 
 			client.stopCluster();

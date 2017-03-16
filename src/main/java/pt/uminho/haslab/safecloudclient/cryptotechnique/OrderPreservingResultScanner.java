@@ -25,7 +25,7 @@ public class OrderPreservingResultScanner implements ResultScanner {
 			return this.cProperties.decodeResult(encryptedResult.getRow(),
 					encryptedResult);
 		else
-			return Result.EMPTY_RESULT;
+			return null;
 	}
 
 	public Result[] next(int i) throws IOException {

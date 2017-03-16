@@ -22,11 +22,12 @@ public class PlaintextResultScanner implements ResultScanner {
 	@Override
 	public Result next() throws IOException {
 		Result encryptedResult = this.encryptedScanner.next();
-		if (encryptedResult != null)
-			return this.cProperties.decodeResult(encryptedResult.getRow(),
-					encryptedResult);
-		else
-			return Result.EMPTY_RESULT;
+		if (encryptedResult != null) {
+			return this.cProperties.decodeResult(encryptedResult.getRow(), encryptedResult);
+		}
+		else {
+			return null;
+		}
 	}
 
 	@Override

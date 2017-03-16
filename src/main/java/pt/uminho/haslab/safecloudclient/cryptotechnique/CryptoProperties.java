@@ -219,6 +219,8 @@ public class CryptoProperties {
 
 		switch (this.tableSchema.getKey().getCryptoType()) {
 			case PLT :
+				encScan = s;
+				break;
 			case STD :
 			case DET :
 				encScan = new Scan();
@@ -253,34 +255,52 @@ public class CryptoProperties {
 	 * @param filter
 	 * @return
 	 */
-	public Object parseFilter(RowFilter filter) {
+	public Object parseFilter(Filter filter) {
 		CompareFilter.CompareOp comp;
 		ByteArrayComparable bComp;
+		Object returnValue = null;
 
-		if (filter != null) {
-			switch (this.tableSchema.getKey().getCryptoType()) {
-				case STD :
-				case DET :
-					comp = filter.getOperator();
-					bComp = filter.getComparator();
+		if(filter != null) {
+			if(filter instanceof RowFilter) {
+				System.out.println("This is a RowFilter");
+				RowFilter rowFilter = (RowFilter) filter;
+				switch (this.tableSchema.getKey().getCryptoType()) {
+					case PLT:
+						System.out.println("Operator: "+rowFilter.getOperator());
+						System.out.println("Compare Value: "+new String(rowFilter.getComparator().getValue()));
+						returnValue = rowFilter;
+						break;
+					case STD:
+					case DET:
+						comp = rowFilter.getOperator();
+						bComp = rowFilter.getComparator();
 
-					Object[] parserResult = new Object[2];
-					parserResult[0] = comp;
-					parserResult[1] = bComp.getValue();
+						Object[] parserResult = new Object[2];
+						parserResult[0] = comp;
+						parserResult[1] = bComp.getValue();
 
-					return parserResult;
-				case OPE :
-					comp = filter.getOperator();
-					bComp = filter.getComparator();
-					BinaryComparator encBC = new BinaryComparator(
-							this.encodeRow(bComp.getValue()));
+						returnValue = parserResult;
+						break;
+					case OPE:
+						comp = rowFilter.getOperator();
+						bComp = rowFilter.getComparator();
+						BinaryComparator encBC = new BinaryComparator(this.encodeRow(bComp.getValue()));
 
-					return new RowFilter(comp, encBC);
-				default :
-					return null;
+						returnValue =  new RowFilter(comp, encBC);
+						break;
+					default:
+						returnValue = null;
+						break;
+				}
 			}
-		} else
-			return null;
+			else if(filter instanceof SingleColumnValueFilter) {
+				System.out.println("This is a SingleColumnValueFilter");
+				returnValue = null;
+			}
+
+		}
+
+		return returnValue;
 	}
 
 	// TODO remove temporary Method
