@@ -13,8 +13,7 @@ public class PlaintextResultScanner implements ResultScanner {
 	public CryptoProperties cProperties;
 	public ResultScanner encryptedScanner;
 
-	public PlaintextResultScanner(CryptoProperties cp,
-			ResultScanner encryptedScanner) {
+	public PlaintextResultScanner(CryptoProperties cp, ResultScanner encryptedScanner) {
 		this.cProperties = cp;
 		this.encryptedScanner = encryptedScanner;
 	}

@@ -23,12 +23,7 @@ import java.util.List;
  */
 public class CryptoProperties {
 
-	// public CryptoHandler handler;
-	// public CryptoTechnique.CryptoType cType;
-	// public byte[] key;
 	public Utils utils;
-	// public int formatSize;
-	//
 	public TableSchema tableSchema;
 
 	public CryptoHandler stdHandler;
@@ -53,15 +48,6 @@ public class CryptoProperties {
 		this.utils = new Utils();
 	}
 
-	// public CryptoProperties(CryptoTechnique.CryptoType cType, int formatSize)
-	// {
-	// this.cType = cType;
-	// this.handler = new CryptoHandler(cType);
-	// this.key = this.handler.gen();
-	// this.utils = new Utils();
-	// this.formatSize = formatSize;
-	// }
-
 	/**
 	 * Get Encryption/Decryption Key from CryptoHandler
 	 * 
@@ -78,7 +64,6 @@ public class CryptoProperties {
 			default :
 				return null;
 		}
-
 	}
 
 	/**
@@ -100,12 +85,10 @@ public class CryptoProperties {
 			default :
 				break;
 		}
-
 		System.out.println("The key was setted. Key - " + Arrays.toString(key));
 	}
 
-	public byte[] encodeCryptoType(CryptoTechnique.CryptoType cType,
-			byte[] content) {
+	public byte[] encodeCryptoType(CryptoTechnique.CryptoType cType, byte[] content) {
 		switch (cType) {
 			case PLT :
 				return content;
@@ -120,8 +103,7 @@ public class CryptoProperties {
 		}
 	}
 
-	public byte[] decodeCryptoType(CryptoTechnique.CryptoType cType,
-			byte[] ciphertext) {
+	public byte[] decodeCryptoType(CryptoTechnique.CryptoType cType, byte[] ciphertext) {
 		switch (cType) {
 			case PLT :
 				return ciphertext;
@@ -143,8 +125,7 @@ public class CryptoProperties {
 	 * @return
 	 */
 	public byte[] encodeRow(byte[] content) {
-		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getKey()
-				.getCryptoType();
+		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getKey().getCryptoType();
 		System.out.println("Encode Row: " + cryptoType);
 		return encodeCryptoType(cryptoType, content);
 	}
@@ -156,8 +137,7 @@ public class CryptoProperties {
 	 * @return
 	 */
 	public byte[] decodeRow(byte[] content) {
-		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getKey()
-				.getCryptoType();
+		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getKey().getCryptoType();
 		System.out.println("Decode Row: " + cryptoType);
 		return decodeCryptoType(cryptoType, content);
 	}
@@ -165,8 +145,7 @@ public class CryptoProperties {
 	public byte[] encodeValue(byte[] family, byte[] qualifier, byte[] value) {
 		String f = new String(family);
 		String q = new String(qualifier);
-		CryptoTechnique.CryptoType cryptoType = this.tableSchema
-				.getCryptoTypeFromQualifer(f, q);
+		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getCryptoTypeFromQualifer(f, q);
 		System.out.println("Encode Value (" + f + "," + q + "): " + cryptoType);
 		return encodeCryptoType(cryptoType, value);
 	}
@@ -174,8 +153,7 @@ public class CryptoProperties {
 	public byte[] decodeValue(byte[] family, byte[] qualifier, byte[] value) {
 		String f = new String(family);
 		String q = new String(qualifier);
-		CryptoTechnique.CryptoType cryptoType = this.tableSchema
-				.getCryptoTypeFromQualifer(f, q);
+		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getCryptoTypeFromQualifer(f, q);
 		System.out.println("Decode Value (" + f + "," + q + "): " + cryptoType);
 		return decodeCryptoType(cryptoType, value);
 	}
@@ -191,6 +169,7 @@ public class CryptoProperties {
 	public Result decodeResult(byte[] row, Result res) {
 		byte[] decodedRow = this.decodeRow(row);
 		List<Cell> cellList = new ArrayList<Cell>();
+
 		while (res.advance()) {
 			Cell cell = res.current();
 			byte[] cf = CellUtil.cloneFamily(cell);
@@ -199,8 +178,13 @@ public class CryptoProperties {
 			long timestamp = cell.getTimestamp();
 			byte type = cell.getTypeByte();
 
-			Cell decCell = CellUtil.createCell(decodedRow, cf, cq, timestamp,
-					type, this.decodeValue(cf, cq, value));
+			Cell decCell = CellUtil.createCell(
+					decodedRow,
+					cf,
+					cq,
+					timestamp,
+					type,
+					this.decodeValue(cf, cq, value));
 			cellList.add(decCell);
 		}
 		return Result.create(cellList);
@@ -237,8 +221,7 @@ public class CryptoProperties {
 				}
 
 				if (s.hasFilter()) {
-					RowFilter encryptedFilter = (RowFilter) parseFilter((RowFilter) s
-							.getFilter());
+					Filter encryptedFilter = (Filter) parseFilter(s.getFilter());
 					encScan.setFilter(encryptedFilter);
 				}
 				break;
@@ -262,19 +245,16 @@ public class CryptoProperties {
 
 		if(filter != null) {
 			if(filter instanceof RowFilter) {
-				System.out.println("This is a RowFilter");
 				RowFilter rowFilter = (RowFilter) filter;
+				comp = rowFilter.getOperator();
+				bComp = rowFilter.getComparator();
+
 				switch (this.tableSchema.getKey().getCryptoType()) {
 					case PLT:
-						System.out.println("Operator: "+rowFilter.getOperator());
-						System.out.println("Compare Value: "+new String(rowFilter.getComparator().getValue()));
 						returnValue = rowFilter;
 						break;
 					case STD:
 					case DET:
-						comp = rowFilter.getOperator();
-						bComp = rowFilter.getComparator();
-
 						Object[] parserResult = new Object[2];
 						parserResult[0] = comp;
 						parserResult[1] = bComp.getValue();
@@ -282,11 +262,9 @@ public class CryptoProperties {
 						returnValue = parserResult;
 						break;
 					case OPE:
-						comp = rowFilter.getOperator();
-						bComp = rowFilter.getComparator();
 						BinaryComparator encBC = new BinaryComparator(this.encodeRow(bComp.getValue()));
 
-						returnValue =  new RowFilter(comp, encBC);
+						returnValue = new RowFilter(comp, encBC);
 						break;
 					default:
 						returnValue = null;
@@ -294,13 +272,55 @@ public class CryptoProperties {
 				}
 			}
 			else if(filter instanceof SingleColumnValueFilter) {
-				System.out.println("This is a SingleColumnValueFilter");
-				returnValue = null;
+				SingleColumnValueFilter singleFilter = (SingleColumnValueFilter) filter;
+				byte[] family = singleFilter.getFamily();
+				byte[] qualifier = singleFilter.getQualifier();
+				comp = singleFilter.getOperator();
+				bComp = singleFilter.getComparator();
+
+				switch (this.tableSchema.getCryptoTypeFromQualifer(new String(family), new String(qualifier))) {
+					case PLT:
+						returnValue = singleFilter;
+						break;
+					case STD:
+					case DET:
+						Object[] parserResult = new Object[4];
+						parserResult[0] = family;
+						parserResult[1] = qualifier;
+						parserResult[2] = comp;
+						parserResult[3] = bComp.getValue();
+
+						returnValue = parserResult;
+						break;
+					case OPE:
+						BinaryComparator encBC = new BinaryComparator(this.encodeValue(family, qualifier, bComp.getValue()));
+
+						returnValue = new SingleColumnValueFilter(family, qualifier, comp, encBC);
+						break;
+					default:
+						returnValue = null;
+						break;
+				}
 			}
 
 		}
 
 		return returnValue;
+	}
+
+
+	public CryptoTechnique.CryptoType verifyFilterCryptoType(Scan scan) {
+		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getKey().getCryptoType();
+
+		if(scan.hasFilter()) {
+			Filter filter = scan.getFilter();
+			if(filter instanceof SingleColumnValueFilter) {
+				String family = new String(((SingleColumnValueFilter) filter).getFamily());
+				String qualifier = new String(((SingleColumnValueFilter)filter).getQualifier());
+				cryptoType = this.tableSchema.getCryptoTypeFromQualifer(family, qualifier);
+			}
+		}
+		return cryptoType;
 	}
 
 	// TODO remove temporary Method

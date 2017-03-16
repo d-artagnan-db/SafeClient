@@ -53,18 +53,6 @@
             </configuration>
         </plugin>
         <plugin>
-            <groupId>com.googlecode.maven-java-formatter-plugin</groupId>
-            <artifactId>maven-java-formatter-plugin</artifactId>
-            <version>0.4</version>
-            <executions>
-                <execution>
-                    <goals>
-                        <goal>format</goal>
-                    </goals>
-                </execution>
-            </executions>
-        </plugin>
-    <plugin>
           <groupId>com.spotify</groupId>
           <artifactId>docker-maven-plugin</artifactId>
           <version>0.4.5</version>

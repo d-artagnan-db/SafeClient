@@ -4,10 +4,7 @@ import java.io.IOException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.filter.BinaryComparator;
-import org.apache.hadoop.hbase.filter.CompareFilter;
-import org.apache.hadoop.hbase.filter.Filter;
-import org.apache.hadoop.hbase.filter.RowFilter;
+import org.apache.hadoop.hbase.filter.*;
 import pt.uminho.haslab.cryptoenv.Utils;
 import pt.uminho.haslab.safecloudclient.clients.TestClient;
 
@@ -27,8 +24,7 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 	final int formatSize = 23;
 	public Utils utils;
 
-	public HBaseFeaturesTest(int maxBits, List<BigInteger> values)
-			throws Exception {
+	public HBaseFeaturesTest(int maxBits, List<BigInteger> values) throws Exception {
 		super(maxBits, values);
 		this.utils = new Utils();
 	}
@@ -68,8 +64,7 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
 	}
 
-	public void testPut(HTableInterface table, byte[] cf, byte[] cq,
-			byte[] value) {
+	public void testPut(HTableInterface table, byte[] cf, byte[] cq, byte[] value) {
 		try {
 			long start = System.currentTimeMillis();
 
@@ -102,8 +97,7 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 		}
 	}
 
-	public void testGet(HTableInterface table, byte[] cf, byte[] cq,
-			byte[] value) {
+	public void testGet(HTableInterface table, byte[] cf, byte[] cq, byte[] value) {
 		try {
 			long start = System.currentTimeMillis();
 
@@ -130,8 +124,7 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 		}
 	}
 
-	public void testDelete(HTableInterface table, byte[] cf, byte[] cq,
-			byte[] value) {
+	public void testDelete(HTableInterface table, byte[] cf, byte[] cq, byte[] value) {
 		try {
 			long start = System.currentTimeMillis();
 			Delete del = new Delete(value);
@@ -202,15 +195,14 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
 			StringBuilder sb = new StringBuilder();
 			sb.append("TestScan\n");
+
 			if (startRow != null)
-				sb.append("Start Row: ").append(new String(startRow))
-						.append("\n");
+				sb.append("Start Row: ").append(new String(startRow)).append("\n");
 			if (stopRow != null)
-				sb.append("Stop Row: ").append(new String(stopRow))
-						.append("\n");
+				sb.append("Stop Row: ").append(new String(stopRow)).append("\n");
+
 			sb.append("Total Values: ").append(total).append("\n");
-			sb.append("Total Scan Time: ").append((stop - start))
-					.append("ms\n");
+			sb.append("Total Scan Time: ").append((stop - start)).append("ms\n");
 
 			LOG.debug(sb.toString());
 
@@ -219,11 +211,13 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 		}
 	}
 
-	public void testFilter(HTableInterface table,
-			CompareFilter.CompareOp operation, byte[] compareValue) {
+	public void testFilter(HTableInterface table, CompareFilter.CompareOp operation, byte[] compareValue) {
 		try {
 			Scan s = new Scan();
-			Filter filter = new RowFilter(operation, new BinaryComparator(compareValue));
+//			Filter filter = new RowFilter(operation, new BinaryComparator(compareValue));
+//			s.setFilter(filter);
+
+			Filter filter = new SingleColumnValueFilter("Name".getBytes(), "First".getBytes(), operation, new BinaryComparator(compareValue));
 			s.setFilter(filter);
 
 			long start = System.currentTimeMillis();
@@ -231,23 +225,21 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 			int total = 0;
 			for (Result r = rs.next(); r != null; r = rs.next()) {
 				if (!r.isEmpty()) {
-					LOG.debug("Not empty");
-					LOG.debug("Key [" + new String(r.getRow()) + "]\n");
+					LOG.debug("Key [" +
+							new String(r.getRow())+
+							":"+
+							new String(r.getValue("Name".getBytes(), "First".getBytes())) +
+							"]\n");
 					total++;
-				}
-				else {
-					LOG.debug("Is Empty");
 				}
 			}
 			long stop = System.currentTimeMillis();
 
 			StringBuilder sb = new StringBuilder();
 			sb.append("TestFilter\n");
-			sb.append("Compare Properties: ").append(operation).append(" - ")
-					.append(new String(compareValue)).append("\n");
+			sb.append("Compare Properties: ").append(operation).append(" - ").append(new String(compareValue)).append("\n");
 			sb.append("Total Values: ").append(total).append("\n");
-			sb.append("Total Filter Time: ").append((stop - start))
-					.append("ms\n");
+			sb.append("Total Filter Time: ").append((stop - start)).append("ms\n");
 
 			LOG.debug(sb.toString());
 
@@ -264,16 +256,14 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
 			long start = System.currentTimeMillis();
 			for (int i = 0; i < sizeofVolume; i++) {
-				Put put = new Put(Utils.addPadding(volume.get(i).getBytes(),
-						formatSize));
+				Put put = new Put(Utils.addPadding(volume.get(i).getBytes(), formatSize));
 				put.add(cf, cq, "Hello".getBytes());
 				table.put(put);
 			}
 
 			long middle = System.currentTimeMillis();
 			for (int i = 0; i < sizeofVolume; i++) {
-				Get get = new Get(Utils.addPadding(volume.get(i).getBytes(),
-						formatSize));
+				Get get = new Get(Utils.addPadding(volume.get(i).getBytes(), formatSize));
 				get.addColumn(cf, cq);
 				Result res = table.get(get);
 				if (res != null) {
@@ -285,12 +275,9 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
 			StringBuilder sb = new StringBuilder();
 			sb.append("PutGetTest result:\n");
-			sb.append("Total time of execution: ").append((stop - start))
-					.append(" ms\n");
-			sb.append("Put execution: ").append((middle - start))
-					.append(" ms\n");
-			sb.append("Get execution: ").append((stop - middle))
-					.append(" ms\n");
+			sb.append("Total time of execution: ").append((stop - start)).append(" ms\n");
+			sb.append("Put execution: ").append((middle - start)).append(" ms\n");
+			sb.append("Get execution: ").append((stop - middle)).append(" ms\n");
 
 			LOG.debug(sb.toString());
 
@@ -303,15 +290,17 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 		try {
 			byte[] cf = "Name".getBytes();
 			byte[] cq = "First".getBytes();
+			Random r = new Random();
 
 			long startTime = System.currentTimeMillis();
 
 			long data = 0;
 			while ((System.currentTimeMillis() - startTime) < time) {
-				byte[] padded = Utils.addPadding(String.valueOf(data)
-						.getBytes(), formatSize);
+				byte[] padded = Utils.addPadding(String.valueOf(data).getBytes(), formatSize);
+				byte[] value = Utils.addPadding(String.valueOf(r.nextInt(100000)).getBytes(), formatSize);
+
 				Put put = new Put(padded);
-				put.add(cf, cq, "Hello".getBytes());
+				put.add(cf, cq, value);
 				table.put(put);
 
 				data++;
@@ -321,8 +310,7 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 			sb.append("Timing Put Test\n");
 			sb.append("Operations: ").append(data).append("\n");
 			sb.append("Time: ").append(time).append("\n");
-			sb.append("Throughput: ").append((data * 1000) / time)
-					.append(" ops/s\n");
+			sb.append("Throughput: ").append((data * 1000) / time).append(" ops/s\n");
 
 			LOG.debug(sb.toString());
 
@@ -345,8 +333,7 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 			long totalOps = 0;
 			long data = 0;
 			while ((System.currentTimeMillis() - startTime) < time) {
-				Get get = new Get(Utils.addPadding(String.valueOf(data)
-						.getBytes(), formatSize));
+				Get get = new Get(Utils.addPadding(String.valueOf(data).getBytes(), formatSize));
 				get.addColumn(cf, cq);
 				Result res = table.get(get);
 				if (res != null) {
@@ -365,8 +352,7 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 			sb.append("Timing Get Test\n");
 			sb.append("Operations: ").append(totalOps).append("\n");
 			sb.append("Time: ").append(time).append("\n");
-			sb.append("Throughput: ").append(((totalOps * 1000) / time))
-					.append(" ops/s\n");
+			sb.append("Throughput: ").append(((totalOps * 1000) / time)).append(" ops/s\n");
 
 			LOG.debug(sb.toString());
 
@@ -375,20 +361,15 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 		}
 	}
 
-	public void timingScanTest(HTableInterface table, int time,
-			int startRowBound, int stopRowBound) {
+	public void timingScanTest(HTableInterface table, int time, int startRowBound, int stopRowBound) {
 		try {
 			Random r = new Random(12345);
 
 			long startTime = System.currentTimeMillis();
 			long data = 0;
 			while ((System.currentTimeMillis() - startTime) < time) {
-				byte[] startRow = Utils.addPadding(
-						String.valueOf(r.nextInt(startRowBound)).getBytes(),
-						formatSize);
-				byte[] stopRow = Utils.addPadding(
-						String.valueOf(r.nextInt(stopRowBound)).getBytes(),
-						formatSize);
+				byte[] startRow = Utils.addPadding(String.valueOf(r.nextInt(startRowBound)).getBytes(), formatSize);
+				byte[] stopRow = Utils.addPadding(String.valueOf(r.nextInt(stopRowBound)).getBytes(), formatSize);
 
 				Scan s = new Scan();
 				s.setStartRow(startRow);
@@ -396,24 +377,21 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
 				ResultScanner rs = table.getScanner(s);
 				int total = 0;
-				for (Result result = rs.next(); result != null; result = rs
-						.next()) {
+				for (Result result = rs.next(); result != null; result = rs.next()) {
 					if (!result.isEmpty()) {
 						total++;
 					}
 				}
 				data++;
 
-				LOG.debug("Scan Result [" + new String(startRow) + ", "
-						+ new String(stopRow) + ", " + total + "]");
+				LOG.debug("Scan Result [" + new String(startRow) + ", " + new String(stopRow) + ", " + total + "]");
 			}
 
 			StringBuilder sb = new StringBuilder();
 			sb.append("TimingScanTest\n");
 			sb.append("Operations: ").append(data).append("\n");
 			sb.append("Time: ").append(time).append("\n");
-			sb.append("Throughput: ").append(((data * 1000) / time))
-					.append(" ops/s\n");
+			sb.append("Throughput: ").append(((data * 1000) / time)).append(" ops/s\n");
 
 			LOG.debug(sb.toString());
 
