@@ -5,18 +5,19 @@ import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.*;
+import pt.uminho.haslab.OpeHgd;
 import pt.uminho.haslab.cryptoenv.CryptoHandler;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 import pt.uminho.haslab.cryptoenv.Utils;
+import pt.uminho.haslab.safecloudclient.schema.Family;
+import pt.uminho.haslab.safecloudclient.schema.Qualifier;
 import pt.uminho.haslab.safecloudclient.schema.TableSchema;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by rgmacedo on 2/22/17.
@@ -29,6 +30,7 @@ public class CryptoProperties {
 	public CryptoHandler stdHandler;
 	public CryptoHandler detHandler;
 	public CryptoHandler opeHandler;
+	public Map<String, Map<String, CryptoHandler>> opeValueHandler;
 
 	public byte[] stdKey;
 	public byte[] detKey;
@@ -36,16 +38,59 @@ public class CryptoProperties {
 
 	public CryptoProperties(TableSchema ts) {
 		this.tableSchema = ts;
-		this.stdHandler = new CryptoHandler(CryptoTechnique.CryptoType.STD);
+
+		this.stdHandler = new CryptoHandler(CryptoTechnique.CryptoType.STD, new ArrayList<>());
 		this.stdKey = this.stdHandler.gen();
 
-		this.detHandler = new CryptoHandler(CryptoTechnique.CryptoType.DET);
+		this.detHandler = new CryptoHandler(CryptoTechnique.CryptoType.DET, new ArrayList<>());
 		this.detKey = this.detHandler.gen();
 
-		this.opeHandler = new CryptoHandler(CryptoTechnique.CryptoType.OPE);
+		this.opeHandler = new CryptoHandler(CryptoTechnique.CryptoType.OPE, opeArguments(23, 46));
 		this.opeKey = this.opeHandler.gen();
 
+		this.opeValueHandler = defineFamilyCryptoHandler();
+		this.verifyOpeValueHandler();
+
 		this.utils = new Utils();
+	}
+
+	public List<Object> opeArguments(int formatSize, int ciphertextSize) {
+		List<Object> arguments = new ArrayList<Object>();
+		arguments.add(OpeHgd.CACHE);
+		arguments.add(formatSize);
+		arguments.add(ciphertextSize);
+		return arguments;
+	}
+
+	public Map<String, Map<String, CryptoHandler>> defineFamilyCryptoHandler() {
+		Map<String, Map<String, CryptoHandler>> familyCryptoHandler = new HashMap<>();
+		for(Family f : this.tableSchema.getColumnFamilies()) {
+			Map<String, CryptoHandler> qualifierCryptoHandler = new HashMap<>();
+			for(Qualifier q : f.getQualifiers()) {
+				if(q.getCryptoType().equals(CryptoTechnique.CryptoType.OPE)) {
+					qualifierCryptoHandler.put(
+							q.getName(),
+							new CryptoHandler(
+									CryptoTechnique.CryptoType.OPE,
+									opeArguments(q.getFormatSize(), q.getFormatSize()*2)));
+				}
+			}
+			familyCryptoHandler.put(f.getFamilyName(), qualifierCryptoHandler);
+		}
+		return familyCryptoHandler;
+	}
+
+	public void verifyOpeValueHandler() {
+		for(String family : this.opeValueHandler.keySet()) {
+			System.out.println("Family Size: "+this.opeValueHandler.get(family).size());
+			for(String qualifier : this.opeValueHandler.get(family).keySet()) {
+				System.out.println("Qualifier Properties: "+qualifier+" - "+this.opeValueHandler.get(family).get(qualifier).toString());
+			}
+		}
+	}
+
+	public CryptoHandler getCryptoHandler(String family, String qualifier) {
+		return this.opeValueHandler.get(family).get(qualifier);
 	}
 
 	/**
@@ -88,7 +133,7 @@ public class CryptoProperties {
 		System.out.println("The key was setted. Key - " + Arrays.toString(key));
 	}
 
-	public byte[] encodeCryptoType(CryptoTechnique.CryptoType cType, byte[] content) {
+	public byte[] encodeRowCryptoType(CryptoTechnique.CryptoType cType, byte[] content) {
 		switch (cType) {
 			case PLT :
 				return content;
@@ -103,7 +148,23 @@ public class CryptoProperties {
 		}
 	}
 
-	public byte[] decodeCryptoType(CryptoTechnique.CryptoType cType, byte[] ciphertext) {
+	public byte[] encodeValueCryptoType(CryptoTechnique.CryptoType cType, byte[] content, String family, String qualifier) {
+		switch (cType) {
+			case PLT :
+				return content;
+			case STD :
+				return this.stdHandler.encrypt(this.stdKey, content);
+			case DET :
+				return this.detHandler.encrypt(this.detKey, content);
+			case OPE :
+				CryptoHandler opeCh = getCryptoHandler(family, qualifier);
+				return opeCh.encrypt(this.opeKey, content);
+			default :
+				return null;
+		}
+	}
+
+	public byte[] decodeRowCryptoType(CryptoTechnique.CryptoType cType, byte[] ciphertext) {
 		switch (cType) {
 			case PLT :
 				return ciphertext;
@@ -118,6 +179,22 @@ public class CryptoProperties {
 		}
 	}
 
+	public byte[] decodeValueCryptoType(CryptoTechnique.CryptoType cType, byte[] ciphertext, String family, String qualifier) {
+		switch (cType) {
+			case PLT :
+				return ciphertext;
+			case STD :
+				return this.stdHandler.decrypt(this.stdKey, ciphertext);
+			case DET :
+				return this.detHandler.decrypt(this.detKey, ciphertext);
+			case OPE :
+				CryptoHandler opeCh = getCryptoHandler(family, qualifier);
+				return opeCh.decrypt(this.opeKey, ciphertext);
+			default :
+				return null;
+		}
+	}
+
 	/**
 	 * Encode a given content, apart the CryptoType
 	 * 
@@ -127,7 +204,7 @@ public class CryptoProperties {
 	public byte[] encodeRow(byte[] content) {
 		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getKey().getCryptoType();
 		System.out.println("Encode Row: " + cryptoType);
-		return encodeCryptoType(cryptoType, content);
+		return encodeRowCryptoType(cryptoType, content);
 	}
 
 	/**
@@ -139,7 +216,7 @@ public class CryptoProperties {
 	public byte[] decodeRow(byte[] content) {
 		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getKey().getCryptoType();
 		System.out.println("Decode Row: " + cryptoType);
-		return decodeCryptoType(cryptoType, content);
+		return decodeRowCryptoType(cryptoType, content);
 	}
 
 	public byte[] encodeValue(byte[] family, byte[] qualifier, byte[] value) {
@@ -147,7 +224,7 @@ public class CryptoProperties {
 		String q = new String(qualifier);
 		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getCryptoTypeFromQualifer(f, q);
 		System.out.println("Encode Value (" + f + "," + q + "): " + cryptoType);
-		return encodeCryptoType(cryptoType, value);
+		return encodeValueCryptoType(cryptoType, value, f, q);
 	}
 
 	public byte[] decodeValue(byte[] family, byte[] qualifier, byte[] value) {
@@ -155,7 +232,7 @@ public class CryptoProperties {
 		String q = new String(qualifier);
 		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getCryptoTypeFromQualifer(f, q);
 		System.out.println("Decode Value (" + f + "," + q + "): " + cryptoType);
-		return decodeCryptoType(cryptoType, value);
+		return decodeValueCryptoType(cryptoType, value, f, q);
 	}
 
 	/**
