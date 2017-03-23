@@ -36,8 +36,8 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 			table = client.createTableInterface(tableName);
 			LOG.debug("Test Execution [" + tableName + "]\n");
 
-//			long quantity = timingPutTest(table, time);
-//			System.out.println("Quantity: " + quantity);
+			long quantity = timingPutTest(table, time);
+			System.out.println("Quantity: " + quantity);
 
 //			timingGetTest(table, time, quantity);
 
@@ -49,12 +49,12 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 			// testPut(table, cf, cq, value);
 			// testGet(table, cf, cq, value);
 			// testDelete(table, cf, cq, value);
-			// testScan(table, null, null);
+			 testScan(table, null, null);
 
-//			testFilter(table, "RowFilter", CompareFilter.CompareOp.GREATER, Utils.addPadding("1500".getBytes(), formatSize));
+//			testFilter(table, "RowFilter", CompareFilter.CompareOp.LESS, Utils.addPadding("1500", formatSize));
 
-//			testFilter(table, "SingleColumnValueFilter", CompareFilter.CompareOp.GREATER, Utils.addPadding("50000".getBytes(), formatSize));
-			//
+//			testFilter(table, "SingleColumnValueFilter", CompareFilter.CompareOp.LESS, Utils.addPadding("50", formatSize));
+
 			// timingScanTest(table, time, 100, 4000);
 			// putGetTest(table, 100);
 
@@ -226,31 +226,39 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
 	public void testFilter(HTableInterface table, String filterType, CompareFilter.CompareOp operation, byte[] compareValue) {
 		try {
+			System.out.println("Entrou no testFilter");
 			Scan s = new Scan();
+			s.setStartRow(Utils.addPadding("1000", formatSize));
+			s.setStopRow(Utils.addPadding("1500", formatSize));
 			s.setFilter(buildFilter(filterType, operation, compareValue));
+			System.out.println("Depois de BuildFilter");
 
 			long start = System.currentTimeMillis();
 			ResultScanner rs = table.getScanner(s);
+			System.out.println("Depois do result scanner");
 			int total = 0;
+			int decoded = 0;
 			for (Result r = rs.next(); r != null; r = rs.next()) {
 				if (!r.isEmpty()) {
-//					LOG.debug("Key [" +
-//							new String(r.getRow())+
-//							":"+
-//							new String(r.getValue("Name".getBytes(), "First".getBytes())) +
-//							"]\n");
-					total++;
+					System.out.println("Key [" +
+							new String(r.getRow())+
+							":"+
+							new String(r.getValue("Name".getBytes(), "First".getBytes())) +
+							"]\n");
+					decoded++;
 				}
+				total++;
 			}
 			long stop = System.currentTimeMillis();
 
 			StringBuilder sb = new StringBuilder();
 			sb.append("TestFilter\n");
 			sb.append("Compare Properties: ").append(operation).append(" - ").append(new String(compareValue)).append("\n");
+			sb.append("Decoded Values: ").append(decoded).append("\n");
 			sb.append("Total Values: ").append(total).append("\n");
 			sb.append("Total Filter Time: ").append((stop - start)).append("ms\n");
 
-			LOG.debug(sb.toString());
+			System.out.println(sb.toString());
 
 		} catch (IOException e) {
 			LOG.error("Exception in testFilter. " + e.getMessage());
@@ -305,8 +313,10 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
 			long data = 0;
 			while ((System.currentTimeMillis() - startTime) < time) {
-				byte[] padded = Utils.addPadding(String.valueOf(data).getBytes(), formatSize);
-				byte[] value = Utils.addPadding(String.valueOf(r.nextInt(100000)).getBytes(), formatSize);
+//				byte[] padded = Utils.addPadding(String.valueOf(data).getBytes(), formatSize);
+//				byte[] value = Utils.addPadding(String.valueOf(r.nextInt(100000)).getBytes(), formatSize);
+				byte[] padded = Utils.addPadding(String.valueOf(data), formatSize);
+				byte[] value = Utils.addPadding(String.valueOf(r.nextInt(100)), formatSize);
 
 				Put put = new Put(padded);
 				put.add(cf, cq, value);

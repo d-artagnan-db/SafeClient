@@ -153,7 +153,7 @@ public class CryptoTable extends HTable {
 			ResultScanner encryptedResultScanner = super.getScanner(encScan);
 
 			return this.resultScannerFactory.getResultScanner(
-					this.cryptoProperties.verifyFilterCryptoType(encScan),
+					this.cryptoProperties.verifyFilterCryptoType(scan),
 					this.cryptoProperties,
 					startRow,
 					endRow,

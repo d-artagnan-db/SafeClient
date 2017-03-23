@@ -267,6 +267,40 @@ public class CryptoProperties {
 		return Result.create(cellList);
 	}
 
+
+	public CryptoTechnique.CryptoType isScanOrFilter(Scan scan) {
+		if(scan.hasFilter()) {
+			Filter filter = scan.getFilter();
+			if(filter instanceof RowFilter) {
+				return this.tableSchema.getKey().getCryptoType();
+			}
+			else if(scan.getFilter() instanceof SingleColumnValueFilter) {
+				SingleColumnValueFilter singleColumn = (SingleColumnValueFilter) filter;
+				String family = new String(singleColumn.getFamily());
+				String qualifier = new String(singleColumn.getQualifier());
+				return this.tableSchema.getCryptoTypeFromQualifer(family, qualifier);
+			}
+			else {
+				return null;
+			}
+		}
+		else {
+			return this.tableSchema.getKey().getCryptoType();
+		}
+	}
+
+	public Scan encodeDelimitingRows(Scan encScan, byte[] startRow, byte[] stopRow) {
+		if (startRow.length != 0 && stopRow.length != 0) {
+			encScan.setStartRow(this.encodeRow(startRow));
+			encScan.setStopRow(this.encodeRow(stopRow));
+		} else if (startRow.length != 0 && stopRow.length == 0) {
+			encScan.setStartRow(this.encodeRow(startRow));
+		} else if (startRow.length == 0 && stopRow.length != 0) {
+			encScan.setStopRow(this.encodeRow(stopRow));
+		}
+		return encScan;
+	}
+
 	/**
 	 * Convert a Scan operation in the respective Encrypted operation
 	 * 
@@ -278,25 +312,22 @@ public class CryptoProperties {
 		byte[] stopRow = s.getStopRow();
 		Scan encScan = null;
 
-		switch (this.tableSchema.getKey().getCryptoType()) {
+		CryptoTechnique.CryptoType scanCryptoType = isScanOrFilter(s);
+
+		switch (scanCryptoType) {
 			case PLT :
 				encScan = s;
 				break;
 			case STD :
 			case DET :
 				encScan = new Scan();
+				if(this.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.OPE) {
+					encScan = encodeDelimitingRows(encScan, startRow, stopRow);
+				}
 				break;
 			case OPE :
 				encScan = new Scan();
-				if (startRow.length != 0 && stopRow.length != 0) {
-					encScan.setStartRow(this.encodeRow(startRow));
-					encScan.setStopRow(this.encodeRow(stopRow));
-				} else if (startRow.length != 0 && stopRow.length == 0) {
-					encScan.setStartRow(this.encodeRow(startRow));
-				} else if (startRow.length == 0 && stopRow.length != 0) {
-					encScan.setStopRow(this.encodeRow(stopRow));
-				}
-
+				encScan = encodeDelimitingRows(encScan, startRow, stopRow);
 				if (s.hasFilter()) {
 					Filter encryptedFilter = (Filter) parseFilter(s.getFilter());
 					encScan.setFilter(encryptedFilter);
@@ -371,7 +402,6 @@ public class CryptoProperties {
 						break;
 					case OPE:
 						BinaryComparator encBC = new BinaryComparator(this.encodeValue(family, qualifier, bComp.getValue()));
-
 						returnValue = new SingleColumnValueFilter(family, qualifier, comp, encBC);
 						break;
 					default:
@@ -379,7 +409,6 @@ public class CryptoProperties {
 						break;
 				}
 			}
-
 		}
 
 		return returnValue;

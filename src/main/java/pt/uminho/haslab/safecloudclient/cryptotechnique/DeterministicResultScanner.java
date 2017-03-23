@@ -127,17 +127,20 @@ public class DeterministicResultScanner implements ResultScanner {
 			case EQUAL :
 				digest = (byteArrayComparator.compare(main, value) == 0);
 				break;
-			case GREATER :
-				digest = (byteArrayComparator.compare(main, value) > 0);
-				break;
-			case LESS :
-				digest = (byteArrayComparator.compare(main, value) < 0);
-				break;
-			case GREATER_OR_EQUAL :
-				digest = (byteArrayComparator.compare(main, value) >= 0);
-				break;
-			case LESS_OR_EQUAL :
-				digest = (byteArrayComparator.compare(main, value) < 0);
+//			case GREATER :
+//				digest = (byteArrayComparator.compare(main, value) > 0);
+//				break;
+//			case LESS :
+//				digest = (byteArrayComparator.compare(main, value) < 0);
+//				break;
+//			case GREATER_OR_EQUAL :
+//				digest = (byteArrayComparator.compare(main, value) >= 0);
+//				break;
+//			case LESS_OR_EQUAL :
+//				digest = (byteArrayComparator.compare(main, value) < 0);
+//				break;
+			default:
+				digest = false;
 				break;
 		}
 		return digest;
@@ -163,8 +166,6 @@ public class DeterministicResultScanner implements ResultScanner {
 							res.getValue(this.family, this.qualifier));
 
 					digest = digestFilter(0, qualifierValue, this.compareValue);
-
-					System.out.println("["+new String(qualifierValue)+""+compareOp+""+new String(this.compareValue)+"]");
 				}
 			}
 

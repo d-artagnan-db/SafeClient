@@ -13,10 +13,10 @@
     <family>
       <name>Name</name>
       <cryptotechnique>STD</cryptotechnique>
-      <formatsize>10</formatsize>
+      <formatsize>23</formatsize>
       <qualifier>
         <name>First</name>
-        <cryptotechnique>DET</cryptotechnique>
+        <cryptotechnique>OPE</cryptotechnique>
         <misc>
           <property>GENERATOR</property>
           <type>String</type>
