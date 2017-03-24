@@ -244,7 +244,7 @@ public class CryptoProperties {
 	 * @return
 	 */
 	public Result decodeResult(byte[] row, Result res) {
-		byte[] decodedRow = this.decodeRow(row);
+//		byte[] decodedRow = this.decodeRow(row);
 		List<Cell> cellList = new ArrayList<Cell>();
 
 		while (res.advance()) {
@@ -256,7 +256,7 @@ public class CryptoProperties {
 			byte type = cell.getTypeByte();
 
 			Cell decCell = CellUtil.createCell(
-					decodedRow,
+					row,
 					cf,
 					cq,
 					timestamp,

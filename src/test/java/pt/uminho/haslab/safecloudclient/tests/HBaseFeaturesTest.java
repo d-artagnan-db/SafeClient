@@ -49,11 +49,11 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 			// testPut(table, cf, cq, value);
 			// testGet(table, cf, cq, value);
 			// testDelete(table, cf, cq, value);
-			 testScan(table, null, null);
+//			 testScan(table, null, null);
 
 //			testFilter(table, "RowFilter", CompareFilter.CompareOp.LESS, Utils.addPadding("1500", formatSize));
 
-//			testFilter(table, "SingleColumnValueFilter", CompareFilter.CompareOp.LESS, Utils.addPadding("50", formatSize));
+			testFilter(table, "SingleColumnValueFilter", CompareFilter.CompareOp.LESS, Utils.addPadding("50", formatSize));
 
 			// timingScanTest(table, time, 100, 4000);
 			// putGetTest(table, 100);

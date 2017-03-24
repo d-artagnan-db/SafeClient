@@ -84,7 +84,7 @@ public class CryptoTable extends HTable {
 						byte[] aux = this.cryptoProperties.decodeRow(r.getRow());
 
 						if (Arrays.equals(row, aux)) {
-							getResult = this.cryptoProperties.decodeResult(r.getRow(), r);
+							getResult = this.cryptoProperties.decodeResult(row, r);
 							break;
 						}
 					}
@@ -95,7 +95,7 @@ public class CryptoTable extends HTable {
 					Result res = super.get(encGet);
 
 					if (!res.isEmpty()) {
-						getResult = this.cryptoProperties.decodeResult(res.getRow(), res);
+						getResult = this.cryptoProperties.decodeResult(row, res);
 					}
 
 					return getResult;

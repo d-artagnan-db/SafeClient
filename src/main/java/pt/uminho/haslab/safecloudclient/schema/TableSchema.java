@@ -172,6 +172,22 @@ public class TableSchema {
 		return cType;
 	}
 
+	public Integer getFormatSizeFromQualifier(String family, String qualifier) {
+		int formatSize = 0;
+		for (Family f : this.columnFamilies) {
+			if (f.getFamilyName().equals(family)) {
+				for (Qualifier q : f.getQualifiers()) {
+					if (q.getName().equals(qualifier)) {
+						formatSize = q.getFormatSize();
+						break;
+					}
+				}
+				break;
+			}
+		}
+		return formatSize;
+	}
+
 	public String whichFamilyContainsQualifier(String qualifier) {
 		String family = "";
 

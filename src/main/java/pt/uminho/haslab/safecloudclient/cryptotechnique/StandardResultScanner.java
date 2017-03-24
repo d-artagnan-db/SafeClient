@@ -170,7 +170,7 @@ public class StandardResultScanner implements ResultScanner {
 			}
 
 			if (digest)
-				return this.cProperties.decodeResult(res.getRow(), res);
+				return this.cProperties.decodeResult(row, res);
 			else
 				return Result.EMPTY_RESULT;
 
