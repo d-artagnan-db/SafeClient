@@ -14,14 +14,14 @@ import java.io.IOException;
 public class CryptoClient implements TestClient {
 
 	private final HBaseAdmin admin;
-	private final CryptoType cryptoType;
+	private String schemaFile;
 
-	public CryptoClient(CryptoType cType) throws ZooKeeperConnectionException,
-			IOException {
+	public CryptoClient(String schemaFileName)
+			throws ZooKeeperConnectionException, IOException {
 		Configuration conf = new Configuration();
 		conf.addResource("conf.xml");
 		admin = new HBaseAdmin(conf);
-		cryptoType = cType;
+		schemaFile = schemaFileName;
 	}
 
 	public void createTestTable(HTableDescriptor testTable)
@@ -34,9 +34,12 @@ public class CryptoClient implements TestClient {
 		Configuration conf = new Configuration();
 		conf.addResource("conf.xml");
 
-		CryptoTable ct = new CryptoTable(conf, tableName, this.cryptoType);
+		CryptoTable ct = new CryptoTable(conf, tableName, this.schemaFile);
 		byte[] key = CryptoProperties.readKeyFromFile("key.txt");
-		ct.cryptoProperties.setKey(key);
+
+		ct.cryptoProperties.setKey(CryptoType.STD, key);
+		ct.cryptoProperties.setKey(CryptoType.DET, key);
+		ct.cryptoProperties.setKey(CryptoType.OPE, key);
 
 		System.out.println("Table created Successfully");
 		return ct;

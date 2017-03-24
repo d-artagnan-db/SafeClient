@@ -4,7 +4,6 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.util.Bytes;
-import pt.uminho.haslab.cryptoenv.Utils;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -22,9 +21,11 @@ public class DeterministicResultScanner implements ResultScanner {
 	public boolean hasFilter;
 	public CompareFilter.CompareOp compareOp;
 	public byte[] compareValue;
+	public byte[] family;
+	public byte[] qualifier;
+	public String filterType;
 
-	public DeterministicResultScanner(CryptoProperties cp, byte[] startRow,
-			byte[] endRow, ResultScanner encryptedScanner, Object filterResult) {
+	public DeterministicResultScanner(CryptoProperties cp, byte[] startRow, byte[] endRow, ResultScanner encryptedScanner, Object filterResult) {
 		this.scanner = encryptedScanner;
 		this.cProperties = cp;
 		this.startRow = startRow;
@@ -50,8 +51,18 @@ public class DeterministicResultScanner implements ResultScanner {
 		if (filter != null) {
 			this.hasFilter = true;
 			Object[] filterProperties = (Object[]) filter;
-			this.compareOp = (CompareFilter.CompareOp) filterProperties[0];
-			this.compareValue = (byte[]) filterProperties[1];
+			if(filterProperties.length == 2) {
+				this.filterType = "RowFilter";
+				this.compareOp = (CompareFilter.CompareOp) filterProperties[0];
+				this.compareValue = (byte[]) filterProperties[1];
+			}
+			else if(filterProperties.length == 4) {
+				this.filterType = "SingleColumnValueFilter";
+				this.family = (byte[]) filterProperties[0];
+				this.qualifier = (byte[]) filterProperties[1];
+				this.compareOp = (CompareFilter.CompareOp) filterProperties[2];
+				this.compareValue = (byte[]) filterProperties[3];
+			}
 		} else {
 			this.hasFilter = false;
 		}
@@ -88,8 +99,7 @@ public class DeterministicResultScanner implements ResultScanner {
 			// startRow = Utils.addPadding(startRow, paddingSize);
 			// endRow = Utils.addPadding(endRow, paddingSize);
 
-			digest = (byteArrayComparator.compare(row, startRow) >= 0 && byteArrayComparator
-					.compare(row, endRow) < 0);
+			digest = (byteArrayComparator.compare(row, startRow) >= 0 && byteArrayComparator.compare(row, endRow) < 0);
 		} else if (hasStartRow && !hasEndRow) {
 			// row = Utils.addPadding(row, paddingSize);
 			// startRow = Utils.addPadding(startRow, paddingSize);
@@ -107,7 +117,7 @@ public class DeterministicResultScanner implements ResultScanner {
 		return digest;
 	}
 
-	public boolean digestFilter(int paddingSize, byte[] row, byte[] value) {
+	public boolean digestFilter(int paddingSize, byte[] main, byte[] value) {
 		boolean digest = true;
 		Bytes.ByteArrayComparator byteArrayComparator = new Bytes.ByteArrayComparator();
 		// row = Utils.addPadding(row, paddingSize);
@@ -115,20 +125,22 @@ public class DeterministicResultScanner implements ResultScanner {
 
 		switch (this.compareOp) {
 			case EQUAL :
-				// TODO Otimização - Fazer um get em vez de scan
-				digest = (byteArrayComparator.compare(row, value) == 0);
+				digest = (byteArrayComparator.compare(main, value) == 0);
 				break;
-			case GREATER :
-				digest = (byteArrayComparator.compare(row, value) > 0);
-				break;
-			case LESS :
-				digest = (byteArrayComparator.compare(row, value) < 0);
-				break;
-			case GREATER_OR_EQUAL :
-				digest = (byteArrayComparator.compare(row, value) >= 0);
-				break;
-			case LESS_OR_EQUAL :
-				digest = (byteArrayComparator.compare(row, value) < 0);
+//			case GREATER :
+//				digest = (byteArrayComparator.compare(main, value) > 0);
+//				break;
+//			case LESS :
+//				digest = (byteArrayComparator.compare(main, value) < 0);
+//				break;
+//			case GREATER_OR_EQUAL :
+//				digest = (byteArrayComparator.compare(main, value) >= 0);
+//				break;
+//			case LESS_OR_EQUAL :
+//				digest = (byteArrayComparator.compare(main, value) < 0);
+//				break;
+			default:
+				digest = false;
 				break;
 		}
 		return digest;
@@ -138,19 +150,29 @@ public class DeterministicResultScanner implements ResultScanner {
 		Result res = this.scanner.next();
 		boolean digest;
 		if (res != null) {
-			byte[] row = this.cProperties.decode(res.getRow());
+			byte[] row = this.cProperties.decodeRow(res.getRow());
 			// int paddingSize = getPaddingSize(row);
 
 			digest = digestStartEndRow(0, row);
 
 			if (hasFilter && digest) {
-				digest = digestFilter(0, row, this.compareValue);
+				if(this.filterType.equals("RowFilter")) {
+					digest = digestFilter(0, row, this.compareValue);
+				}
+				else if(this.filterType.equals("SingleColumnValueFilter")) {
+					byte[] qualifierValue = this.cProperties.decodeValue(
+							this.family,
+							this.qualifier,
+							res.getValue(this.family, this.qualifier));
+
+					digest = digestFilter(0, qualifierValue, this.compareValue);
+				}
 			}
 
 			if (digest)
-				return this.cProperties.decodeResult(res.getRow(), res);
+				return this.cProperties.decodeResult(row, res);
 			else
-				return new Result();
+				return Result.EMPTY_RESULT;
 
 		} else
 			return null;

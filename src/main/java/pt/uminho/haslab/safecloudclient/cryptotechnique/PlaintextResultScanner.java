@@ -7,35 +7,39 @@ import java.io.IOException;
 import java.util.Iterator;
 
 /**
- * Created by rgmacedo on 2/21/17.
+ * Created by rgmacedo on 3/15/17.
  */
-public class OrderPreservingResultScanner implements ResultScanner {
+public class PlaintextResultScanner implements ResultScanner {
 	public CryptoProperties cProperties;
 	public ResultScanner encryptedScanner;
 
-	public OrderPreservingResultScanner(CryptoProperties cp, ResultScanner encryptedScanner) {
+	public PlaintextResultScanner(CryptoProperties cp, ResultScanner encryptedScanner) {
 		this.cProperties = cp;
 		this.encryptedScanner = encryptedScanner;
 	}
 
+	@Override
 	public Result next() throws IOException {
 		Result encryptedResult = this.encryptedScanner.next();
 		if (encryptedResult != null) {
-			byte[] decodedRow = this.cProperties.decodeRow(encryptedResult.getRow());
-			return this.cProperties.decodeResult(decodedRow, encryptedResult);
+			return this.cProperties.decodeResult(encryptedResult.getRow(), encryptedResult);
 		}
-		else
+		else {
 			return null;
+		}
 	}
 
+	@Override
 	public Result[] next(int i) throws IOException {
 		return encryptedScanner.next(i);
 	}
 
+	@Override
 	public void close() {
 		this.encryptedScanner.close();
 	}
 
+	@Override
 	public Iterator<Result> iterator() {
 		return this.encryptedScanner.iterator();
 	}

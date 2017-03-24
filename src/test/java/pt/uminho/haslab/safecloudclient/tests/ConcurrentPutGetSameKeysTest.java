@@ -7,7 +7,6 @@ import java.util.List;
 import org.junit.runners.Parameterized;
 import pt.uminho.haslab.testingutils.ValuesGenerator;
 
-
 public class ConcurrentPutGetSameKeysTest extends ConcurrentPutGetTest {
 
 	/**
