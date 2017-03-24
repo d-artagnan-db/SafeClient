@@ -245,6 +245,7 @@ public class CryptoProperties {
 	 */
 	public Result decodeResult(byte[] row, Result res) {
 //		byte[] decodedRow = this.decodeRow(row);
+		String opeValues = "_STD";
 		List<Cell> cellList = new ArrayList<Cell>();
 
 		while (res.advance()) {
@@ -255,14 +256,36 @@ public class CryptoProperties {
 			long timestamp = cell.getTimestamp();
 			byte type = cell.getTypeByte();
 
-			Cell decCell = CellUtil.createCell(
-					row,
-					cf,
-					cq,
-					timestamp,
-					type,
-					this.decodeValue(cf, cq, value));
-			cellList.add(decCell);
+			Cell decCell;
+			String qualifier = new String(cq);
+
+			if(!qualifier.substring(qualifier.length()-opeValues.length(), qualifier.length()).equals(opeValues)) {
+				if (tableSchema.getCryptoTypeFromQualifer(new String(cf), qualifier) == CryptoTechnique.CryptoType.OPE) {
+					Cell stdCell = res.getColumnLatestCell(cf, (qualifier + opeValues).getBytes());
+
+					decCell = CellUtil.createCell(
+							row,
+							cf,
+							cq,
+							stdCell.getTimestamp(),
+							stdCell.getTypeByte(),
+							this.decodeValue(
+									cf,
+									CellUtil.cloneQualifier(stdCell),
+									CellUtil.cloneValue(stdCell))
+
+					);
+				} else {
+					decCell = CellUtil.createCell(
+							row,
+							cf,
+							cq,
+							timestamp,
+							type,
+							this.decodeValue(cf, cq, value));
+				}
+				cellList.add(decCell);
+			}
 		}
 		return Result.create(cellList);
 	}
@@ -427,6 +450,28 @@ public class CryptoProperties {
 			}
 		}
 		return cryptoType;
+	}
+
+	public Map<byte[], List<byte[]>> getFamiliesAndQualifiers(Map<byte[], NavigableSet<byte[]>> familiesAndQualifiers) {
+		String opeValue = "_STD";
+		Map<byte[],List<byte[]>> result = new HashMap<>();
+		for(byte[] family : familiesAndQualifiers.keySet()) {
+			NavigableSet<byte[]> q = familiesAndQualifiers.get(family);
+			Iterator i = q.iterator();
+			List<byte[]> qualifierList = new ArrayList<>();
+			while(i.hasNext()) {
+				byte[] qualifier = (byte[]) i.next();
+				qualifierList.add(qualifier);
+				if(tableSchema.getCryptoTypeFromQualifer(new String(family), new String(qualifier)) == CryptoTechnique.CryptoType.OPE) {
+					String q_std = new String(qualifier);
+					qualifierList.add((q_std+opeValue).getBytes());
+				}
+
+			}
+			result.put(family, qualifierList);
+		}
+
+		return result;
 	}
 
 	// TODO remove temporary Method

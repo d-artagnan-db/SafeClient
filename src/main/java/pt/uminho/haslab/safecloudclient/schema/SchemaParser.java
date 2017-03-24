@@ -122,6 +122,21 @@ public class SchemaParser {
 								properties);
 
 						this.tableSchema.addQualifier(familyName, q);
+
+						if(cryptotechniqueQualifier.equals("OPE")) {
+							String stdQualifierName = qualifierName+"_STD";
+							String stdCType = "STD";
+
+							Qualifier std = new Qualifier(
+									stdQualifierName,
+									switchCryptoType(stdCType),
+									formatSizeIntegerValue(qualifierFormatsize),
+									properties
+							);
+
+							this.tableSchema.addQualifier(familyName, std);
+						}
+
 					}
 				}
 			}

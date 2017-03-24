@@ -51,9 +51,9 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 			// testDelete(table, cf, cq, value);
 //			 testScan(table, null, null);
 
-//			testFilter(table, "RowFilter", CompareFilter.CompareOp.LESS, Utils.addPadding("1500", formatSize));
-
-			testFilter(table, "SingleColumnValueFilter", CompareFilter.CompareOp.LESS, Utils.addPadding("50", formatSize));
+			testFilter(table, "RowFilter", CompareFilter.CompareOp.LESS, Utils.addPadding("1500", formatSize));
+//
+//			testFilter(table, "SingleColumnValueFilter", CompareFilter.CompareOp.EQUAL, Utils.addPadding("50", formatSize));
 
 			// timingScanTest(table, time, 100, 4000);
 			// putGetTest(table, 100);
@@ -307,6 +307,7 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 		try {
 			byte[] cf = "Name".getBytes();
 			byte[] cq = "First".getBytes();
+			byte[]cq1 = "Last".getBytes();
 			Random r = new Random();
 
 			long startTime = System.currentTimeMillis();
@@ -320,6 +321,7 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
 				Put put = new Put(padded);
 				put.add(cf, cq, value);
+				put.add(cf, cq1, value);
 				table.put(put);
 
 				data++;
@@ -346,18 +348,20 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 		try {
 			byte[] cf = "Name".getBytes();
 			byte[] cq = "First".getBytes();
+			byte[]cq1 = "Last".getBytes();
 
 			long startTime = System.currentTimeMillis();
 
 			long totalOps = 0;
 			long data = 0;
 			while ((System.currentTimeMillis() - startTime) < time) {
-				Get get = new Get(Utils.addPadding(String.valueOf(data).getBytes(), formatSize));
+				Get get = new Get(Utils.addPadding(String.valueOf(data), formatSize));
 				get.addColumn(cf, cq);
+				get.addColumn(cf, cq1);
 				Result res = table.get(get);
 				if (res != null) {
 					byte[] storedKey = res.getRow();
-					LOG.debug("> Key : " + new String(storedKey));
+					System.out.println("> Key : " + new String(storedKey)+" - "+new String(res.getValue(cf, cq))+" - "+new String(res.getValue(cf, cq1)));
 				}
 
 				data++;
