@@ -336,6 +336,7 @@ public class CryptoProperties {
 		Scan encScan = null;
 
 		CryptoTechnique.CryptoType scanCryptoType = isScanOrFilter(s);
+		Map<byte[], List<byte[]>>columns = this.getFamiliesAndQualifiers(s.getFamilyMap());
 
 		switch (scanCryptoType) {
 			case PLT :
@@ -344,12 +345,27 @@ public class CryptoProperties {
 			case STD :
 			case DET :
 				encScan = new Scan();
+
+				for(byte[] f : columns.keySet()) {
+					List<byte[]> qualifiersTemp = columns.get(f);
+					for(byte[] q : qualifiersTemp) {
+						encScan.addColumn(f, q);
+					}
+				}
+
 				if(this.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.OPE) {
 					encScan = encodeDelimitingRows(encScan, startRow, stopRow);
 				}
 				break;
 			case OPE :
 				encScan = new Scan();
+
+				for(byte[] f : columns.keySet()) {
+					List<byte[]> qualifiersTemp = columns.get(f);
+					for(byte[] q : qualifiersTemp) {
+						encScan.addColumn(f, q);
+					}
+				}
 				encScan = encodeDelimitingRows(encScan, startRow, stopRow);
 				if (s.hasFilter()) {
 					Filter encryptedFilter = (Filter) parseFilter(s.getFilter());

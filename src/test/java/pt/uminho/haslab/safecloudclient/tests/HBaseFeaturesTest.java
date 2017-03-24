@@ -51,9 +51,9 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 			// testDelete(table, cf, cq, value);
 //			 testScan(table, null, null);
 
-			testFilter(table, "RowFilter", CompareFilter.CompareOp.LESS, Utils.addPadding("1500", formatSize));
-//
-//			testFilter(table, "SingleColumnValueFilter", CompareFilter.CompareOp.EQUAL, Utils.addPadding("50", formatSize));
+//			testFilter(table, "RowFilter", CompareFilter.CompareOp.LESS, Utils.addPadding("1500", formatSize));
+
+			testFilter(table, "SingleColumnValueFilter", CompareFilter.CompareOp.LESS, Utils.addPadding("50", formatSize));
 
 			// timingScanTest(table, time, 100, 4000);
 			// putGetTest(table, 100);
@@ -231,6 +231,8 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 			s.setStartRow(Utils.addPadding("1000", formatSize));
 			s.setStopRow(Utils.addPadding("1500", formatSize));
 			s.setFilter(buildFilter(filterType, operation, compareValue));
+			s.addColumn("Name".getBytes(), "First".getBytes());
+
 			System.out.println("Depois de BuildFilter");
 
 			long start = System.currentTimeMillis();
@@ -240,6 +242,7 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 			int decoded = 0;
 			for (Result r = rs.next(); r != null; r = rs.next()) {
 				if (!r.isEmpty()) {
+					System.out.println("Value: "+r.toString());
 					System.out.println("Key [" +
 							new String(r.getRow())+
 							":"+
