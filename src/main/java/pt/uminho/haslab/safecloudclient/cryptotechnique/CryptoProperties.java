@@ -372,8 +372,9 @@ public class CryptoProperties {
 						encScan.addColumn(f, q);
 					}
 				}
-
-				encScan = encodeDelimitingRows(encScan, startRow, stopRow);
+				if(this.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.OPE) {
+					encScan = encodeDelimitingRows(encScan, startRow, stopRow);
+				}
 				if (s.hasFilter()) {
 					Filter encryptedFilter = (Filter) parseFilter(s.getFilter());
 					encScan.setFilter(encryptedFilter);
