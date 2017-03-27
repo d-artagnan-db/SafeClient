@@ -56,26 +56,35 @@ public class CryptoTable extends HTable {
 				byte[] family = CellUtil.cloneFamily(cell);
 				byte[] qualifier = CellUtil.cloneQualifier(cell);
 				byte[] value = CellUtil.cloneValue(cell);
-				encPut.add(
-						family,
-						qualifier,
-						this.cryptoProperties.encodeValue(
-								family,
-								qualifier,
-								value));
 
-				String qual = new String(qualifier);
-				if(tableSchema.getCryptoTypeFromQualifer(new String(family), qual) == CryptoTechnique.CryptoType.OPE) {
+				boolean verifyProperty = false;
+				String qualifierString = new String(qualifier);
+				String opeValues = "_STD";
+
+				if (qualifierString.length() >= opeValues.length()) {
+					verifyProperty = qualifierString.substring(qualifierString.length() - opeValues.length(), qualifierString.length()).equals(opeValues);
+				}
+				if (!verifyProperty) {
 					encPut.add(
 							family,
-							(qual+"_STD").getBytes(),
+							qualifier,
 							this.cryptoProperties.encodeValue(
 									family,
-									(qual+"_STD").getBytes(),
-									value)
-					);
-				}
+									qualifier,
+									value));
 
+					if (tableSchema.getCryptoTypeFromQualifer(new String(family), qualifierString) == CryptoTechnique.CryptoType.OPE) {
+						encPut.add(
+								family,
+								(qualifierString + opeValues).getBytes(),
+								this.cryptoProperties.encodeValue(
+										family,
+										(qualifierString + opeValues).getBytes(),
+										value)
+						);
+					}
+
+				}
 			}
 			super.put(encPut);
 
@@ -111,19 +120,6 @@ public class CryptoTable extends HTable {
 					String opeValue = "_STD";
 					Get encGet = new Get(this.cryptoProperties.encodeRow(row));
 
-//					Map<byte[], NavigableSet<byte[]>> familiesAndQualifiers = get.getFamilyMap();
-//					for(byte[] family : familiesAndQualifiers.keySet()) {
-//						NavigableSet<byte[]> q = familiesAndQualifiers.get(family);
-//						Iterator i = q.iterator();
-//						while(i.hasNext()) {
-//							byte[] qualifier = (byte[]) i.next();
-//							if(tableSchema.getCryptoTypeFromQualifer(new String(family), new String(qualifier)) == CryptoTechnique.CryptoType.OPE) {
-//								String q_std = new String(qualifier);
-//								encGet.addColumn(family, (q_std+opeValue).getBytes());
-//							}
-//							encGet.addColumn(family, qualifier);
-//						}
-//					}
 					Map<byte[],List<byte[]>> columns = this.cryptoProperties.getFamiliesAndQualifiers(get.getFamilyMap());
 
 					for(byte[] f : columns.keySet()) {

@@ -21,11 +21,14 @@ public class OrderPreservingResultScanner implements ResultScanner {
 	public Result next() throws IOException {
 		Result encryptedResult = this.encryptedScanner.next();
 		if (encryptedResult != null) {
+			System.out.println("Não é null");
 			byte[] decodedRow = this.cProperties.decodeRow(encryptedResult.getRow());
 			return this.cProperties.decodeResult(decodedRow, encryptedResult);
 		}
-		else
+		else {
+			System.out.println("É null");
 			return null;
+		}
 	}
 
 	public Result[] next(int i) throws IOException {

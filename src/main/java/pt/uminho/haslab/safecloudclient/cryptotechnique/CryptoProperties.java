@@ -259,7 +259,12 @@ public class CryptoProperties {
 			Cell decCell;
 			String qualifier = new String(cq);
 
-			if(!qualifier.substring(qualifier.length()-opeValues.length(), qualifier.length()).equals(opeValues)) {
+			boolean verifyProperty = false;
+			if(qualifier.length() >= opeValues.length()) {
+				verifyProperty = qualifier.substring(qualifier.length()-opeValues.length(), qualifier.length()).equals(opeValues);
+			}
+
+			if(!verifyProperty) {
 				if (tableSchema.getCryptoTypeFromQualifer(new String(cf), qualifier) == CryptoTechnique.CryptoType.OPE) {
 					Cell stdCell = res.getColumnLatestCell(cf, (qualifier + opeValues).getBytes());
 
@@ -356,6 +361,7 @@ public class CryptoProperties {
 				if(this.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.OPE) {
 					encScan = encodeDelimitingRows(encScan, startRow, stopRow);
 				}
+
 				break;
 			case OPE :
 				encScan = new Scan();
@@ -366,6 +372,7 @@ public class CryptoProperties {
 						encScan.addColumn(f, q);
 					}
 				}
+
 				encScan = encodeDelimitingRows(encScan, startRow, stopRow);
 				if (s.hasFilter()) {
 					Filter encryptedFilter = (Filter) parseFilter(s.getFilter());
@@ -440,8 +447,10 @@ public class CryptoProperties {
 						returnValue = parserResult;
 						break;
 					case OPE:
+						System.out.println("Passo aqui para construir o valor a comparar - "+new String(bComp.getValue()));
 						BinaryComparator encBC = new BinaryComparator(this.encodeValue(family, qualifier, bComp.getValue()));
 						returnValue = new SingleColumnValueFilter(family, qualifier, comp, encBC);
+						System.out.println("SingleColumnCenas: "+returnValue.toString());
 						break;
 					default:
 						returnValue = null;
@@ -473,18 +482,20 @@ public class CryptoProperties {
 		Map<byte[],List<byte[]>> result = new HashMap<>();
 		for(byte[] family : familiesAndQualifiers.keySet()) {
 			NavigableSet<byte[]> q = familiesAndQualifiers.get(family);
-			Iterator i = q.iterator();
-			List<byte[]> qualifierList = new ArrayList<>();
-			while(i.hasNext()) {
-				byte[] qualifier = (byte[]) i.next();
-				qualifierList.add(qualifier);
-				if(tableSchema.getCryptoTypeFromQualifer(new String(family), new String(qualifier)) == CryptoTechnique.CryptoType.OPE) {
-					String q_std = new String(qualifier);
-					qualifierList.add((q_std+opeValue).getBytes());
-				}
+			if (!q.isEmpty()) {
+				Iterator i = q.iterator();
+				List<byte[]> qualifierList = new ArrayList<>();
+				while (i.hasNext()) {
+					byte[] qualifier = (byte[]) i.next();
+					qualifierList.add(qualifier);
+					if (tableSchema.getCryptoTypeFromQualifer(new String(family), new String(qualifier)) == CryptoTechnique.CryptoType.OPE) {
+						String q_std = new String(qualifier);
+						qualifierList.add((q_std + opeValue).getBytes());
+					}
 
+				}
+				result.put(family, qualifierList);
 			}
-			result.put(family, qualifierList);
 		}
 
 		return result;
