@@ -126,7 +126,6 @@ public class DeterministicResultScanner implements ResultScanner {
 		switch (this.compareOp) {
 			case EQUAL :
 				digest = (byteArrayComparator.compare(main, value) == 0);
-				System.out.println("O digest entrou no equal");
 				break;
 //			case GREATER :
 //				digest = (byteArrayComparator.compare(main, value) > 0);
@@ -142,7 +141,6 @@ public class DeterministicResultScanner implements ResultScanner {
 //				break;
 			default:
 				digest = false;
-				System.out.println("O digest entrou no default");
 				break;
 		}
 		return digest;
@@ -162,14 +160,12 @@ public class DeterministicResultScanner implements ResultScanner {
 					digest = digestFilter(0, row, this.compareValue);
 				}
 				else if(this.filterType.equals("SingleColumnValueFilter")) {
-					System.out.println("This is a single column value filter decoding");
 					byte[] qualifierValue = this.cProperties.decodeValue(
 							this.family,
 							this.qualifier,
 							res.getValue(this.family, this.qualifier));
 
 					digest = digestFilter(0, qualifierValue, this.compareValue);
-					System.out.println("Digest - "+digest);
 				}
 			}
 

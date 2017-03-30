@@ -89,6 +89,7 @@ public class CryptoTable extends HTable {
 			super.put(encPut);
 
 		} catch (IOException e) {
+			System.out.println("Exception in put method. " + e.getMessage());
 			LOG.error("Exception in put method. " + e.getMessage());
 		}
 	}
@@ -141,9 +142,10 @@ public class CryptoTable extends HTable {
 			}
 
 		} catch (IOException e) {
+			System.out.println("Exception in get method. " + e.getMessage());
 			LOG.error("Exception in get method. " + e.getMessage());
 		}
-		LOG.debug("Going to return result " + getResult);
+
 		return getResult;
 	}
 
@@ -198,6 +200,7 @@ public class CryptoTable extends HTable {
 					this.cryptoProperties.parseFilter(scan.getFilter()));
 
 		} catch (Exception e) {
+			System.out.println("Exception in scan method. "+e.getMessage());
 			LOG.error("Exception in scan method. " + e.getMessage());
 		}
 		return null;

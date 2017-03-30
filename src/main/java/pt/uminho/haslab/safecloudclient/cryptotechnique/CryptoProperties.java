@@ -49,7 +49,7 @@ public class CryptoProperties {
 		this.opeKey = this.opeHandler.gen();
 
 		this.opeValueHandler = defineFamilyCryptoHandler();
-		this.verifyOpeValueHandler();
+//		this.verifyOpeValueHandler();
 
 		this.utils = new Utils();
 	}
@@ -203,7 +203,7 @@ public class CryptoProperties {
 	 */
 	public byte[] encodeRow(byte[] content) {
 		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getKey().getCryptoType();
-		System.out.println("Encode Row: " + cryptoType);
+//		System.out.println("Encode Row: " + cryptoType);
 		return encodeRowCryptoType(cryptoType, content);
 	}
 
@@ -215,7 +215,7 @@ public class CryptoProperties {
 	 */
 	public byte[] decodeRow(byte[] content) {
 		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getKey().getCryptoType();
-		System.out.println("Decode Row: " + cryptoType);
+//		System.out.println("Decode Row: " + cryptoType);
 		return decodeRowCryptoType(cryptoType, content);
 	}
 
@@ -223,7 +223,7 @@ public class CryptoProperties {
 		String f = new String(family);
 		String q = new String(qualifier);
 		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getCryptoTypeFromQualifer(f, q);
-		System.out.println("Encode Value (" + f + "," + q + "): " + cryptoType);
+//		System.out.println("Encode Value (" + f + "," + q + "): " + cryptoType);
 		return encodeValueCryptoType(cryptoType, value, f, q);
 	}
 
@@ -231,7 +231,7 @@ public class CryptoProperties {
 		String f = new String(family);
 		String q = new String(qualifier);
 		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getCryptoTypeFromQualifer(f, q);
-		System.out.println("Decode Value (" + f + "," + q + "): " + cryptoType);
+//		System.out.println("Decode Value (" + f + "," + q + "): " + cryptoType);
 		return decodeValueCryptoType(cryptoType, value, f, q);
 	}
 
@@ -448,10 +448,8 @@ public class CryptoProperties {
 						returnValue = parserResult;
 						break;
 					case OPE:
-						System.out.println("Passo aqui para construir o valor a comparar - "+new String(bComp.getValue()));
 						BinaryComparator encBC = new BinaryComparator(this.encodeValue(family, qualifier, bComp.getValue()));
 						returnValue = new SingleColumnValueFilter(family, qualifier, comp, encBC);
-						System.out.println("SingleColumnCenas: "+returnValue.toString());
 						break;
 					default:
 						returnValue = null;

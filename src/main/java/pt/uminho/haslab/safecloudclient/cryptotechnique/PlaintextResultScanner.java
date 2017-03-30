@@ -22,7 +22,8 @@ public class PlaintextResultScanner implements ResultScanner {
 	public Result next() throws IOException {
 		Result encryptedResult = this.encryptedScanner.next();
 		if (encryptedResult != null) {
-			return this.cProperties.decodeResult(encryptedResult.getRow(), encryptedResult);
+			byte[] row = this.cProperties.decodeRow(encryptedResult.getRow());
+			return this.cProperties.decodeResult(row, encryptedResult);
 		}
 		else {
 			return null;
