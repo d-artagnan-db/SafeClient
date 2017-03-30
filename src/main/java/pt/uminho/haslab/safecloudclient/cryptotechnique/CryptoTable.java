@@ -39,7 +39,7 @@ public class CryptoTable extends HTable {
 	public TableSchema init(String filename) {
 		SchemaParser schemaParser = new SchemaParser();
 		schemaParser.parse(filename);
-		System.out.println(schemaParser.tableSchema.toString());
+//		System.out.println(schemaParser.tableSchema.toString());
 		return schemaParser.getTableSchema();
 	}
 

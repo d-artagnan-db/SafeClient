@@ -95,12 +95,12 @@ public class Family {
 
 		if (formatSize > 0) {
 			fSize = formatSize;
-			System.out.println("Entrou na primeira condição - " + fSize + " - "
-					+ formatSize);
+//			System.out.println("Entrou na primeira condição - " + fSize + " - "
+//					+ formatSize);
 		} else {
 			fSize = this.formatSize;
-			System.out.println("Entrou na segunda condição - " + fSize + " - "
-					+ this.formatSize);
+//			System.out.println("Entrou na segunda condição - " + fSize + " - "
+//					+ this.formatSize);
 		}
 
 		this.qualifiers.add(new Qualifier(qualifierName, cType, fSize, properties));

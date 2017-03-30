@@ -31,7 +31,7 @@ public class SchemaParser {
 			SAXReader reader = new SAXReader();
 			Document document = reader.read(inputFile);
 
-			System.out.println("Root Element: " + document.getRootElement().getName());
+//			System.out.println("Root Element: " + document.getRootElement().getName());
 
 			Element rootElement = document.getRootElement();
 
@@ -41,9 +41,9 @@ public class SchemaParser {
 			parseColumns(rootElement);
 
 			long stopttime = System.currentTimeMillis();
-			System.out.println("Parsing Time: " + (stopttime - starttime));
+//			System.out.println("Parsing Time: " + (stopttime - starttime));
 		} catch (DocumentException e) {
-			e.printStackTrace();
+			System.out.println("DocumentException - "+e.getMessage());
 		}
 	}
 
