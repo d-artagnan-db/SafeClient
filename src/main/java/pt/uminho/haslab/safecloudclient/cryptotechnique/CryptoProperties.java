@@ -45,7 +45,9 @@ public class CryptoProperties {
 		this.detHandler = new CryptoHandler(CryptoTechnique.CryptoType.DET, new ArrayList<>());
 		this.detKey = this.detHandler.gen();
 
-		this.opeHandler = new CryptoHandler(CryptoTechnique.CryptoType.OPE, opeArguments(23, 46));
+		this.opeHandler = new CryptoHandler(CryptoTechnique.CryptoType.OPE, opeArguments(
+				this.tableSchema.getKey().getFormatSize(),
+				this.tableSchema.getKey().getFormatSize()*2));
 		this.opeKey = this.opeHandler.gen();
 
 		this.opeValueHandler = defineFamilyCryptoHandler();
