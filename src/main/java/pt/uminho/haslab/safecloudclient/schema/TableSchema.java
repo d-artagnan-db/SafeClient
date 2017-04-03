@@ -172,6 +172,22 @@ public class TableSchema {
 		return cType;
 	}
 
+	public String getGeneratorTypeFromQualifier(String family, String qualifier) {
+		String gen = null;
+		for(Family f : this.columnFamilies) {
+			if (f.getFamilyName().equals(family)) {
+				for(Qualifier q : f.getQualifiers()) {
+					if (q.getName().equals(qualifier)) {
+						gen = q.getProperties().get("GENERATOR");
+						break;
+					}
+				}
+				break;
+			}
+		}
+		return gen;
+	}
+
 	public Integer getFormatSizeFromQualifier(String family, String qualifier) {
 		int formatSize = 0;
 		for (Family f : this.columnFamilies) {
