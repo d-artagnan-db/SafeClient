@@ -4,6 +4,7 @@ import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.filter.*;
 import pt.uminho.haslab.OpeHgd;
 import pt.uminho.haslab.cryptoenv.CryptoHandler;
@@ -362,6 +363,18 @@ public class CryptoProperties {
 
 				if(this.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.OPE) {
 					encScan = encodeDelimitingRows(encScan, startRow, stopRow);
+				}
+
+				if(s.hasFilter()) {
+					if(s.getFilter() instanceof SingleColumnValueFilter) {
+//						System.out.println("Entrou no singlecolumn cenas");
+						SingleColumnValueFilter f = (SingleColumnValueFilter) s.getFilter();
+						ByteArrayComparable bComp = f.getComparator();
+						byte[] value = bComp.getValue();
+
+						encScan.setFilter(new SingleColumnValueFilter(f.getFamily(), f.getQualifier(), f.getOperator(), this.encodeRow(value)));
+//						System.out.println("Fez set Filter");
+					}
 				}
 
 				break;

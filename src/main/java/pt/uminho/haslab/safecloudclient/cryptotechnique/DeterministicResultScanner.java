@@ -159,14 +159,14 @@ public class DeterministicResultScanner implements ResultScanner {
 				if(this.filterType.equals("RowFilter")) {
 					digest = digestFilter(0, row, this.compareValue);
 				}
-				else if(this.filterType.equals("SingleColumnValueFilter")) {
-					byte[] qualifierValue = this.cProperties.decodeValue(
-							this.family,
-							this.qualifier,
-							res.getValue(this.family, this.qualifier));
-
-					digest = digestFilter(0, qualifierValue, this.compareValue);
-				}
+//				else if(this.filterType.equals("SingleColumnValueFilter")) {
+//					byte[] qualifierValue = this.cProperties.decodeValue(
+//							this.family,
+//							this.qualifier,
+//							res.getValue(this.family, this.qualifier));
+//
+//					digest = digestFilter(0, qualifierValue, this.compareValue);
+//				}
 			}
 
 			if (digest)
