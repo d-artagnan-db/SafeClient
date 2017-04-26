@@ -6,7 +6,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created by rgmacedo on 3/13/17.
+ * Qualifier class.
+ * Holds all the relevant information associated to a specific Qualifier.
  */
 public class Qualifier {
 

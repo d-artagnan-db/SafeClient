@@ -9,20 +9,21 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by rgmacedo on 3/13/17.
+ * TableSchema class.
+ * Mapper of the database schema provided by the user.
  */
 public class TableSchema {
-	// The name of the table
 	private String tablename;
-	// Default values
+//	Default Row Key CryptoBox
 	private CryptoTechnique.CryptoType defaultKeyCryptoType;
+//	Default Qualifiers CryptoBox
 	private CryptoTechnique.CryptoType defaultColumnsCryptoType;
+//	Default format size for both row key and values
 	private int defaultFormatSize;
 
-	// The CryptoTechnique to use in the keys
+//	Key object. Contains CryptoBox, formatSize and other information about the Row Key
 	private Key key;
-	// The Column Families and the respective Column Qualifiers and
-	// CryptoTechniques
+//  Collection of the database column families (and qualifiers)
 	private List<Family> columnFamilies;
 
 	public TableSchema() {
@@ -33,9 +34,8 @@ public class TableSchema {
 		this.key = new Key();
 		this.columnFamilies = new ArrayList<>();
 	}
-	public TableSchema(String tablename, CryptoTechnique.CryptoType defKey,
-			CryptoTechnique.CryptoType defColumns, int defFormat, Key key,
-			List<Family> families) {
+
+	public TableSchema(String tablename, CryptoTechnique.CryptoType defKey, CryptoTechnique.CryptoType defColumns, int defFormat, Key key, List<Family> families) {
 		this.tablename = tablename;
 		this.defaultKeyCryptoType = defKey;
 		this.defaultColumnsCryptoType = defColumns;
@@ -108,8 +108,15 @@ public class TableSchema {
 			this.columnFamilies.add(family);
 	}
 
-	public void addFamily(String familyName, CryptoTechnique.CryptoType cType,
-			int formatSize, List<Qualifier> qualifiers) {
+	/**
+	 * addFamily(familyName : String, cType : CryptoType, formatSize : int, qualifiers : List<Qualifier>) method : add a new column family to the database mapper
+	 * Parametrized version.
+	 * @param familyName column family name
+	 * @param cType CryptoBox type
+	 * @param formatSize column family default size
+	 * @param qualifiers set of column qualifiers
+	 */
+	public void addFamily(String familyName, CryptoTechnique.CryptoType cType, int formatSize, List<Qualifier> qualifiers) {
 		Family family = new Family();
 		family.setFamilyName(familyName);
 
@@ -129,6 +136,11 @@ public class TableSchema {
 		this.columnFamilies.add(family);
 	}
 
+	/**
+	 * addFamily(fam : Family) method : add a new column family to the database mapper
+	 * Object version.
+	 * @param fam Family object
+	 */
 	public void addFamily(Family fam) {
 		if (fam.getCryptoType() == null)
 			fam.setCryptoType(defaultColumnsCryptoType);
@@ -139,6 +151,11 @@ public class TableSchema {
 		this.columnFamilies.add(fam);
 	}
 
+	/**
+	 * addQualifier(familyName : String, qualifier : Qualifier) method : add a new column qualifier to the respective family collection
+	 * @param familyName column family name
+	 * @param qualifier Qualifier object.
+	 */
 	public void addQualifier(String familyName, Qualifier qualifier) {
 		int index = 0;
 
@@ -156,7 +173,13 @@ public class TableSchema {
 		}
 	}
 
-	public CryptoTechnique.CryptoType getCryptoTypeFromQualifer(String family, String qualifier) {
+	/**
+	 * getCryptoTypeFromQualifier(family : String, qualifier : String)  method : get the CryptoType of a given family:qualifier
+	 * @param family column family
+	 * @param qualifier column qualifier
+	 * @return the respective CryptoType
+	 */
+	public CryptoTechnique.CryptoType getCryptoTypeFromQualifier(String family, String qualifier) {
 		CryptoTechnique.CryptoType cType = null;
 		for (Family f : this.columnFamilies) {
 			if (f.getFamilyName().equals(family)) {
@@ -172,6 +195,12 @@ public class TableSchema {
 		return cType;
 	}
 
+	/**
+	 * getGeneratorTypeFromQualifier(family : String, qualifier : String)  method : get the generator type of a given family:qualifier (e.g., String, Date, Integer)
+	 * @param family column family
+	 * @param qualifier column qualifier
+	 * @return the respective Generator in string format
+	 */
 	public String getGeneratorTypeFromQualifier(String family, String qualifier) {
 		String gen = null;
 		for(Family f : this.columnFamilies) {
@@ -188,6 +217,12 @@ public class TableSchema {
 		return gen;
 	}
 
+	/**
+	 * getFormatSizeFromQualifier(family : String, qualifier : String)  method : get the FormatSize of a given family:qualifier
+	 * @param family column family
+	 * @param qualifier column qualifier
+	 * @return the respective format size in Integer format
+	 */
 	public Integer getFormatSizeFromQualifier(String family, String qualifier) {
 		int formatSize = 0;
 		for (Family f : this.columnFamilies) {
@@ -204,6 +239,12 @@ public class TableSchema {
 		return formatSize;
 	}
 
+//	TODO: adjust this method, since if there is two or more qualifiers with the same name, the returned value will be the same everytime
+	/**
+	 * whichFamilyContainsQualifier(qualifier : String) method : verify in which family a given qualifier is inserted
+	 * @param qualifier column qualifier
+	 * @return column family in String format
+	 */
 	public String whichFamilyContainsQualifier(String qualifier) {
 		String family = "";
 

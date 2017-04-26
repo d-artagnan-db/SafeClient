@@ -7,7 +7,8 @@ import java.io.IOException;
 import java.util.Iterator;
 
 /**
- * Created by rgmacedo on 3/15/17.
+ * PlaintextResultScanner class.
+ * ResultScanner instance, providing a secure ResultScanner with the PLT CryptoBox.
  */
 public class PlaintextResultScanner implements ResultScanner {
 	public CryptoProperties cProperties;
@@ -18,6 +19,11 @@ public class PlaintextResultScanner implements ResultScanner {
 		this.encryptedScanner = encryptedScanner;
 	}
 
+	/**
+	 * next() method : decode both row key and result set for the current Result object from the encryptedScanner.
+	 * @return the original Result
+	 * @throws IOException
+	 */
 	@Override
 	public Result next() throws IOException {
 		Result encryptedResult = this.encryptedScanner.next();

@@ -7,7 +7,8 @@ import java.io.IOException;
 import java.util.Iterator;
 
 /**
- * Created by rgmacedo on 2/21/17.
+ * OrderPreservingResultScanner class.
+ * ResultScanner instance, providing a secure ResultScanner with the OPE CryptoBox.
  */
 public class OrderPreservingResultScanner implements ResultScanner {
 	public CryptoProperties cProperties;
@@ -18,6 +19,11 @@ public class OrderPreservingResultScanner implements ResultScanner {
 		this.encryptedScanner = encryptedScanner;
 	}
 
+	/**
+	 * next() method : decode both row key and result set for the current Result object from the encryptedScanner
+	 * @return the original Result
+	 * @throws IOException
+	 */
 	public Result next() throws IOException {
 		Result encryptedResult = this.encryptedScanner.next();
 		if (encryptedResult != null) {

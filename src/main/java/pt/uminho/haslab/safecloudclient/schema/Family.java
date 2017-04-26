@@ -8,7 +8,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by rgmacedo on 3/13/17.
+ * Family class.
+ * Holds all the relevant information associated to a specific Family.
  */
 public class Family {
 
@@ -23,14 +24,15 @@ public class Family {
 		this.formatSize = 0;
 		this.qualifiers = new ArrayList<>();
 	}
+
 	public Family(String familyName, CryptoTechnique.CryptoType cType, int formatSize) {
         this.familyName = familyName;
         this.cryptoType = cType;
         this.formatSize = formatSize;
         this.qualifiers = new ArrayList<>();
     }
-	public Family(String familyName, CryptoTechnique.CryptoType cType,
-			int formatSize, List<Qualifier> quals) {
+
+    public Family(String familyName, CryptoTechnique.CryptoType cType, int formatSize, List<Qualifier> quals) {
 		this.familyName = familyName;
 		this.cryptoType = cType;
 		this.formatSize = formatSize;
@@ -76,13 +78,12 @@ public class Family {
 	}
 
 	/**
-	 * Add a new qualifier to the Qualifiers list. If both format size and
-	 * cryptoType is not defined, the qualifier assume both values from is
-	 * parent, the column family.
-	 * 
-	 * @param qualifierName
-	 * @param cryptoType
-	 * @param formatSize
+	 * addQualifier(qualifierName : String, cryptoType : CryptoType, formatSize : int, properties : Map<String,String>) method :
+	 * add a new qualifier to the Qualifiers list. If both format size and CryptoType are undefined, the qualifier assume
+	 * the default properties (inherited from the column family)
+	 * @param qualifierName column qualifier
+	 * @param cryptoType CryptoBox type
+	 * @param formatSize size of qualifier
 	 */
 	public void addQualifier(String qualifierName, CryptoTechnique.CryptoType cryptoType, int formatSize, Map<String,String> properties) {
 		CryptoTechnique.CryptoType cType;
@@ -106,6 +107,11 @@ public class Family {
 		this.qualifiers.add(new Qualifier(qualifierName, cType, fSize, properties));
 	}
 
+	/**
+	 * addQualifier(qualifier : Qualifier) method : add a new qualifier to the Qualifiers list. If both format size and
+	 * CryptoType are undefined, the qualifier assume the default properties (inherited from the column family)
+	 * @param qualifier Qualifier object
+	 */
 	public void addQualifier(Qualifier qualifier) {
 		if (qualifier.getCryptoType() == null)
 			qualifier.setCryptoType(this.cryptoType);
@@ -116,6 +122,11 @@ public class Family {
 		this.qualifiers.add(qualifier);
 	}
 
+	/**
+	 * containsQualifier(qualifier :String) method : verify if qualifier List contains a given qualifier
+	 * @param qualifier column qualifier
+	 * @return true if qualifier exist. Otherwise false.
+	 */
 	public boolean containsQualifier(String qualifier) {
 		boolean contains = false;
 		for (Qualifier q : this.qualifiers) {

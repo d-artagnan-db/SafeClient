@@ -9,7 +9,8 @@ import java.io.IOException;
 import java.util.Iterator;
 
 /**
- * Created by rgmacedo on 2/21/17.
+ * StandardResultScanner class.
+ * ResultScanner instance, providing a secure ResultScanner with the STD CryptoBox.
  */
 public class StandardResultScanner implements ResultScanner {
 	public ResultScanner scanner;
@@ -33,6 +34,12 @@ public class StandardResultScanner implements ResultScanner {
 		this.setFilters(startRow, endRow, filterResult);
 	}
 
+	/**
+	 * setFilter (startRow : byte[], endRow : byte[], filter : Object) method : set the start and stop rows and the filter properties into class variables
+	 * @param startRow start row
+	 * @param endRow stop row
+	 * @param filter filter propeties. In case of RowFilter(CompareOperation,CompareValue). In case of SingleColumnValueFilter(Family,Qualififer,CompareOperation,CompareValue).
+	 */
 	public void setFilters(byte[] startRow, byte[] endRow, Object filter) {
 		if (startRow.length != 0) {
 			this.hasStartRow = true;
@@ -90,6 +97,12 @@ public class StandardResultScanner implements ResultScanner {
 	// return paddingSize;
 	// }
 
+	/**
+	 * digestStartEndRow(paddingSize : int, row : byte[]) method : check if a row key is between the start and stop rows
+	 * @param paddingSize Not applicable
+	 * @param row row key
+	 * @return true if is comprehended between the two delimiter rows. Otherwise false.
+	 */
 	public boolean digestStartEndRow(int paddingSize, byte[] row) {
 		boolean digest;
 		Bytes.ByteArrayComparator byteArrayComparator = new Bytes.ByteArrayComparator();
@@ -117,6 +130,13 @@ public class StandardResultScanner implements ResultScanner {
 		return digest;
 	}
 
+	/**
+	 * digestFilter(paddingSize : int, main : byte[], value : byte[]) method : check if a value match the filter properties
+	 * @param paddingSize Not applicable
+	 * @param main compare value
+	 * @param value value to perform the comparison
+	 * @return true if match the filter properties. Otherwise false.
+	 */
 	public boolean digestFilter(int paddingSize, byte[] main, byte[] value) {
 		boolean digest = true;
 		Bytes.ByteArrayComparator byteArrayComparator = new Bytes.ByteArrayComparator();
@@ -146,6 +166,11 @@ public class StandardResultScanner implements ResultScanner {
 		return digest;
 	}
 
+	/**
+	 * next() method : decode both row key and result set for the current Result object from the encrypted scanner
+	 * @return the original result
+	 * @throws IOException
+	 */
 	public Result next() throws IOException {
 		Result res = this.scanner.next();
 		boolean digest;
@@ -159,14 +184,14 @@ public class StandardResultScanner implements ResultScanner {
 				if(this.filterType.equals("RowFilter")) {
 					digest = digestFilter(0, row, this.compareValue);
 				}
-				else if(this.filterType.equals("SingleColumnValueFilter")) {
-					byte[] qualifierValue = this.cProperties.decodeValue(
-							this.family,
-							this.qualifier,
-							res.getValue(this.family, this.qualifier));
-
-					digest = digestFilter(0, qualifierValue, this.compareValue);
-				}
+//				else if(this.filterType.equals("SingleColumnValueFilter")) {
+//					byte[] qualifierValue = this.cProperties.decodeValue(
+//							this.family,
+//							this.qualifier,
+//							res.getValue(this.family, this.qualifier));
+//
+//					digest = digestFilter(0, qualifierValue, this.compareValue);
+//				}
 			}
 
 			if (digest)

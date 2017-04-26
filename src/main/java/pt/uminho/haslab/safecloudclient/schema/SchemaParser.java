@@ -10,7 +10,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by rgmacedo on 3/13/17.
+ * SchemaParser class.
+ * Used to parse the database schema file.
  */
 public class SchemaParser {
 	public TableSchema tableSchema;
@@ -23,16 +24,21 @@ public class SchemaParser {
 		return this.tableSchema;
 	}
 
+	/**
+	 * parse(filename : String) method : parse the database schema file (<schema>.xml)
+	 * @param filename database schema path
+	 */
 	public void parse(String filename) {
 		try {
 			long starttime = System.currentTimeMillis();
 
+//			Read schema file
 			File inputFile = new File(filename);
 			SAXReader reader = new SAXReader();
 			Document document = reader.read(inputFile);
 
 //			System.out.println("Root Element: " + document.getRootElement().getName());
-
+//			Map the schema file into an Element object
 			Element rootElement = document.getRootElement();
 
 			parseTablename(rootElement);
@@ -47,6 +53,10 @@ public class SchemaParser {
 		}
 	}
 
+	/**
+	 * parseTablename(rootElement : Element) method : parse the table name
+	 * @param rootElement main Element node
+	 */
 	public void parseTablename(Element rootElement) {
 		Element nameElement = rootElement.element("name");
 		String name = nameElement.getText();
@@ -55,6 +65,10 @@ public class SchemaParser {
 		}
 	}
 
+	/**
+	 * parseDefault(rootElement : Element) method : parse the default database parameters
+	 * @param rootElement main Element node
+	 */
 	public void parseDefault(Element rootElement) {
 		Element defaultElement = rootElement.element("default");
 		if (defaultElement != null) {
@@ -76,6 +90,10 @@ public class SchemaParser {
 		}
 	}
 
+	/**
+	 * parseKey(rootElement : Element) method : parse the key properties from the database schema
+	 * @param rootElement main Element node
+	 */
 	public void parseKey(Element rootElement) {
 		Element keyElement = rootElement.element("key");
 		if (keyElement != null) {
@@ -89,6 +107,10 @@ public class SchemaParser {
 		}
 	}
 
+	/**
+	 * parseColumns(rootElement : Element) method : parse the column families and qualifiers properties from the database schema
+	 * @param rootElement main Element node
+	 */
 	public void parseColumns(Element rootElement) {
 		Element columnsElement = rootElement.element("columns");
 		if (columnsElement != null) {
@@ -144,6 +166,12 @@ public class SchemaParser {
 	}
 
 //		TODO falta por o default
+
+	/**
+	 * parseMiscellaneous(properties : List<Element>) method : parse random properties from the database schema
+	 * @param properties list of Element nodes
+	 * @return a mapper of the property and the type in Map<String,String> format
+	 */
 	public Map<String,String> parseMiscellaneous(List<Element> properties) {
 		Map<String, String > result = new HashMap<>();
 		for(Element property : properties) {

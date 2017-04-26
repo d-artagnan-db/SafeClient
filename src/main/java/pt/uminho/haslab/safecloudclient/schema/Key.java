@@ -3,7 +3,8 @@ package pt.uminho.haslab.safecloudclient.schema;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 
 /**
- * Created by rgmacedo on 3/13/17.
+ * Key class.
+ * Holds all the relevant information associated to the row key
  */
 public class Key {
 

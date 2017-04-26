@@ -4,7 +4,8 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 
 /**
- * Created by rgmacedo on 2/21/17.
+ * ResultScannerFactory class.
+ * Factory pattern applied in order to provide a uniform getResultScanner operation
  */
 public class ResultScannerFactory {
 

@@ -6,6 +6,7 @@ import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique.CryptoType;
+import pt.uminho.haslab.cryptoenv.Utils;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoTable;
 import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
@@ -35,7 +36,7 @@ public class CryptoClient implements TestClient {
 		conf.addResource("conf.xml");
 
 		CryptoTable ct = new CryptoTable(conf, tableName, this.schemaFile);
-		byte[] key = CryptoProperties.readKeyFromFile("key.txt");
+		byte[] key = Utils.readKeyFromFile("key.txt");
 
 		ct.cryptoProperties.setKey(CryptoType.STD, key);
 		ct.cryptoProperties.setKey(CryptoType.DET, key);

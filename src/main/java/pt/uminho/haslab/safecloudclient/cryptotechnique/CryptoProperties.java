@@ -21,18 +21,24 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 /**
- * Created by rgmacedo on 2/22/17.
+ * CryptoProperties class.
+ * Supports the CryptoTable class with the secondary methods such as encode, decode, ...
  */
 public class CryptoProperties {
 
 	public Utils utils;
+//	TableSchema object, used to trace the database composition
 	public TableSchema tableSchema;
 
+//	For each CryptoBox a new CryptoHandler object must be instantiated
 	public CryptoHandler stdHandler;
 	public CryptoHandler detHandler;
+//	This object handles the row keys protected with the OPE CryptoBox
 	public CryptoHandler opeHandler;
+//	Since the OPE CryptoBox need to be initialized with the plaintext size and ciphertext size, each value protected with OPE must have an individual CryptoHandler
 	public Map<String, Map<String, CryptoHandler>> opeValueHandler;
 
+//	Cryptographic Keys stored in byte[] format
 	public byte[] stdKey;
 	public byte[] detKey;
 	public byte[] opeKey;
@@ -57,6 +63,13 @@ public class CryptoProperties {
 		this.utils = new Utils();
 	}
 
+	/**
+	 * opeArguments(formatSize : int, ciphertextSize : int) method :  set the ope initialization values.
+	 * By default the OPE Cache is enabled (OpeHgd.CACHE). To disable the OPE CACHE set OpeHdg.NO_CACHE
+	 * @param formatSize plaintext format size
+	 * @param ciphertextSize ciphertext format size
+	 * @return the ope arguments list (List<Object>)
+	 */
 	public List<Object> opeArguments(int formatSize, int ciphertextSize) {
 		List<Object> arguments = new ArrayList<Object>();
 		arguments.add(OpeHgd.CACHE);
@@ -65,6 +78,10 @@ public class CryptoProperties {
 		return arguments;
 	}
 
+	/**
+	 * defineFamilyCryptoHandler() method : creates a Map of CryptoHandler's for each qualifier protected with OPE CryptoBox.
+	 * @return a collection of families and the respective qualifiers CryptoHandler (Map<FamilyName, Map<QualifierName, CryptoHandler>>)
+	 */
 	public Map<String, Map<String, CryptoHandler>> defineFamilyCryptoHandler() {
 		Map<String, Map<String, CryptoHandler>> familyCryptoHandler = new HashMap<>();
 		for(Family f : this.tableSchema.getColumnFamilies()) {
@@ -83,6 +100,9 @@ public class CryptoProperties {
 		return familyCryptoHandler;
 	}
 
+	/**
+	 * verifyOpeValueHandler() method : only used to check the OPE CryptoHandlers
+	 */
 	public void verifyOpeValueHandler() {
 		for(String family : this.opeValueHandler.keySet()) {
 			System.out.println("Family Size: "+this.opeValueHandler.get(family).size());
@@ -92,14 +112,20 @@ public class CryptoProperties {
 		}
 	}
 
+	/**
+	 * getCryptoHandler(family : String, qualifier : String) method : get an OPE CryptoHandler of a given family and qualifier
+	 * @param family
+	 * @param qualifier
+	 * @return the CryptoHandler that corresponds to the family and qualifier specified
+	 */
 	public CryptoHandler getCryptoHandler(String family, String qualifier) {
 		return this.opeValueHandler.get(family).get(qualifier);
 	}
 
 	/**
-	 * Get Encryption/Decryption Key from CryptoHandler
-	 * 
-	 * @return
+	 * getKey(cType : CryptoType) method : get cryptographic key given a CryptoBox type
+	 * @param cType CryptoBox type
+	 * @return the respective cryptographic key
 	 */
 	public byte[] getKey(CryptoTechnique.CryptoType cType) {
 		switch (cType) {
@@ -115,9 +141,9 @@ public class CryptoProperties {
 	}
 
 	/**
-	 * Set the Encryption/Decryption Key in the CryptoHandler
-	 * 
-	 * @param key
+	 * setKey (cType : CryptoType, key : byte[]) : set the cryptographic key of a given CryptoBox type
+	 * @param cType CryptoBox type
+	 * @param key Cryptographic key in byte[] format
 	 */
 	public void setKey(CryptoTechnique.CryptoType cType, byte[] key) {
 		switch (cType) {
@@ -133,9 +159,15 @@ public class CryptoProperties {
 			default :
 				break;
 		}
-		System.out.println("The key was setted. Key - " + Arrays.toString(key));
+//		System.out.println("The key was setted. Key - " + Arrays.toString(key));
 	}
 
+	/**
+	 * encodeRowCryptoType(cType : CryptoType, content : byte[]) method : encrypts the row key
+	 * @param cType CryptoBox type
+	 * @param content plaintext row key
+	 * @return the resulting ciphertext
+	 */
 	public byte[] encodeRowCryptoType(CryptoTechnique.CryptoType cType, byte[] content) {
 		switch (cType) {
 			case PLT :
@@ -151,6 +183,14 @@ public class CryptoProperties {
 		}
 	}
 
+	/**
+	 * encodeValueCryptoType(cType : CryptoType, content : byte[], family : String, qualifier : String) method : encrypts the value of a specific family and qualifier
+	 * @param cType CryptoBox type
+	 * @param content plaintext value
+	 * @param family family column
+	 * @param qualifier qualifier column
+	 * @return the resulting ciphertext
+	 */
 	public byte[] encodeValueCryptoType(CryptoTechnique.CryptoType cType, byte[] content, String family, String qualifier) {
 		switch (cType) {
 			case PLT :
@@ -167,6 +207,12 @@ public class CryptoProperties {
 		}
 	}
 
+	/**
+	 * decodeRowCryptoType(cType : CryptoType, ciphertext : byte[]) method : decrypts the row key ciphertext
+	 * @param cType CryptoBox type
+	 * @param ciphertext protected row key
+	 * @return the original row key in byte[] format
+	 */
 	public byte[] decodeRowCryptoType(CryptoTechnique.CryptoType cType, byte[] ciphertext) {
 		switch (cType) {
 			case PLT :
@@ -182,6 +228,14 @@ public class CryptoProperties {
 		}
 	}
 
+	/**
+	 * decodeValueCryptoType(cType : CryptoType, ciphertext : byte[], family : String, qualifier : String) method : decrypts the ciphertext value of a specific family and qualifier
+	 * @param cType CryptoBox type
+	 * @param ciphertext protected value
+	 * @param family family column
+	 * @param qualifier qualifier column
+	 * @return the original value in byte[] format
+	 */
 	public byte[] decodeValueCryptoType(CryptoTechnique.CryptoType cType, byte[] ciphertext, String family, String qualifier) {
 		switch (cType) {
 			case PLT :
@@ -199,10 +253,9 @@ public class CryptoProperties {
 	}
 
 	/**
-	 * Encode a given content, apart the CryptoType
-	 * 
-	 * @param content
-	 * @return
+	 * encodeRow(content : byte[]) method : get the row key CryptoType and encrypt the row key
+	 * @param content plaintext row key
+	 * @return call the encodeRowCryptoType method. Return the encoded row key in byte[] format
 	 */
 	public byte[] encodeRow(byte[] content) {
 		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getKey().getCryptoType();
@@ -211,10 +264,9 @@ public class CryptoProperties {
 	}
 
 	/**
-	 * Decode a given content, apart the CryptoType
-	 * 
-	 * @param content
-	 * @return
+	 * decodeRow(content : byte[]) method : get the row key CryptoType and decrypt the row key
+	 * @param content ciphertext row key
+	 * @return call the decodeRowCryptoType method. Return the original plaintext row key in byte[] format
 	 */
 	public byte[] decodeRow(byte[] content) {
 		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getKey().getCryptoType();
@@ -222,29 +274,41 @@ public class CryptoProperties {
 		return decodeRowCryptoType(cryptoType, content);
 	}
 
+	/**
+	 * encodeValue(family : byte[], qualifier : byte[], value : byte[]) method : get the family:qualifier CryptoType and encrypt the value
+	 * @param family family column
+	 * @param qualifier qualifier column
+	 * @param value plaintext value
+	 * @return call the encodeValueCryptoType method. Return the encoded value in byte[] format
+	 */
 	public byte[] encodeValue(byte[] family, byte[] qualifier, byte[] value) {
 		String f = new String(family);
 		String q = new String(qualifier);
-		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getCryptoTypeFromQualifer(f, q);
+		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getCryptoTypeFromQualifier(f, q);
 //		System.out.println("Encode Value (" + f + "," + q + "): " + cryptoType);
 		return encodeValueCryptoType(cryptoType, value, f, q);
 	}
 
+	/**
+	 * decodeValue(family : byte[], qualifier : byte[], value : byte[]) method : get the family:qualifier CryptoType and decrypt the value
+	 * @param family family column
+	 * @param qualifier qualifier column
+	 * @param value ciphertext value
+	 * @return call the decodeValueCryptoType method. Return the original value in byte[] format
+	 */
 	public byte[] decodeValue(byte[] family, byte[] qualifier, byte[] value) {
 		String f = new String(family);
 		String q = new String(qualifier);
-		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getCryptoTypeFromQualifer(f, q);
+		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getCryptoTypeFromQualifier(f, q);
 //		System.out.println("Decode Value (" + f + "," + q + "): " + cryptoType);
 		return decodeValueCryptoType(cryptoType, value, f, q);
 	}
 
 	/**
-	 * Decode a Result given a row (key) and an encrypted result (value). Return
-	 * the respective value decrypted.
-	 * 
-	 * @param row
-	 * @param res
-	 * @return
+	 * decodeResult(row :byte[], res : Result) method : decrypt all qualifiers from the HBase Result encrypted object
+	 * @param row original row key
+	 * @param res HBase Result object encrypted
+	 * @return decrypted HBase Result
 	 */
 	public Result decodeResult(byte[] row, Result res) {
 //		byte[] decodedRow = this.decodeRow(row);
@@ -262,13 +326,15 @@ public class CryptoProperties {
 			Cell decCell;
 			String qualifier = new String(cq);
 
+//			Verify if the actual qualifier is equal to <qualifier>_STD
 			boolean verifyProperty = false;
 			if(qualifier.length() >= opeValues.length()) {
 				verifyProperty = qualifier.substring(qualifier.length()-opeValues.length(), qualifier.length()).equals(opeValues);
 			}
 
 			if(!verifyProperty) {
-				if (tableSchema.getCryptoTypeFromQualifer(new String(cf), qualifier) == CryptoTechnique.CryptoType.OPE) {
+//				If the qualifier's CryptoType equal to OPE, decrypt the auxiliary qualifier (<qualifier_STD>)
+				if (tableSchema.getCryptoTypeFromQualifier(new String(cf), qualifier) == CryptoTechnique.CryptoType.OPE) {
 					Cell stdCell = res.getColumnLatestCell(cf, (qualifier + opeValues).getBytes());
 
 					decCell = CellUtil.createCell(
@@ -298,7 +364,11 @@ public class CryptoProperties {
 		return Result.create(cellList);
 	}
 
-
+	/**
+	 * isScanOrFilter(scan : Scan) method : check the CryptoType of a scan operation. It may vary if it's a Scan, Row Filter or SingleColumnValueFilter
+	 * @param scan scan object used to check the instance
+	 * @return the Scan's CryptoType (Row Key CryptoType in case of Scan or RowFilter, Qualifier CryptoType in case of SingleColumnValueFilter)
+	 */
 	public CryptoTechnique.CryptoType isScanOrFilter(Scan scan) {
 		if(scan.hasFilter()) {
 			Filter filter = scan.getFilter();
@@ -309,7 +379,7 @@ public class CryptoProperties {
 				SingleColumnValueFilter singleColumn = (SingleColumnValueFilter) filter;
 				String family = new String(singleColumn.getFamily());
 				String qualifier = new String(singleColumn.getQualifier());
-				return this.tableSchema.getCryptoTypeFromQualifer(family, qualifier);
+				return this.tableSchema.getCryptoTypeFromQualifier(family, qualifier);
 			}
 			else {
 				return null;
@@ -320,6 +390,13 @@ public class CryptoProperties {
 		}
 	}
 
+	/**
+	 * encodeDelimitingRows(encScan : Scan, startRow : byte[], stopRow : byte[]) method : set the encrypted start and stop rows to an encrypted scan operator
+	 * @param encScan encrytped scan operator
+	 * @param startRow original start row
+	 * @param stopRow original stop row
+	 * @return an encrypted scan with the respective start and stop row, both encrypted with the row key CryptoBox
+	 */
 	public Scan encodeDelimitingRows(Scan encScan, byte[] startRow, byte[] stopRow) {
 		if (startRow.length != 0 && stopRow.length != 0) {
 			encScan.setStartRow(this.encodeRow(startRow));
@@ -333,38 +410,45 @@ public class CryptoProperties {
 	}
 
 	/**
-	 * Convert a Scan operation in the respective Encrypted operation
-	 * 
-	 * @param s
-	 * @return
+	 * encryptedScan(s : Scan) : convert a regular Scan object in the respective encrypted object
+	 * @param s scan object
+	 * @return the respective encrypted scan object
 	 */
 	public Scan encryptedScan(Scan s) {
 		byte[] startRow = s.getStartRow();
 		byte[] stopRow = s.getStopRow();
 		Scan encScan = null;
 
+//		get the CryptoType of the Scan/Filter operation
 		CryptoTechnique.CryptoType scanCryptoType = isScanOrFilter(s);
+//		Map the database column families and qualifiers into a collection
 		Map<byte[], List<byte[]>>columns = this.getFamiliesAndQualifiers(s.getFamilyMap());
 
 		switch (scanCryptoType) {
+//			In case of plaintext, return the same object as received
 			case PLT :
 				encScan = s;
 				break;
+//			In case of standard or deterministic encryption, since no order is preserved a full table scan must be performed.
+//			In case of Filter, the compare value must be encrypted.
 			case STD :
 			case DET :
 				encScan = new Scan();
-
+//				Add only the specified qualifiers in the original scan (s), instead of retrieve all (unnecessary) values).
 				for(byte[] f : columns.keySet()) {
 					List<byte[]> qualifiersTemp = columns.get(f);
 					for(byte[] q : qualifiersTemp) {
 						encScan.addColumn(f, q);
 					}
 				}
-
-				if(this.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.OPE) {
-					encScan = encodeDelimitingRows(encScan, startRow, stopRow);
+//				Since the scanCryptoType defines the CryptoType of the scan or filter operaion, in case of SingleColumnValueFilter,
+// 				the start and stop row must be encoded with the respective row key CryptoBox
+				if((this.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.PLT) ||
+						(this.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.OPE)) {
+							encScan = encodeDelimitingRows(encScan, startRow, stopRow);
 				}
 
+//				In case of filter, the compare value must be encrypted
 				if(s.hasFilter()) {
 					if(s.getFilter() instanceof SingleColumnValueFilter) {
 //						System.out.println("Entrou no singlecolumn cenas");
@@ -380,14 +464,17 @@ public class CryptoProperties {
 				break;
 			case OPE :
 				encScan = new Scan();
-
+//				Add only the specified qualifiers in the original scan (s), instead of retrieve all (unnecessary) values).
 				for(byte[] f : columns.keySet()) {
 					List<byte[]> qualifiersTemp = columns.get(f);
 					for(byte[] q : qualifiersTemp) {
 						encScan.addColumn(f, q);
 					}
 				}
-				if(this.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.OPE) {
+//				Since the scanCryptoType defines the CryptoType of the scan or filter operaion, in case of SingleColumnValueFilter,
+// 				the start and stop row must be encoded with the respective row key CryptoBox
+				if((this.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.PLT) ||
+						(this.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.OPE)) {
 					encScan = encodeDelimitingRows(encScan, startRow, stopRow);
 				}
 				if (s.hasFilter()) {
@@ -402,11 +489,9 @@ public class CryptoProperties {
 	}
 
 	/**
-	 * When setting a filter, parse it and handle it according the respective
-	 * CryptoType
-	 * 
-	 * @param filter
-	 * @return
+	 * parseFilter(filter : Filter) method : when setting a filter, parse it and handle it according the respective CryptoType
+	 * @param filter Filter object
+	 * @return provide an encrypted Filter, with the respective operator and compare value.
 	 */
 	public Object parseFilter(Filter filter) {
 		CompareFilter.CompareOp comp;
@@ -432,8 +517,8 @@ public class CryptoProperties {
 						returnValue = parserResult;
 						break;
 					case OPE:
+//						Generate a Binary Comparator to perform the comparison with the respective encrypted value
 						BinaryComparator encBC = new BinaryComparator(this.encodeRow(bComp.getValue()));
-
 						returnValue = new RowFilter(comp, encBC);
 						break;
 					default:
@@ -448,7 +533,7 @@ public class CryptoProperties {
 				comp = singleFilter.getOperator();
 				bComp = singleFilter.getComparator();
 
-				switch (this.tableSchema.getCryptoTypeFromQualifer(new String(family), new String(qualifier))) {
+				switch (this.tableSchema.getCryptoTypeFromQualifier(new String(family), new String(qualifier))) {
 					case PLT:
 						returnValue = singleFilter;
 						break;
@@ -463,6 +548,7 @@ public class CryptoProperties {
 						returnValue = parserResult;
 						break;
 					case OPE:
+//						Generate a Binary Comparator to perform the comparison with the respective encrypted value
 						BinaryComparator encBC = new BinaryComparator(this.encodeValue(family, qualifier, bComp.getValue()));
 						returnValue = new SingleColumnValueFilter(family, qualifier, comp, encBC);
 						break;
@@ -476,7 +562,11 @@ public class CryptoProperties {
 		return returnValue;
 	}
 
-
+	/**
+	 * verifyFilterCryptoType(scan : Scan) method : verify the filter's CryptoBox
+	 * @param scan scan/filter object
+	 * @return the respective CryptoType
+	 */
 	public CryptoTechnique.CryptoType verifyFilterCryptoType(Scan scan) {
 		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getKey().getCryptoType();
 
@@ -485,12 +575,18 @@ public class CryptoProperties {
 			if(filter instanceof SingleColumnValueFilter) {
 				String family = new String(((SingleColumnValueFilter) filter).getFamily());
 				String qualifier = new String(((SingleColumnValueFilter)filter).getQualifier());
-				cryptoType = this.tableSchema.getCryptoTypeFromQualifer(family, qualifier);
+				cryptoType = this.tableSchema.getCryptoTypeFromQualifier(family, qualifier);
 			}
 		}
 		return cryptoType;
 	}
 
+	/**
+	 * getFamiliesAndQualifiers(familiesAndQualifiers : Map<byte[], NavigableSet<byte[]>>) method : convert a mapper of the
+	 * column families and the respective column qualifiers in a user friendly one
+	 * @param familiesAndQualifiers received mapper
+	 * @return user friendly mapper, providing the column families and the respective column qualifiers in the Map<byte[], List<byte[]>> format.
+	 */
 	public Map<byte[], List<byte[]>> getFamiliesAndQualifiers(Map<byte[], NavigableSet<byte[]>> familiesAndQualifiers) {
 		String opeValue = "_STD";
 		Map<byte[],List<byte[]>> result = new HashMap<>();
@@ -502,7 +598,7 @@ public class CryptoProperties {
 				while (i.hasNext()) {
 					byte[] qualifier = (byte[]) i.next();
 					qualifierList.add(qualifier);
-					if (tableSchema.getCryptoTypeFromQualifer(new String(family), new String(qualifier)) == CryptoTechnique.CryptoType.OPE) {
+					if (tableSchema.getCryptoTypeFromQualifier(new String(family), new String(qualifier)) == CryptoTechnique.CryptoType.OPE) {
 						String q_std = new String(qualifier);
 						qualifierList.add((q_std + opeValue).getBytes());
 					}
@@ -513,36 +609,6 @@ public class CryptoProperties {
 		}
 
 		return result;
-	}
-
-	// TODO remove temporary Method
-	/**
-	 * This is only a temporary Method
-	 * 
-	 * @param filename
-	 * @return
-	 * @throws IOException
-	 */
-	public static byte[] readKeyFromFile(String filename) throws IOException {
-		FileInputStream stream = new FileInputStream(filename);
-		try {
-			byte[] key = new byte[stream.available()];
-			int b;
-			int i = 0;
-
-			while ((b = stream.read()) != -1) {
-				key[i] = (byte) b;
-				i++;
-			}
-			System.out.println("readKeyFromFile: " + Arrays.toString(key));
-
-			return key;
-		} catch (Exception e) {
-			System.out.println("Exception. " + e.getMessage());
-		} finally {
-			stream.close();
-		}
-		return null;
 	}
 
 }

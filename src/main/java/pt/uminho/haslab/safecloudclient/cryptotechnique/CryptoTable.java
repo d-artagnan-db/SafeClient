@@ -15,6 +15,10 @@ import pt.uminho.haslab.safecloudclient.schema.TableSchema;
 import java.io.IOException;
 import java.util.*;
 
+/**
+ * CryptoTable class.
+ * Provides a secure extended version of an HBase HTable
+ */
 public class CryptoTable extends HTable {
 	static final Log LOG = LogFactory.getLog(CryptoTable.class.getName());
 
@@ -36,6 +40,11 @@ public class CryptoTable extends HTable {
 		this.resultScannerFactory = new ResultScannerFactory();
 	}
 
+	/**
+	 * init(String filename) method : read and creates a database secure schema
+	 * @param filename path to the database schema
+	 * @return TableSchema object
+	 */
 	public TableSchema init(String filename) {
 		SchemaParser schemaParser = new SchemaParser();
 		schemaParser.parse(filename);
@@ -43,11 +52,18 @@ public class CryptoTable extends HTable {
 		return schemaParser.getTableSchema();
 	}
 
+	/**
+	 * put(Put put) method : secure put/update method.
+	 * The original put object sends a set of qualifiers and values to insert in the database system.
+	 * Before the insertion both key and values are encrypted, following the database schema specifications.
+	 * In case of OPE CryptoBox, an additional qualifier is created and stores the respective value encrypted with the STD CryptoBox
+	 * @param put original put object that contains the key, values, qualifiers, ...
+	 */
 	@Override
 	public void put(Put put) {
 		try {
 			byte[] row = put.getRow();
-
+//			Encode the row key
 			Put encPut = new Put(this.cryptoProperties.encodeRow(row));
 
 			CellScanner cs = put.cellScanner();
@@ -61,10 +77,12 @@ public class CryptoTable extends HTable {
 				String qualifierString = new String(qualifier);
 				String opeValues = "_STD";
 
+//				Verify if the actual qualifier corresponds to the supporting qualifier (<qualifier>_STD)
 				if (qualifierString.length() >= opeValues.length()) {
 					verifyProperty = qualifierString.substring(qualifierString.length() - opeValues.length(), qualifierString.length()).equals(opeValues);
 				}
 				if (!verifyProperty) {
+//					Encode the original value with the corresponding CryptoBox
 					encPut.add(
 							family,
 							qualifier,
@@ -73,7 +91,8 @@ public class CryptoTable extends HTable {
 									qualifier,
 									value));
 
-					if (tableSchema.getCryptoTypeFromQualifer(new String(family), qualifierString) == CryptoTechnique.CryptoType.OPE) {
+//					If the actual qualifier CryptoType is equal to OPE, encode the same value with STD CryptoBox
+					if (tableSchema.getCryptoTypeFromQualifier(new String(family), qualifierString) == CryptoTechnique.CryptoType.OPE) {
 						encPut.add(
 								family,
 								(qualifierString + opeValues).getBytes(),
@@ -86,6 +105,7 @@ public class CryptoTable extends HTable {
 
 				}
 			}
+
 			super.put(encPut);
 
 		} catch (IOException e) {
@@ -94,6 +114,14 @@ public class CryptoTable extends HTable {
 		}
 	}
 
+	/**
+	 * get(Get get) method : secure get method.
+	 * The original get object sets the row key to search in the database system. Before the get operation, the row key
+	 * is encrypted accordingly the respective CryptoBox and its issued. After the server response, all the values must be
+	 * decoded with the respective CryptoBox, resulting in the original values stored by the user.
+	 * @param get original get object that contains the key to perform the operation.
+	 * @return Result containing the plaintext value of the get result.
+	 */
 	@Override
 	public Result get(Get get) {
 		Scan getScan = new Scan();
@@ -101,6 +129,7 @@ public class CryptoTable extends HTable {
 
 		try {
 			byte[] row = get.getRow();
+//			Verify the row key CryptoBox
 			switch (this.cryptoProperties.tableSchema.getKey().getCryptoType()) {
 				case PLT :
 					Result pltResult = super.get(get);
@@ -149,11 +178,18 @@ public class CryptoTable extends HTable {
 		return getResult;
 	}
 
+	/**
+	 * delete(Delete delete) method : secure delete method.
+	 * The original delete object sets the row key to search in the database system. Before the delete operation, the row key
+	 * is encrypted accordingly the respective CryptoBox and its issued.
+	 * @param delete original get object that contains the key to perform the operation.
+	 */
 	@Override
 	public void delete(Delete delete) {
 		Scan deleteScan = new Scan();
 		try {
 			byte[] row = delete.getRow();
+//			Verify the row key CryptoBox
 			switch (this.cryptoProperties.tableSchema.getKey().getCryptoType()) {
 				case PLT :
 					super.delete(delete);
@@ -182,15 +218,24 @@ public class CryptoTable extends HTable {
 		}
 	}
 
+	/**
+	 * getScanner(Scan scan) method : secure scan and filter operations
+	 * This operations provides the secure scan and filter operations over the database. Encrypting both start row, stop row
+	 * and compare value.
+	 * @param scan scan object that provides the necessary filter and scan parameters.
+	 * @return resulting values that pass the filter parameters. The values are still encrypted.
+	 */
 	@Override
 	public ResultScanner getScanner(Scan scan) {
 		try {
 			byte[] startRow = scan.getStartRow();
 			byte[] endRow = scan.getStopRow();
 
+//			Transform the original object in an encrypted scan.
 			Scan encScan = this.cryptoProperties.encryptedScan(scan);
 			ResultScanner encryptedResultScanner = super.getScanner(encScan);
 
+//			Return the corresponding result scanner to decrypt the resulting set of values
 			return this.resultScannerFactory.getResultScanner(
 					this.cryptoProperties.verifyFilterCryptoType(scan),
 					this.cryptoProperties,
