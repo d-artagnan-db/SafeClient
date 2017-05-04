@@ -41,6 +41,8 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 			System.out.println("Quantity: " + quantity);
 			timingGetTest(table, time, quantity);
 
+			testScan(table, Utils.intArrayToByteArray(Utils.integerToIntArray(2000, 10)), Utils.intArrayToByteArray(Utils.integerToIntArray(2010, 10)));
+			testFilter(table, "RowFilter", CompareFilter.CompareOp.GREATER,  Utils.intArrayToByteArray(Utils.integerToIntArray(2450, 10)));
 //			timingGetTest(table, time, quantity);
 
 			// byte[] cf = columnDescriptor.getBytes();
@@ -192,6 +194,7 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 			for (Result r = rs.next(); r != null; r = rs.next()) {
 				if (!r.isEmpty()) {
 					// LOG.debug("Key [" + new String(r.getRow())+"]\n");
+					System.out.println("Key [" + Utils.intArrayToInteger(Utils.byteArrayToIntArray(r.getRow()), 10)+"]");
 					total++;
 				}
 			}
@@ -221,7 +224,7 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 		if(filterType.equals("RowFilter"))
 			filter = new RowFilter(operation, new BinaryComparator(compareValue));
 		else if(filterType.equals("SingleColumnValueFilter"))
-			filter = new SingleColumnValueFilter("Name".getBytes(), "First".getBytes(), operation, new BinaryComparator(compareValue));
+			filter = new SingleColumnValueFilter("Physician".getBytes(), "Physician ID".getBytes(), operation, new BinaryComparator(compareValue));
 
 		return filter;
 	}
@@ -230,10 +233,12 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 		try {
 			System.out.println("Entrou no testFilter");
 			Scan s = new Scan();
-			s.setStartRow(Utils.addPadding("1000", formatSize));
-			s.setStopRow(Utils.addPadding("1500", formatSize));
+//			s.setStartRow(Utils.addPadding("1000", formatSize));
+//			s.setStopRow(Utils.addPadding("1500", formatSize));
+			s.setStartRow( Utils.intArrayToByteArray(Utils.integerToIntArray(2000, 10)));
+			s.setStopRow( Utils.intArrayToByteArray(Utils.integerToIntArray(2500, 10)));
 			s.setFilter(buildFilter(filterType, operation, compareValue));
-			s.addColumn("Name".getBytes(), "First".getBytes());
+			s.addColumn("Physician".getBytes(), "Physician ID".getBytes());
 
 			System.out.println("Depois de BuildFilter");
 
@@ -246,9 +251,10 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 				if (!r.isEmpty()) {
 					System.out.println("Value: "+r.toString());
 					System.out.println("Key [" +
-							new String(r.getRow())+
+//							new String(r.getRow())+
+							Utils.intArrayToInteger(Utils.byteArrayToIntArray(r.getRow()), 10)+
 							":"+
-							new String(r.getValue("Name".getBytes(), "First".getBytes())) +
+							Utils.intArrayToInteger(Utils.byteArrayToIntArray(r.getValue("Physician".getBytes(), "Physician ID".getBytes())), 10) +
 							"]\n");
 					decoded++;
 				}

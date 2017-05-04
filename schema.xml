@@ -18,8 +18,11 @@
       <cryptotechnique>PLT</cryptotechnique>
       <qualifier>
         <name>Physician ID</name>
-        <cryptotechnique>PLT</cryptotechnique>
-        <formatsize>16</formatsize>
+        <cryptotechnique>FPE</cryptotechnique>
+        <formatsize>10</formatsize>
+        <instance>FF3</instance>
+        <radix>10</radix>
+        <tweak>hello world</tweak>
         <misc>
           <property>GENERATOR</property>
           <type>String</type>

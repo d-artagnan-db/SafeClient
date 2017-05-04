@@ -145,15 +145,33 @@ public class SchemaParser {
 						String qualifierName = qualifier.elementText("name");
 						String cryptotechniqueQualifier = qualifier.elementText("cryptotechnique");
 						String qualifierFormatsize = qualifier.elementText("formatsize");
+						String instance = qualifier.elementText("instance");
+						String radix = qualifier.elementText("radix");
+						String tweak = qualifier.elementText("tweak");
 
 						List<Element> misc = qualifier.elements("misc");
 						Map<String,String> properties = parseMiscellaneous(misc);
 
-						Qualifier q = new Qualifier(
-								qualifierName,
-								switchCryptoType(cryptotechniqueQualifier),
-								formatSizeIntegerValue(qualifierFormatsize),
-								properties);
+						Qualifier q;
+						if (!cryptotechniqueQualifier.equals("FPE")) {
+							q = new Qualifier(
+									qualifierName,
+									switchCryptoType(cryptotechniqueQualifier),
+									formatSizeIntegerValue(qualifierFormatsize),
+									properties);
+
+						}
+						else {
+							q = new QualifierFPE(
+									qualifierName,
+									switchCryptoType(cryptotechniqueQualifier),
+									formatSizeIntegerValue(qualifierFormatsize),
+									properties,
+									instance,
+									radixIntegerValue(radix),
+									tweak
+							);
+						}
 
 						this.tableSchema.addQualifier(familyName, q);
 

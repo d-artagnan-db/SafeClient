@@ -3,39 +3,43 @@ package pt.uminho.haslab.safecloudclient.schema;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import static pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties.getTweakBytes;
 import static pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties.whichFpeInstance;
 
 /**
- * Created by rgmacedo on 5/3/17.
+ * Created by rgmacedo on 5/4/17.
  */
-public class KeyFPE extends Key {
-
+public class QualifierFPE extends Qualifier {
+    private String qualifierName;
     private CryptoTechnique.CryptoType cryptoType;
     private int formatSize;
+    private Map<String, String> properties;
     private String instance;
     private CryptoTechnique.FFX fpe_instance;
     private int radix;
     private String tweak;
 
-    public KeyFPE() {
+    public QualifierFPE() {
+        this.qualifierName = "";
         this.cryptoType = CryptoTechnique.CryptoType.FPE;
-        this.formatSize = 10;
+        this.formatSize = 0;
+        this.properties = new HashMap<>();
         this.instance = "FF1";
         this.fpe_instance = CryptoTechnique.FFX.FF1;
         this.radix = 10;
         this.tweak = "";
     }
 
-    public KeyFPE(CryptoTechnique.CryptoType cType, int formatSize, String instance, int radix, String tweak) {
-        super(cType, formatSize);
+    public QualifierFPE(String qualifierName, CryptoTechnique.CryptoType cType, int formatSize, Map<String,String> prop, String instance, int radix, String tweak) {
+        super(qualifierName,cType,formatSize,prop);
         this.instance = instance;
         this.fpe_instance = whichFpeInstance(instance);
         this.radix = radix;
         this.tweak = tweak;
     }
-
 
     public String getInstance() {
         return this.instance;
@@ -71,20 +75,16 @@ public class KeyFPE extends Key {
 
     public byte[] getSecurityParameters(byte[] key) {
         byte[] temp_tweak = getTweakBytes(this.instance, this.tweak);
-        byte[] security_parameters = new byte[key.length+temp_tweak.length];
+        byte[] security_parameters = new byte[key.length + temp_tweak.length];
         System.arraycopy(key, 0, security_parameters, 0, key.length);
         System.arraycopy(temp_tweak, 0, security_parameters, key.length, temp_tweak.length);
-        System.out.println("Key+Tweak["+ Arrays.toString(security_parameters)+"]");
+        System.out.println("Key+Tweak[" + Arrays.toString(security_parameters) + "]");
         return security_parameters;
     }
 
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("[").append(this.instance).append(",");
-        sb.append(this.fpe_instance).append(",");
-        sb.append(this.radix).append(",");
-        sb.append(this.tweak).append("]\n");
-        return super.toString()+sb.toString();
-    }
 
-}
+
+
+
+
+    }

@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties.whichFpeInstance;
+
 /**
  * TableSchema class.
  * Mapper of the database schema provided by the user.
@@ -104,7 +106,7 @@ public class TableSchema {
 
 			if (((KeyFPE) key).getInstance() != null) {
 				temp.setInstance(((KeyFPE) key).getInstance());
-				temp.setFpeInstance(temp.whichFpeInstance(((KeyFPE) key).getInstance()));
+				temp.setFpeInstance(whichFpeInstance(((KeyFPE) key).getInstance()));
 			}
 
 			if(((KeyFPE) key).getRadix() > 0)

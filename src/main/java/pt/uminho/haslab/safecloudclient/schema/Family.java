@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties.whichFpeInstance;
+
 /**
  * Family class.
  * Holds all the relevant information associated to a specific Family.
@@ -113,13 +115,48 @@ public class Family {
 	 * @param qualifier Qualifier object
 	 */
 	public void addQualifier(Qualifier qualifier) {
-		if (qualifier.getCryptoType() == null)
-			qualifier.setCryptoType(this.cryptoType);
+		if (qualifier instanceof QualifierFPE) {
+			QualifierFPE q = new QualifierFPE();
+			QualifierFPE qTemp = (QualifierFPE) qualifier;
 
-		if (qualifier.getFormatSize() == 0)
-			qualifier.setFormatSize(this.formatSize);
+			if(qualifier.getName() != null)
+				q.setQualifierName(qualifier.getName());
 
-		this.qualifiers.add(qualifier);
+			if (qualifier.getCryptoType() == null)
+				q.setCryptoType(this.cryptoType);
+			else
+				q.setCryptoType(qualifier.getCryptoType());
+
+			if (qualifier.getFormatSize() == 0)
+				q.setFormatSize(this.formatSize);
+			else
+				q.setFormatSize(qualifier.getFormatSize());
+
+			if (qTemp.getInstance() != null) {
+				q.setInstance(qTemp.getInstance());
+				q.setFpeInstance(whichFpeInstance(qTemp.getInstance()));
+			}
+
+			if(qTemp.getRadix() > 0)
+				q.setRadix(qTemp.getRadix());
+
+			if(qTemp.getTweak() != null)
+				q.setTweak(qTemp.getTweak());
+
+			System.out.println("QualSize: "+this.qualifiers.size());
+			System.out.println("Q.toString: "+q.toString());
+			this.qualifiers.add(q);
+			System.out.println("QualSize: "+this.qualifiers.size());
+		}
+		else {
+			if (qualifier.getCryptoType() == null)
+				qualifier.setCryptoType(this.cryptoType);
+
+			if (qualifier.getFormatSize() == 0)
+				qualifier.setFormatSize(this.formatSize);
+
+			this.qualifiers.add(qualifier);
+		}
 	}
 
 	/**

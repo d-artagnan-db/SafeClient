@@ -19,6 +19,8 @@ public class ResultScannerFactory {
 				return new DeterministicResultScanner(cp, startRow, stopRow, rs, filterResult);
 			case OPE :
 				return new OrderPreservingResultScanner(cp, rs);
+			case FPE :
+				return new FormatPreservingResultScanner(cp, startRow, stopRow, rs, filterResult);
 			default :
 				return null;
 		}

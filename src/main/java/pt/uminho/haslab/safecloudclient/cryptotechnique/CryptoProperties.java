@@ -1,11 +1,9 @@
 package pt.uminho.haslab.safecloudclient.cryptotechnique;
 
-import org.apache.commons.collections.ArrayStack;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.filter.*;
 import pt.uminho.haslab.OpeHgd;
 import pt.uminho.haslab.cryptoenv.CryptoHandler;
@@ -16,10 +14,6 @@ import pt.uminho.haslab.safecloudclient.schema.KeyFPE;
 import pt.uminho.haslab.safecloudclient.schema.Qualifier;
 import pt.uminho.haslab.safecloudclient.schema.TableSchema;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.nio.ByteBuffer;
 import java.util.*;
 
 /**
@@ -63,7 +57,7 @@ public class CryptoProperties {
 				this.tableSchema.getKey().getFormatSize()*2));
 		this.opeKey = this.opeHandler.gen();
 
-		this.opeValueHandler = defineFamilyCryptoHandler();
+		this.opeValueHandler = defineFamilyCryptoHandler(CryptoTechnique.CryptoType.OPE);
 //		this.verifyOpeValueHandler();
 
 		if(this.tableSchema.getKey() instanceof KeyFPE) {
@@ -71,6 +65,7 @@ public class CryptoProperties {
 			KeyFPE temp_key_fpe = (KeyFPE) this.tableSchema.getKey();
 			this.fpeKey = temp_key_fpe.getSecurityParameters(this.fpeHandler.gen());
 		}
+		this.fpeValueHandler = defineFamilyCryptoHandler(CryptoTechnique.CryptoType.FPE);
 
 		this.utils = new Utils();
 	}
@@ -91,6 +86,7 @@ public class CryptoProperties {
 	}
 
 
+//		TODO mudar isto porque está para a key e nao para o qualifier
 	public List<Object> fpeArguments() {
 		List<Object> fpeArguments = new ArrayList<>();
 		KeyFPE temp = (KeyFPE) this.tableSchema.getKey();
@@ -103,17 +99,25 @@ public class CryptoProperties {
 	 * defineFamilyCryptoHandler() method : creates a Map of CryptoHandler's for each qualifier protected with OPE CryptoBox.
 	 * @return a collection of families and the respective qualifiers CryptoHandler (Map<FamilyName, Map<QualifierName, CryptoHandler>>)
 	 */
-	public Map<String, Map<String, CryptoHandler>> defineFamilyCryptoHandler() {
+	public Map<String, Map<String, CryptoHandler>> defineFamilyCryptoHandler(CryptoTechnique.CryptoType cType) {
 		Map<String, Map<String, CryptoHandler>> familyCryptoHandler = new HashMap<>();
 		for(Family f : this.tableSchema.getColumnFamilies()) {
 			Map<String, CryptoHandler> qualifierCryptoHandler = new HashMap<>();
 			for(Qualifier q : f.getQualifiers()) {
-				if(q.getCryptoType().equals(CryptoTechnique.CryptoType.OPE)) {
-					qualifierCryptoHandler.put(
-							q.getName(),
-							new CryptoHandler(
-									CryptoTechnique.CryptoType.OPE,
-									opeArguments(q.getFormatSize(), q.getFormatSize()*2)));
+				if(q.getCryptoType().equals(cType)) {
+					CryptoHandler ch;
+					switch (cType) {
+						case OPE :
+							ch = new CryptoHandler(cType, opeArguments(q.getFormatSize(), q.getFormatSize()*2));
+							break;
+						case FPE :
+//							TODO mudar isto porque está para a key e nao para o qualifier
+							ch = new CryptoHandler(cType, fpeArguments());
+							break;
+							default:
+								ch = null;
+					}
+					qualifierCryptoHandler.put(q.getName(), ch);
 				}
 			}
 			familyCryptoHandler.put(f.getFamilyName(), qualifierCryptoHandler);
@@ -139,8 +143,15 @@ public class CryptoProperties {
 	 * @param qualifier
 	 * @return the CryptoHandler that corresponds to the family and qualifier specified
 	 */
-	public CryptoHandler getCryptoHandler(String family, String qualifier) {
-		return this.opeValueHandler.get(family).get(qualifier);
+	public CryptoHandler getCryptoHandler(CryptoTechnique.CryptoType ctype, String family, String qualifier) {
+		switch(ctype) {
+			case OPE :
+				return this.opeValueHandler.get(family).get(qualifier);
+			case FPE :
+				return this.fpeValueHandler.get(family).get(qualifier);
+			default :
+				return null;
+		}
 	}
 
 	/**
@@ -156,6 +167,8 @@ public class CryptoProperties {
 				return detKey;
 			case OPE :
 				return opeKey;
+			case FPE :
+				return fpeKey;
 			default :
 				return null;
 		}
@@ -227,8 +240,12 @@ public class CryptoProperties {
 			case DET :
 				return this.detHandler.encrypt(this.detKey, content);
 			case OPE :
-				CryptoHandler opeCh = getCryptoHandler(family, qualifier);
+				CryptoHandler opeCh = getCryptoHandler(CryptoTechnique.CryptoType.OPE, family, qualifier);
 				return opeCh.encrypt(this.opeKey, content);
+			case FPE :
+				CryptoHandler fpeCH = getCryptoHandler(CryptoTechnique.CryptoType.FPE, family, qualifier);
+//				TODO mudar isto - a fpeKey está c/ o tweak da key e nao do qualifier
+				return fpeCH.encrypt(this.fpeKey, content);
 			default :
 				return null;
 		}
@@ -274,8 +291,11 @@ public class CryptoProperties {
 			case DET :
 				return this.detHandler.decrypt(this.detKey, ciphertext);
 			case OPE :
-				CryptoHandler opeCh = getCryptoHandler(family, qualifier);
+				CryptoHandler opeCh = getCryptoHandler(CryptoTechnique.CryptoType.OPE, family, qualifier);
 				return opeCh.decrypt(this.opeKey, ciphertext);
+			case FPE :
+				CryptoHandler fpeCH = getCryptoHandler(CryptoTechnique.CryptoType.FPE, family, qualifier);
+				return fpeCH.decrypt(this.fpeKey, ciphertext);
 			default :
 				return null;
 		}
@@ -314,7 +334,7 @@ public class CryptoProperties {
 		String f = new String(family);
 		String q = new String(qualifier);
 		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getCryptoTypeFromQualifier(f, q);
-//		System.out.println("Encode Value (" + f + "," + q + "): " + cryptoType);
+		System.out.println("Encode Value (" + f + "," + q + "): " + cryptoType);
 		return encodeValueCryptoType(cryptoType, value, f, q);
 	}
 
@@ -462,6 +482,7 @@ public class CryptoProperties {
 //			In case of Filter, the compare value must be encrypted.
 			case STD :
 			case DET :
+			case FPE :
 				encScan = new Scan();
 //				Add only the specified qualifiers in the original scan (s), instead of retrieve all (unnecessary) values).
 				for(byte[] f : columns.keySet()) {
@@ -534,18 +555,19 @@ public class CryptoProperties {
 				bComp = rowFilter.getComparator();
 
 				switch (this.tableSchema.getKey().getCryptoType()) {
-					case PLT:
+					case PLT :
 						returnValue = rowFilter;
 						break;
-					case STD:
-					case DET:
+					case STD :
+					case DET :
+					case FPE :
 						Object[] parserResult = new Object[2];
 						parserResult[0] = comp;
 						parserResult[1] = bComp.getValue();
 
 						returnValue = parserResult;
 						break;
-					case OPE:
+					case OPE :
 //						Generate a Binary Comparator to perform the comparison with the respective encrypted value
 						BinaryComparator encBC = new BinaryComparator(this.encodeRow(bComp.getValue()));
 						returnValue = new RowFilter(comp, encBC);
@@ -563,11 +585,12 @@ public class CryptoProperties {
 				bComp = singleFilter.getComparator();
 
 				switch (this.tableSchema.getCryptoTypeFromQualifier(new String(family), new String(qualifier))) {
-					case PLT:
+					case PLT :
 						returnValue = singleFilter;
 						break;
-					case STD:
-					case DET:
+					case STD :
+					case DET :
+					case FPE :
 						Object[] parserResult = new Object[4];
 						parserResult[0] = family;
 						parserResult[1] = qualifier;
@@ -576,7 +599,7 @@ public class CryptoProperties {
 
 						returnValue = parserResult;
 						break;
-					case OPE:
+					case OPE :
 //						Generate a Binary Comparator to perform the comparison with the respective encrypted value
 						BinaryComparator encBC = new BinaryComparator(this.encodeValue(family, qualifier, bComp.getValue()));
 						returnValue = new SingleColumnValueFilter(family, qualifier, comp, encBC);
@@ -638,6 +661,39 @@ public class CryptoProperties {
 		}
 
 		return result;
+	}
+
+
+	public static CryptoTechnique.FFX whichFpeInstance(String instance) {
+		switch (instance) {
+			case "FF1" :
+				return CryptoTechnique.FFX.FF1;
+			case "FF3" :
+				return CryptoTechnique.FFX.FF3;
+			default :
+				return null;
+		}
+	}
+
+
+	public static byte[] getTweakBytes(String instance, String tweak) {
+		byte[] temp = new byte[8];
+		switch (instance) {
+			case "FF1" :
+				temp = tweak.getBytes();
+			case "FF3" :
+				byte[] temp_tweak = tweak.getBytes();
+				if(temp_tweak.length == 8) {
+					temp = temp_tweak;
+				}
+				else if(temp_tweak.length > 8) {
+					System.arraycopy(temp_tweak, 0, temp, 0, 8);
+				}
+				else {
+					throw new IllegalArgumentException("For an FF3 instance, the tweak must have a 64bit length");
+				}
+		}
+		return temp;
 	}
 
 }

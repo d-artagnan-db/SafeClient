@@ -168,7 +168,7 @@ public class CryptoTable extends HTable {
 						getResult = this.cryptoProperties.decodeResult(row, res);
 					}
 
-					System.out.println("Going to get (plaintext): "+Arrays.toString(getResult.getRow()));
+					System.out.println("Going to get (plaintext): "+Arrays.toString(getResult.getRow())+" - "+Arrays.toString(getResult.getValue("Physician".getBytes(), "Physician ID".getBytes())));
 					return getResult;
 				default :
 					break;
