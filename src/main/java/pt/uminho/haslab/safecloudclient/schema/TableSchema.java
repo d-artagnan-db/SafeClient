@@ -90,15 +90,42 @@ public class TableSchema {
 	}
 
 	public void setKey(Key key) {
-		if (key.getCryptoType() == null)
-			this.key.setCryptoType(this.defaultKeyCryptoType);
-		else
-			this.key.setCryptoType(key.getCryptoType());
+		if(key instanceof KeyFPE) {
+			KeyFPE temp = new KeyFPE();
+			if (key.getCryptoType() == null)
+				temp.setCryptoType(this.defaultKeyCryptoType);
+			else
+				temp.setCryptoType(key.getCryptoType());
 
-		if (key.getFormatSize() <= 0)
-			this.key.setFormatSize(this.defaultFormatSize);
-		else
-			this.key.setFormatSize(key.getFormatSize());
+			if (key.getFormatSize() <= 0)
+				temp.setFormatSize(this.defaultFormatSize);
+			else
+				temp.setFormatSize(key.getFormatSize());
+
+			if (((KeyFPE) key).getInstance() != null) {
+				temp.setInstance(((KeyFPE) key).getInstance());
+				temp.setFpeInstance(temp.whichFpeInstance(((KeyFPE) key).getInstance()));
+			}
+
+			if(((KeyFPE) key).getRadix() > 0)
+				temp.setRadix(((KeyFPE) key).getRadix());
+
+			if(((KeyFPE) key).getTweak() != null)
+				temp.setTweak(((KeyFPE) key).getTweak());
+
+			this.key = temp;
+		}
+		else {
+			if (key.getCryptoType() == null)
+				this.key.setCryptoType(this.defaultKeyCryptoType);
+			else
+				this.key.setCryptoType(key.getCryptoType());
+
+			if (key.getFormatSize() <= 0)
+				this.key.setFormatSize(this.defaultFormatSize);
+			else
+				this.key.setFormatSize(key.getFormatSize());
+		}
 	}
 
 	public void setColumnFamilies(List<Family> families) {

@@ -21,7 +21,7 @@ import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
 public class HBaseFeaturesTest extends SimpleHBaseTest {
 
 	static final Log LOG = LogFactory.getLog(HBaseFeaturesTest.class.getName());
-	final int formatSize = 23;
+	final int formatSize = 20;
 	public Utils utils;
 
 	public HBaseFeaturesTest(int maxBits, List<BigInteger> values) throws Exception {
@@ -35,9 +35,11 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 		try {
 			table = client.createTableInterface(tableName);
 			LOG.debug("Test Execution [" + tableName + "]\n");
+			System.out.println("Table execution "+ tableName);
 
 			long quantity = timingPutTest(table, time);
 			System.out.println("Quantity: " + quantity);
+			timingGetTest(table, time, quantity);
 
 //			timingGetTest(table, time, quantity);
 
@@ -53,7 +55,7 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
 //			testFilter(table, "RowFilter", CompareFilter.CompareOp.LESS, Utils.addPadding("1500", formatSize));
 
-			testFilter(table, "SingleColumnValueFilter", CompareFilter.CompareOp.LESS, Utils.addPadding("50", formatSize));
+//			testFilter(table, "SingleColumnValueFilter", CompareFilter.CompareOp.LESS, Utils.addPadding("50", formatSize));
 
 			// timingScanTest(table, time, 100, 4000);
 			// putGetTest(table, 100);
@@ -308,25 +310,29 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
 	public long timingPutTest(HTableInterface table, int time) {
 		try {
-			byte[] cf = "Name".getBytes();
-			byte[] cq = "First".getBytes();
-			byte[]cq1 = "Last".getBytes();
+			byte[] cf = "Physician".getBytes();
+			byte[] cq = "Physician ID".getBytes();
 			Random r = new Random();
 
 			long startTime = System.currentTimeMillis();
 
 			long data = 0;
+			int counter = 1234;
 			while ((System.currentTimeMillis() - startTime) < time) {
 //				byte[] padded = Utils.addPadding(String.valueOf(data).getBytes(), formatSize);
 //				byte[] value = Utils.addPadding(String.valueOf(r.nextInt(100000)).getBytes(), formatSize);
 				byte[] padded = Utils.addPadding(String.valueOf(data), formatSize);
 				byte[] value = Utils.addPadding(String.valueOf(r.nextInt(100)), formatSize);
 
-				Put put = new Put(padded);
-				put.add(cf, cq, value);
-				put.add(cf, cq1, value);
-				table.put(put);
+//				put.add(cf, cq, value);
+//				put.add(cf, cq1, value);
+//				System.out.println("1- "+Arrays.toString(Utils.integerToIntArray(counter, 10)));
+//				System.out.println("2- "+Arrays.toString(Utils.intArrayToByteArray(Utils.integerToIntArray(counter, 10))));
 
+				Put put = new Put(Utils.intArrayToByteArray(Utils.integerToIntArray(counter, 10)));
+				put.add(cf, cq, Utils.intArrayToByteArray(Utils.integerToIntArray(counter, 10)));
+				table.put(put);
+				counter++;
 				data++;
 			}
 
@@ -349,26 +355,27 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
 	public void timingGetTest(HTableInterface table, int time, long limit) {
 		try {
-			byte[] cf = "Name".getBytes();
-			byte[] cq = "First".getBytes();
-			byte[]cq1 = "Last".getBytes();
+			byte[] cf = "Physician".getBytes();
+			byte[] cq = "Physician ID".getBytes();
 
 			long startTime = System.currentTimeMillis();
 
 			long totalOps = 0;
 			long data = 0;
+			int counter = 1234;
 			while ((System.currentTimeMillis() - startTime) < time) {
-				Get get = new Get(Utils.addPadding(String.valueOf(data), formatSize));
+//				Get get = new Get(Utils.addPadding(String.valueOf(data), formatSize));
+				Get get = new Get(Utils.intArrayToByteArray(Utils.integerToIntArray(counter, 10)));
 				get.addColumn(cf, cq);
-				get.addColumn(cf, cq1);
 				Result res = table.get(get);
 				if (res != null) {
 					byte[] storedKey = res.getRow();
-					System.out.println("> Key : " + new String(storedKey)+" - "+new String(res.getValue(cf, cq))+" - "+new String(res.getValue(cf, cq1)));
+//					System.out.println("> Key : " + new String(storedKey)+" - "+new String(res.getValue(cf, cq)));
 				}
 
 				data++;
 				totalOps++;
+				counter++;
 				if (data == limit) {
 					data = 0;
 				}

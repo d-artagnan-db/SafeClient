@@ -1,30 +1,25 @@
 <table>
   <name>usertable</name>
   <default>
-    <key>STD</key>
-    <columns>STD</columns>
+    <key>PLT</key>
+    <columns>PLT</columns>
     <formatsize>23</formatsize>
   </default>
   <key>
-    <formatsize>23</formatsize>
-    <cryptotechnique>OPE</cryptotechnique>
+    <formatsize>10</formatsize>
+    <cryptotechnique>FPE</cryptotechnique>
+    <instance>FF3</instance>
+    <radix>10</radix>
+    <tweak>hello world</tweak>
   </key>
   <columns>
     <family>
-      <name>Name</name>
-      <cryptotechnique>STD</cryptotechnique>
-      <formatsize>23</formatsize>
+      <name>Physician</name>
+      <cryptotechnique>PLT</cryptotechnique>
       <qualifier>
-        <name>First</name>
-        <cryptotechnique>OPE</cryptotechnique>
-        <misc>
-          <property>GENERATOR</property>
-          <type>String</type>
-        </misc>
-      </qualifier>
-      <qualifier>
-        <name>Last</name>
-        <cryptotechnique>DET</cryptotechnique>
+        <name>Physician ID</name>
+        <cryptotechnique>PLT</cryptotechnique>
+        <formatsize>16</formatsize>
         <misc>
           <property>GENERATOR</property>
           <type>String</type>
@@ -32,21 +27,65 @@
       </qualifier>
     </family>
     <family>
-      <name>Age</name>
+      <name>Patient</name>
       <qualifier>
-        <name>Birthday</name>
-        <cryptotechnique>OPE</cryptotechnique>
+        <name>Patient ID</name>
+        <cryptotechnique>PLT</cryptotechnique>
+        <formatsize>16</formatsize>
+        <misc>
+          <property>GENERATOR</property>
+          <type>String</type>
+        </misc>
+      </qualifier>
+    </family>
+    <family>
+      <name>Appointment</name>
+      <qualifier>
+        <name>Date</name>
+        <cryptotechnique>PLT</cryptotechnique>
+        <formatsize>14</formatsize>
         <misc>
           <property>GENERATOR</property>
           <type>Date</type>
         </misc>
       </qualifier>
       <qualifier>
-        <name>Age</name>
-        <cryptotechnique>OPE</cryptotechnique>
-        <formatsize>3</formatsize><misc>
+        <name>Type</name>
+        <cryptotechnique>PLT</cryptotechnique>
+        <formatsize>64</formatsize>
+        <misc>
           <property>GENERATOR</property>
-          <type>Integer</type>
+          <type>String</type>
+        </misc>
+      </qualifier>
+      <qualifier>
+        <name>Obs</name>
+        <cryptotechnique>PLT</cryptotechnique>
+        <formatsize>1024</formatsize>
+        <misc>
+          <property>GENERATOR</property>
+          <type>String</type>
+        </misc>
+      </qualifier>
+    </family>
+    <family>
+      <name>Institution</name>
+      <qualifier>
+        <name>Name</name>
+        <cryptotechnique>PLT</cryptotechnique>
+        <formatsize>128</formatsize>
+        <misc>
+          <property>GENERATOR</property>
+          <type>String</type>
+        </misc>
+      </qualifier>
+      <qualifier>
+        <name>Address</name>
+        <cryptotechnique>PLT</cryptotechnique>
+        <formatsize>256</formatsize>
+        <misc>
+          <property>GENERATOR</property>
+          <type>String</type>
         </misc>
       </qualifier>
     </family>

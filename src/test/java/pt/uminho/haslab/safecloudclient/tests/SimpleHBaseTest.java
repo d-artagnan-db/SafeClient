@@ -78,6 +78,7 @@ public abstract class SimpleHBaseTest {
 			SchemaParser schema = new SchemaParser();
 			schema.parse("schema.xml");
 			TableSchema ts = schema.getTableSchema();
+			System.out.println("Table schema: "+ts.toString());
 
 			TableName tbname = TableName.valueOf(ts.getTablename());
 			HTableDescriptor table = new HTableDescriptor(tbname);

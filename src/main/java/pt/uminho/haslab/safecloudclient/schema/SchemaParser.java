@@ -99,11 +99,23 @@ public class SchemaParser {
 		if (keyElement != null) {
 			String formatsize = keyElement.elementText("formatsize");
 			String cryptotechnique = keyElement.elementText("cryptotechnique");
+			String instance = keyElement.elementText("instance");
+			String radix = keyElement.elementText("radix");
+			String tweak = keyElement.elementText("tweak");
 
-			Key key = new Key(switchCryptoType(cryptotechnique), formatSizeIntegerValue(formatsize));
-
-			this.tableSchema.setKey(key);
-
+			if(!cryptotechnique.equals("FPE")) {
+				Key key = new Key(switchCryptoType(cryptotechnique), formatSizeIntegerValue(formatsize));
+				this.tableSchema.setKey(key);
+			}
+			else {
+				Key key = new KeyFPE(
+						switchCryptoType(cryptotechnique),
+						formatSizeIntegerValue(formatsize),
+						instance,
+						radixIntegerValue(radix),
+						tweak);
+				this.tableSchema.setKey(key);
+			}
 		}
 	}
 
@@ -191,6 +203,8 @@ public class SchemaParser {
 					return CryptoTechnique.CryptoType.DET;
 				case "OPE" :
 					return CryptoTechnique.CryptoType.OPE;
+				case "FPE" :
+					return CryptoTechnique.CryptoType.FPE;
 				case "PLT" :
 				default :
 					return CryptoTechnique.CryptoType.PLT;
@@ -202,6 +216,13 @@ public class SchemaParser {
 			return 0;
 		else
 			return Integer.parseInt(formatSize);
+	}
+
+	public int radixIntegerValue(String radix) {
+		if (radix == null || radix.isEmpty())
+			return 10;
+		else
+			return Integer.parseInt(radix);
 	}
 
 }

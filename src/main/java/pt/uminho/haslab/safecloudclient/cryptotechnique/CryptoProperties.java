@@ -1,5 +1,6 @@
 package pt.uminho.haslab.safecloudclient.cryptotechnique;
 
+import org.apache.commons.collections.ArrayStack;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Result;
@@ -11,6 +12,7 @@ import pt.uminho.haslab.cryptoenv.CryptoHandler;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 import pt.uminho.haslab.cryptoenv.Utils;
 import pt.uminho.haslab.safecloudclient.schema.Family;
+import pt.uminho.haslab.safecloudclient.schema.KeyFPE;
 import pt.uminho.haslab.safecloudclient.schema.Qualifier;
 import pt.uminho.haslab.safecloudclient.schema.TableSchema;
 
@@ -38,10 +40,14 @@ public class CryptoProperties {
 //	Since the OPE CryptoBox need to be initialized with the plaintext size and ciphertext size, each value protected with OPE must have an individual CryptoHandler
 	public Map<String, Map<String, CryptoHandler>> opeValueHandler;
 
+	public CryptoHandler fpeHandler;
+	public Map<String, Map<String, CryptoHandler>> fpeValueHandler;
+
 //	Cryptographic Keys stored in byte[] format
 	public byte[] stdKey;
 	public byte[] detKey;
 	public byte[] opeKey;
+	public byte[] fpeKey;
 
 	public CryptoProperties(TableSchema ts) {
 		this.tableSchema = ts;
@@ -60,6 +66,12 @@ public class CryptoProperties {
 		this.opeValueHandler = defineFamilyCryptoHandler();
 //		this.verifyOpeValueHandler();
 
+		if(this.tableSchema.getKey() instanceof KeyFPE) {
+			this.fpeHandler = new CryptoHandler(CryptoTechnique.CryptoType.FPE, this.fpeArguments());
+			KeyFPE temp_key_fpe = (KeyFPE) this.tableSchema.getKey();
+			this.fpeKey = temp_key_fpe.getSecurityParameters(this.fpeHandler.gen());
+		}
+
 		this.utils = new Utils();
 	}
 
@@ -76,6 +88,15 @@ public class CryptoProperties {
 		arguments.add(formatSize);
 		arguments.add(ciphertextSize);
 		return arguments;
+	}
+
+
+	public List<Object> fpeArguments() {
+		List<Object> fpeArguments = new ArrayList<>();
+		KeyFPE temp = (KeyFPE) this.tableSchema.getKey();
+		fpeArguments.add(temp.getInstance());
+		fpeArguments.add(temp.getRadix());
+		return fpeArguments;
 	}
 
 	/**
@@ -156,6 +177,10 @@ public class CryptoProperties {
 			case OPE :
 				this.opeKey = key;
 				break;
+			case FPE :
+				KeyFPE temp_key_fpe = (KeyFPE) this.tableSchema.getKey();
+				this.fpeKey = temp_key_fpe.getSecurityParameters(key);
+				break;
 			default :
 				break;
 		}
@@ -178,6 +203,8 @@ public class CryptoProperties {
 				return this.detHandler.encrypt(this.detKey, content);
 			case OPE :
 				return this.opeHandler.encrypt(this.opeKey, content);
+			case FPE :
+				return this.fpeHandler.encrypt(this.fpeKey, content);
 			default :
 				return null;
 		}
@@ -223,6 +250,8 @@ public class CryptoProperties {
 				return this.detHandler.decrypt(this.detKey, ciphertext);
 			case OPE :
 				return this.opeHandler.decrypt(this.opeKey, ciphertext);
+			case FPE :
+				return this.fpeHandler.decrypt(this.fpeKey, ciphertext);
 			default :
 				return null;
 		}
