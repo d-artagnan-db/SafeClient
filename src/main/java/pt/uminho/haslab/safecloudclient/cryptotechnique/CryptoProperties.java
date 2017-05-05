@@ -702,6 +702,7 @@ public class CryptoProperties {
 		switch (instance) {
 			case "FF1" :
 				temp = tweak.getBytes();
+				break;
 			case "FF3" :
 				byte[] temp_tweak = tweak.getBytes();
 				if(temp_tweak.length == 8) {
@@ -713,6 +714,7 @@ public class CryptoProperties {
 				else {
 					throw new IllegalArgumentException("For an FF3 instance, the tweak must have a 64bit length");
 				}
+				break;
 		}
 		return temp;
 	}
