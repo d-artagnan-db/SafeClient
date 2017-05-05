@@ -22,7 +22,7 @@
         <formatsize>10</formatsize>
         <instance>FF3</instance>
         <radix>10</radix>
-        <tweak>hello world</tweak>
+        <tweak>12345678</tweak>
         <misc>
           <property>GENERATOR</property>
           <type>String</type>

@@ -42,7 +42,8 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 			timingGetTest(table, time, quantity);
 
 			testScan(table, Utils.intArrayToByteArray(Utils.integerToIntArray(2000, 10)), Utils.intArrayToByteArray(Utils.integerToIntArray(2010, 10)));
-			testFilter(table, "RowFilter", CompareFilter.CompareOp.GREATER,  Utils.intArrayToByteArray(Utils.integerToIntArray(2450, 10)));
+			testFilter(table, "RowFilter", CompareFilter.CompareOp.EQUAL,  Utils.intArrayToByteArray(Utils.integerToIntArray(2450, 10)));
+			testFilter(table, "SingleColumnValueFilter", CompareFilter.CompareOp.EQUAL, Utils.intArrayToByteArray(Utils.integerToIntArray(244, 10)));
 //			timingGetTest(table, time, quantity);
 
 			// byte[] cf = columnDescriptor.getBytes();
@@ -235,8 +236,8 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 			Scan s = new Scan();
 //			s.setStartRow(Utils.addPadding("1000", formatSize));
 //			s.setStopRow(Utils.addPadding("1500", formatSize));
-			s.setStartRow( Utils.intArrayToByteArray(Utils.integerToIntArray(2000, 10)));
-			s.setStopRow( Utils.intArrayToByteArray(Utils.integerToIntArray(2500, 10)));
+			s.setStartRow( Utils.intArrayToByteArray(Utils.integerToIntArray(1234, 10)));
+			s.setStopRow( Utils.intArrayToByteArray(Utils.integerToIntArray(4000, 10)));
 			s.setFilter(buildFilter(filterType, operation, compareValue));
 			s.addColumn("Physician".getBytes(), "Physician ID".getBytes());
 
@@ -318,7 +319,7 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 		try {
 			byte[] cf = "Physician".getBytes();
 			byte[] cq = "Physician ID".getBytes();
-			Random r = new Random();
+			Random r = new Random(100);
 
 			long startTime = System.currentTimeMillis();
 
@@ -335,8 +336,9 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 //				System.out.println("1- "+Arrays.toString(Utils.integerToIntArray(counter, 10)));
 //				System.out.println("2- "+Arrays.toString(Utils.intArrayToByteArray(Utils.integerToIntArray(counter, 10))));
 
+				int cenas = r.nextInt(1000)+100;
 				Put put = new Put(Utils.intArrayToByteArray(Utils.integerToIntArray(counter, 10)));
-				put.add(cf, cq, Utils.intArrayToByteArray(Utils.integerToIntArray(counter, 10)));
+				put.add(cf, cq, Utils.intArrayToByteArray(Utils.integerToIntArray(cenas, 10)));
 				table.put(put);
 				counter++;
 				data++;

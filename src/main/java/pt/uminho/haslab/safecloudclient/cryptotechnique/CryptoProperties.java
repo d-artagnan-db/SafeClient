@@ -9,10 +9,7 @@ import pt.uminho.haslab.OpeHgd;
 import pt.uminho.haslab.cryptoenv.CryptoHandler;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 import pt.uminho.haslab.cryptoenv.Utils;
-import pt.uminho.haslab.safecloudclient.schema.Family;
-import pt.uminho.haslab.safecloudclient.schema.KeyFPE;
-import pt.uminho.haslab.safecloudclient.schema.Qualifier;
-import pt.uminho.haslab.safecloudclient.schema.TableSchema;
+import pt.uminho.haslab.safecloudclient.schema.*;
 
 import java.util.*;
 
@@ -41,7 +38,7 @@ public class CryptoProperties {
 	public byte[] stdKey;
 	public byte[] detKey;
 	public byte[] opeKey;
-	public byte[] fpeKey;
+	public Map<String, byte[]>fpeKey;
 
 	public CryptoProperties(TableSchema ts) {
 		this.tableSchema = ts;
@@ -61,9 +58,11 @@ public class CryptoProperties {
 //		this.verifyOpeValueHandler();
 
 		if(this.tableSchema.getKey() instanceof KeyFPE) {
-			this.fpeHandler = new CryptoHandler(CryptoTechnique.CryptoType.FPE, this.fpeArguments());
 			KeyFPE temp_key_fpe = (KeyFPE) this.tableSchema.getKey();
-			this.fpeKey = temp_key_fpe.getSecurityParameters(this.fpeHandler.gen());
+			this.fpeHandler = new CryptoHandler(CryptoTechnique.CryptoType.FPE, this.fpeArguments(temp_key_fpe));
+			byte[] temp_key = temp_key_fpe.getSecurityParameters(this.fpeHandler.gen());
+			this.fpeKey = new HashMap<>();
+			this.fpeKey.put("KEY",temp_key);
 		}
 		this.fpeValueHandler = defineFamilyCryptoHandler(CryptoTechnique.CryptoType.FPE);
 
@@ -87,11 +86,19 @@ public class CryptoProperties {
 
 
 //		TODO mudar isto porque está para a key e nao para o qualifier
-	public List<Object> fpeArguments() {
+	public List<Object> fpeArguments(Object fpe_object) {
 		List<Object> fpeArguments = new ArrayList<>();
-		KeyFPE temp = (KeyFPE) this.tableSchema.getKey();
-		fpeArguments.add(temp.getInstance());
-		fpeArguments.add(temp.getRadix());
+
+		if (fpe_object instanceof KeyFPE) {
+//			KeyFPE temp = (KeyFPE) this.tableSchema.getKey();
+			KeyFPE temp = (KeyFPE) fpe_object;
+			fpeArguments.add(temp.getInstance());
+			fpeArguments.add(temp.getRadix());
+		} else if (fpe_object instanceof QualifierFPE) {
+			QualifierFPE temp = (QualifierFPE) fpe_object;
+			fpeArguments.add(temp.getInstance());
+			fpeArguments.add(temp.getRadix());
+		}
 		return fpeArguments;
 	}
 
@@ -111,11 +118,12 @@ public class CryptoProperties {
 							ch = new CryptoHandler(cType, opeArguments(q.getFormatSize(), q.getFormatSize()*2));
 							break;
 						case FPE :
-//							TODO mudar isto porque está para a key e nao para o qualifier
-							ch = new CryptoHandler(cType, fpeArguments());
+							QualifierFPE qFPE = (QualifierFPE) q;
+							ch = new CryptoHandler(cType, fpeArguments(qFPE));
+
 							break;
-							default:
-								ch = null;
+						default:
+							ch = null;
 					}
 					qualifierCryptoHandler.put(q.getName(), ch);
 				}
@@ -168,7 +176,7 @@ public class CryptoProperties {
 			case OPE :
 				return opeKey;
 			case FPE :
-				return fpeKey;
+				return fpeKey.get("KEY");
 			default :
 				return null;
 		}
@@ -192,12 +200,24 @@ public class CryptoProperties {
 				break;
 			case FPE :
 				KeyFPE temp_key_fpe = (KeyFPE) this.tableSchema.getKey();
-				this.fpeKey = temp_key_fpe.getSecurityParameters(key);
+				this.fpeKey.put("KEY",temp_key_fpe.getSecurityParameters(key));
+				setQualifiersFPEKey(key);
 				break;
 			default :
 				break;
 		}
 //		System.out.println("The key was setted. Key - " + Arrays.toString(key));
+	}
+
+	public void setQualifiersFPEKey(byte[] key) {
+		for (Family f : this.tableSchema.getColumnFamilies()) {
+			for (Qualifier q : f.getQualifiers()) {
+				if (q.getCryptoType().equals(CryptoTechnique.CryptoType.FPE)) {
+					QualifierFPE qFPE = (QualifierFPE) q;
+					this.fpeKey.put(f.getFamilyName() + ":" + qFPE.getName(), qFPE.getSecurityParameters(key));
+				}
+			}
+		}
 	}
 
 	/**
@@ -217,7 +237,7 @@ public class CryptoProperties {
 			case OPE :
 				return this.opeHandler.encrypt(this.opeKey, content);
 			case FPE :
-				return this.fpeHandler.encrypt(this.fpeKey, content);
+				return this.fpeHandler.encrypt(this.fpeKey.get("KEY"), content);
 			default :
 				return null;
 		}
@@ -245,7 +265,7 @@ public class CryptoProperties {
 			case FPE :
 				CryptoHandler fpeCH = getCryptoHandler(CryptoTechnique.CryptoType.FPE, family, qualifier);
 //				TODO mudar isto - a fpeKey está c/ o tweak da key e nao do qualifier
-				return fpeCH.encrypt(this.fpeKey, content);
+				return fpeCH.encrypt(this.fpeKey.get(family+":"+qualifier), content);
 			default :
 				return null;
 		}
@@ -268,7 +288,7 @@ public class CryptoProperties {
 			case OPE :
 				return this.opeHandler.decrypt(this.opeKey, ciphertext);
 			case FPE :
-				return this.fpeHandler.decrypt(this.fpeKey, ciphertext);
+				return this.fpeHandler.decrypt(this.fpeKey.get("KEY"), ciphertext);
 			default :
 				return null;
 		}
@@ -295,7 +315,7 @@ public class CryptoProperties {
 				return opeCh.decrypt(this.opeKey, ciphertext);
 			case FPE :
 				CryptoHandler fpeCH = getCryptoHandler(CryptoTechnique.CryptoType.FPE, family, qualifier);
-				return fpeCH.decrypt(this.fpeKey, ciphertext);
+				return fpeCH.decrypt(this.fpeKey.get(family+":"+qualifier), ciphertext);
 			default :
 				return null;
 		}
@@ -350,6 +370,7 @@ public class CryptoProperties {
 		String q = new String(qualifier);
 		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getCryptoTypeFromQualifier(f, q);
 //		System.out.println("Decode Value (" + f + "," + q + "): " + cryptoType);
+		System.out.println("Value (ciphertext) - "+Arrays.toString(value));
 		return decodeValueCryptoType(cryptoType, value, f, q);
 	}
 

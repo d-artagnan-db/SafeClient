@@ -82,9 +82,12 @@ public class QualifierFPE extends Qualifier {
         return security_parameters;
     }
 
-
-
-
-
-
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Qualifier instance: ").append(this.instance).append("\n");
+        sb.append("Qualifier radix: ").append(this.radix).append("\n");
+        sb.append("Qualifier tweak: ").append(this.tweak).append("\n");
+        return super.toString()+sb.toString();
     }
+
+}

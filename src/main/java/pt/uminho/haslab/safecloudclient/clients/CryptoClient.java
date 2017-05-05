@@ -41,6 +41,7 @@ public class CryptoClient implements TestClient {
 		ct.cryptoProperties.setKey(CryptoType.STD, key);
 		ct.cryptoProperties.setKey(CryptoType.DET, key);
 		ct.cryptoProperties.setKey(CryptoType.OPE, key);
+		ct.cryptoProperties.setKey(CryptoType.FPE, key);
 
 		System.out.println("Table created Successfully");
 		return ct;
