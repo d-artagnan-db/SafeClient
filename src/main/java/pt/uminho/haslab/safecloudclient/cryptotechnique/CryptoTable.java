@@ -65,7 +65,7 @@ public class CryptoTable extends HTable {
 			byte[] row = put.getRow();
 //			Encode the row key
 			Put encPut = new Put(this.cryptoProperties.encodeRow(row));
-			System.out.println("Going to put (plaintext): "+Arrays.toString(row));
+//			System.out.println("Going to put (plaintext): "+Arrays.toString(row));
 			CellScanner cs = put.cellScanner();
 			while (cs.advance()) {
 				Cell cell = cs.current();
@@ -106,7 +106,7 @@ public class CryptoTable extends HTable {
 				}
 			}
 
-			System.out.println("Going to put (ciphertext): "+Arrays.toString(encPut.getRow()));
+//			System.out.println("Going to put (ciphertext): "+Arrays.toString(encPut.getRow()));
 			super.put(encPut);
 
 		} catch (IOException e) {
@@ -152,7 +152,7 @@ public class CryptoTable extends HTable {
 					String opeValue = "_STD";
 					Get encGet = new Get(this.cryptoProperties.encodeRow(row));
 
-					System.out.println("Going to get (ciphertext): "+Arrays.toString(encGet.getRow()));
+//					System.out.println("Going to get (ciphertext): "+Arrays.toString(encGet.getRow()));
 					Map<byte[],List<byte[]>> columns = this.cryptoProperties.getFamiliesAndQualifiers(get.getFamilyMap());
 
 					for(byte[] f : columns.keySet()) {
@@ -168,7 +168,7 @@ public class CryptoTable extends HTable {
 						getResult = this.cryptoProperties.decodeResult(row, res);
 					}
 
-					System.out.println("Going to get (plaintext): "+Arrays.toString(getResult.getRow())+" - "+Arrays.toString(getResult.getValue("Physician".getBytes(), "Physician ID".getBytes())));
+//					System.out.println("Going to get (plaintext): "+Arrays.toString(getResult.getRow())+" - "+Arrays.toString(getResult.getValue("Physician".getBytes(), "Physician ID".getBytes())));
 					return getResult;
 				default :
 					break;

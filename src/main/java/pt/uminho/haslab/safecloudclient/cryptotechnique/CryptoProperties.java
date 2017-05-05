@@ -354,7 +354,7 @@ public class CryptoProperties {
 		String f = new String(family);
 		String q = new String(qualifier);
 		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getCryptoTypeFromQualifier(f, q);
-		System.out.println("Encode Value (" + f + "," + q + "): " + cryptoType);
+//		System.out.println("Encode Value (" + f + "," + q + "): " + cryptoType);
 		return encodeValueCryptoType(cryptoType, value, f, q);
 	}
 
@@ -370,7 +370,6 @@ public class CryptoProperties {
 		String q = new String(qualifier);
 		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getCryptoTypeFromQualifier(f, q);
 //		System.out.println("Decode Value (" + f + "," + q + "): " + cryptoType);
-		System.out.println("Value (ciphertext) - "+Arrays.toString(value));
 		return decodeValueCryptoType(cryptoType, value, f, q);
 	}
 
