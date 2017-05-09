@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule="true" type="JAVA_MODULE" version="4">
-  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_7" inherit-compiler-output="false">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_7">
     <output url="file://$MODULE_DIR$/target/classes" />
     <output-test url="file://$MODULE_DIR$/target/test-classes" />
     <content url="file://$MODULE_DIR$">
@@ -12,8 +12,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="Maven: org.codehaus.jackson:jackson-jaxrs:1.8.3" level="project" />
-    <orderEntry type="library" name="Maven: junit:junit:4.11" level="project" />
     <orderEntry type="library" name="Maven: pt.uminho.haslab:testingutilities:1.0-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: org.apache.hbase:hbase-testing-util:0.98.24-hadoop2" level="project" />
     <orderEntry type="library" name="Maven: org.apache.hbase:hbase-common:0.98.24-hadoop2" level="project" />
@@ -142,6 +140,7 @@
     <orderEntry type="library" name="Maven: org.ehcache:ehcache:3.2.0" level="project" />
     <orderEntry type="library" name="Maven: org.slf4j:slf4j-api:1.7.7" level="project" />
     <orderEntry type="library" name="Maven: pt.uminho.haslab:CryptoEnv:1.0-SNAPSHOT" level="project" />
+    <orderEntry type="library" name="Maven: pt.uminho.haslab:fpe-enc:1.0-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: pt.uminho.haslab:ope-enc:1.0-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: pt.uminho.haslab:det-enc:1.0-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: pt.uminho.haslab:std-enc:1.0-SNAPSHOT" level="project" />

@@ -22,8 +22,8 @@ public class StandardResultScanner implements ResultScanner {
 	public boolean hasFilter;
 	public CompareFilter.CompareOp compareOp;
 	public byte[] compareValue;
-	public byte[] family;
-	public byte[] qualifier;
+//	public byte[] family;
+//	public byte[] qualifier;
 	public String filterType;
 
 	public StandardResultScanner(CryptoProperties cp, byte[] startRow, byte[] endRow, ResultScanner encryptedScanner, Object filterResult) {
@@ -65,8 +65,8 @@ public class StandardResultScanner implements ResultScanner {
 			}
 			else if(filterProperties.length == 4) {
 				this.filterType = "SingleColumnValueFilter";
-				this.family = (byte[]) filterProperties[0];
-				this.qualifier = (byte[]) filterProperties[1];
+//				this.family = (byte[]) filterProperties[0];
+//				this.qualifier = (byte[]) filterProperties[1];
 				this.compareOp = (CompareFilter.CompareOp) filterProperties[2];
 				this.compareValue = (byte[]) filterProperties[3];
 			}

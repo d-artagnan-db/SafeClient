@@ -13,6 +13,7 @@ import pt.uminho.haslab.safecloudclient.schema.SchemaParser;
 import pt.uminho.haslab.safecloudclient.schema.TableSchema;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.*;
 
 /**
@@ -46,6 +47,10 @@ public class CryptoTable extends HTable {
 	 * @return TableSchema object
 	 */
 	public TableSchema init(String filename) {
+		if (filename == null) {
+			throw new NullPointerException("Schema file name cannot be null.");
+		}
+
 		SchemaParser schemaParser = new SchemaParser();
 		schemaParser.parse(filename);
 //		System.out.println(schemaParser.tableSchema.toString());
@@ -63,6 +68,10 @@ public class CryptoTable extends HTable {
 	public void put(Put put) {
 		try {
 			byte[] row = put.getRow();
+			if(row.length == 0) {
+				throw new NullPointerException("Row Key cannot be null.");
+			}
+
 //			Encode the row key
 			Put encPut = new Put(this.cryptoProperties.encodeRow(row));
 //			System.out.println("Going to put (plaintext): "+Arrays.toString(row));
@@ -74,7 +83,7 @@ public class CryptoTable extends HTable {
 				byte[] value = CellUtil.cloneValue(cell);
 
 				boolean verifyProperty = false;
-				String qualifierString = new String(qualifier);
+				String qualifierString = new String(qualifier, Charset.forName("UTF-8"));
 				String opeValues = "_STD";
 
 //				Verify if the actual qualifier corresponds to the supporting qualifier (<qualifier>_STD)
@@ -92,13 +101,13 @@ public class CryptoTable extends HTable {
 									value));
 
 //					If the actual qualifier CryptoType is equal to OPE, encode the same value with STD CryptoBox
-					if (tableSchema.getCryptoTypeFromQualifier(new String(family), qualifierString) == CryptoTechnique.CryptoType.OPE) {
+					if (tableSchema.getCryptoTypeFromQualifier(new String(family, Charset.forName("UTF-8")), qualifierString) == CryptoTechnique.CryptoType.OPE) {
 						encPut.add(
 								family,
-								(qualifierString + opeValues).getBytes(),
+								(qualifierString + opeValues).getBytes(Charset.forName("UTF-8")),
 								this.cryptoProperties.encodeValue(
 										family,
-										(qualifierString + opeValues).getBytes(),
+										(qualifierString + opeValues).getBytes(Charset.forName("UTF-8")),
 										value)
 						);
 					}
@@ -110,7 +119,6 @@ public class CryptoTable extends HTable {
 			super.put(encPut);
 
 		} catch (IOException e) {
-			System.out.println("Exception in put method. " + e.getMessage());
 			LOG.error("Exception in put method. " + e.getMessage());
 		}
 	}
@@ -130,6 +138,10 @@ public class CryptoTable extends HTable {
 
 		try {
 			byte[] row = get.getRow();
+			if(row.length == 0) {
+				throw new NullPointerException("Row Key cannot be null.");
+			}
+
 //			Verify the row key CryptoBox
 			switch (this.cryptoProperties.tableSchema.getKey().getCryptoType()) {
 				case PLT :
@@ -149,20 +161,19 @@ public class CryptoTable extends HTable {
 				case DET :
 				case OPE :
 				case FPE :
-					String opeValue = "_STD";
 					Get encGet = new Get(this.cryptoProperties.encodeRow(row));
 
 //					System.out.println("Going to get (ciphertext): "+Arrays.toString(encGet.getRow()));
 					Map<byte[],List<byte[]>> columns = this.cryptoProperties.getFamiliesAndQualifiers(get.getFamilyMap());
 
 					for(byte[] f : columns.keySet()) {
-						List<byte[]> qualifiersTemp = columns.get(f);
-						for(byte[] q : qualifiersTemp) {
+						for(byte[] q : columns.get(f)){
 							encGet.addColumn(f, q);
 						}
 					}
 
 					Result res = super.get(encGet);
+					System.out.println("After get: "+ Arrays.toString(res.getRow()));
 
 					if (!res.isEmpty()) {
 						getResult = this.cryptoProperties.decodeResult(row, res);
@@ -192,6 +203,10 @@ public class CryptoTable extends HTable {
 		Scan deleteScan = new Scan();
 		try {
 			byte[] row = delete.getRow();
+			if(row.length == 0) {
+				throw new NullPointerException("Row Key cannot be null.");
+			}
+
 //			Verify the row key CryptoBox
 			switch (this.cryptoProperties.tableSchema.getKey().getCryptoType()) {
 				case PLT :

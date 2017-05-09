@@ -326,19 +326,13 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 			long data = 0;
 			int counter = 1234;
 			while ((System.currentTimeMillis() - startTime) < time) {
-//				byte[] padded = Utils.addPadding(String.valueOf(data).getBytes(), formatSize);
-//				byte[] value = Utils.addPadding(String.valueOf(r.nextInt(100000)).getBytes(), formatSize);
-				byte[] padded = Utils.addPadding(String.valueOf(data), formatSize);
-				byte[] value = Utils.addPadding(String.valueOf(r.nextInt(100)), formatSize);
+				byte[] padded = Utils.addPadding(String.valueOf(data).getBytes(), formatSize);
+				byte[] value = Utils.addPadding(String.valueOf(r.nextInt(100000)).getBytes(), formatSize);
+				Put put = new Put(padded);
 
-//				put.add(cf, cq, value);
-//				put.add(cf, cq1, value);
-//				System.out.println("1- "+Arrays.toString(Utils.integerToIntArray(counter, 10)));
-//				System.out.println("2- "+Arrays.toString(Utils.intArrayToByteArray(Utils.integerToIntArray(counter, 10))));
+				put.add(cf, cq, value);
 
 				int cenas = r.nextInt(1000)+100;
-				Put put = new Put(Utils.intArrayToByteArray(Utils.integerToIntArray(counter, 10)));
-				put.add(cf, cq, Utils.intArrayToByteArray(Utils.integerToIntArray(cenas, 10)));
 				table.put(put);
 				counter++;
 				data++;
@@ -372,8 +366,7 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 			long data = 0;
 			int counter = 1234;
 			while ((System.currentTimeMillis() - startTime) < time) {
-//				Get get = new Get(Utils.addPadding(String.valueOf(data), formatSize));
-				Get get = new Get(Utils.intArrayToByteArray(Utils.integerToIntArray(counter, 10)));
+				Get get = new Get(Utils.addPadding(String.valueOf(data), formatSize));
 				get.addColumn(cf, cq);
 				Result res = table.get(get);
 				if (res != null) {
