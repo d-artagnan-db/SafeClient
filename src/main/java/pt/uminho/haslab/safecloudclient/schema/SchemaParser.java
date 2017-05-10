@@ -14,14 +14,22 @@ import java.util.Map;
  * Used to parse the database schema file.
  */
 public class SchemaParser {
-	public TableSchema tableSchema;
+	public Map<String,TableSchema> tableSchemas;
 
 	public SchemaParser() {
-		this.tableSchema = new TableSchema();
+		this.tableSchemas = new HashMap<>();
 	}
 
-	public TableSchema getTableSchema() {
-		return this.tableSchema;
+	public Map<String, TableSchema> getSchemas() {
+		return this.tableSchemas;
+	}
+
+	public TableSchema getTableSchema(String tablename) {
+		if (this.tableSchemas.containsKey(tablename)) {
+			return this.tableSchemas.get(tablename);
+		} else {
+			return null;
+		}
 	}
 
 	/**
@@ -41,10 +49,12 @@ public class SchemaParser {
 //			Map the schema file into an Element object
 			Element rootElement = document.getRootElement();
 
-			parseTablename(rootElement);
-			parseDefault(rootElement);
-			parseKey(rootElement);
-			parseColumns(rootElement);
+			List<Element> tables = rootElement.elements("table");
+			for(Element table_element : tables) {
+				TableSchema temp_schema = parseSchema(table_element);
+				this.tableSchemas.put(temp_schema.getTablename(), temp_schema);
+			}
+
 
 			long stopttime = System.currentTimeMillis();
 //			System.out.println("Parsing Time: " + (stopttime - starttime));
@@ -53,15 +63,27 @@ public class SchemaParser {
 		}
 	}
 
+
+	public TableSchema parseSchema(Element rootElement) {
+		TableSchema ts = new TableSchema();
+
+		parseTablename(rootElement, ts);
+		parseDefault(rootElement, ts);
+		parseKey(rootElement, ts);
+		parseColumns(rootElement, ts);
+
+		return ts;
+	}
+
 	/**
 	 * parseTablename(rootElement : Element) method : parse the table name
 	 * @param rootElement main Element node
 	 */
-	public void parseTablename(Element rootElement) {
+	public void parseTablename(Element rootElement, TableSchema tableSchema) {
 		Element nameElement = rootElement.element("name");
 		String name = nameElement.getText();
 		if (name != null) {
-			this.tableSchema.setTablename(name);
+			tableSchema.setTablename(name);
 		}
 	}
 
@@ -69,7 +91,7 @@ public class SchemaParser {
 	 * parseDefault(rootElement : Element) method : parse the default database parameters
 	 * @param rootElement main Element node
 	 */
-	public void parseDefault(Element rootElement) {
+	public void parseDefault(Element rootElement, TableSchema tableSchema) {
 		Element defaultElement = rootElement.element("default");
 		if (defaultElement != null) {
 			String key = defaultElement.elementText("key");
@@ -77,15 +99,13 @@ public class SchemaParser {
 			String formatsize = defaultElement.elementText("formatsize");
 
 			if (key != null) {
-				this.tableSchema.setDefaultKeyCryptoType(switchCryptoType(key));
+				tableSchema.setDefaultKeyCryptoType(switchCryptoType(key));
 			}
 			if (columns != null) {
-				this.tableSchema
-						.setDefaultColumnsCryptoType(switchCryptoType(columns));
+				tableSchema.setDefaultColumnsCryptoType(switchCryptoType(columns));
 			}
 			if (formatsize != null) {
-				this.tableSchema
-						.setDefaultFormatSize(formatSizeIntegerValue(formatsize));
+				tableSchema.setDefaultFormatSize(formatSizeIntegerValue(formatsize));
 			}
 		}
 	}
@@ -94,7 +114,7 @@ public class SchemaParser {
 	 * parseKey(rootElement : Element) method : parse the key properties from the database schema
 	 * @param rootElement main Element node
 	 */
-	public void parseKey(Element rootElement) {
+	public void parseKey(Element rootElement, TableSchema tableSchema) {
 		Element keyElement = rootElement.element("key");
 		if (keyElement != null) {
 			String formatsize = keyElement.elementText("formatsize");
@@ -105,7 +125,7 @@ public class SchemaParser {
 
 			if(!cryptotechnique.equals("FPE")) {
 				Key key = new Key(switchCryptoType(cryptotechnique), formatSizeIntegerValue(formatsize));
-				this.tableSchema.setKey(key);
+				tableSchema.setKey(key);
 			}
 			else {
 				Key key = new KeyFPE(
@@ -114,7 +134,7 @@ public class SchemaParser {
 						instance,
 						radixIntegerValue(radix),
 						tweak);
-				this.tableSchema.setKey(key);
+				tableSchema.setKey(key);
 			}
 		}
 	}
@@ -123,7 +143,7 @@ public class SchemaParser {
 	 * parseColumns(rootElement : Element) method : parse the column families and qualifiers properties from the database schema
 	 * @param rootElement main Element node
 	 */
-	public void parseColumns(Element rootElement) {
+	public void parseColumns(Element rootElement, TableSchema tableSchema) {
 		Element columnsElement = rootElement.element("columns");
 		if (columnsElement != null) {
 			List<Element> familiesElement = columnsElement.elements("family");
@@ -138,7 +158,7 @@ public class SchemaParser {
 							switchCryptoType(cryptotechnique),
 							formatSizeIntegerValue(formatsize));
 
-					this.tableSchema.addFamily(f);
+					tableSchema.addFamily(f);
 
 					List<Element> qualifiersElement = family.elements("qualifier");
 					for (Element qualifier : qualifiersElement) {
@@ -173,7 +193,7 @@ public class SchemaParser {
 							);
 						}
 
-						this.tableSchema.addQualifier(familyName, q);
+						tableSchema.addQualifier(familyName, q);
 
 						if(cryptotechniqueQualifier.equals("OPE")) {
 							String stdQualifierName = qualifierName+"_STD";
@@ -186,7 +206,7 @@ public class SchemaParser {
 									properties
 							);
 
-							this.tableSchema.addQualifier(familyName, std);
+							tableSchema.addQualifier(familyName, std);
 						}
 
 					}
@@ -243,4 +263,12 @@ public class SchemaParser {
 			return Integer.parseInt(radix);
 	}
 
+	public String printDatabaseSchemas() {
+		StringBuilder sb = new StringBuilder();
+		for(String schema : tableSchemas.keySet()) {
+			sb.append("---------------------------\n");
+			sb.append(tableSchemas.get(schema).toString());
+		}
+		return sb.toString();
+	}
 }

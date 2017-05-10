@@ -77,8 +77,10 @@ public abstract class SimpleHBaseTest {
 		if (!client.checkTableExists(tableName)) {
 			SchemaParser schema = new SchemaParser();
 			schema.parse("schema.xml");
-			TableSchema ts = schema.getTableSchema();
-			System.out.println("Table schema: "+ts.toString());
+			System.out.println("DATABASE SCHEMA: \n"+schema.printDatabaseSchemas());
+
+			TableSchema ts = schema.getTableSchema("usertable");
+//			System.out.println("Table schema: "+ts.toString());
 
 			TableName tbname = TableName.valueOf(ts.getTablename());
 			HTableDescriptor table = new HTableDescriptor(tbname);
