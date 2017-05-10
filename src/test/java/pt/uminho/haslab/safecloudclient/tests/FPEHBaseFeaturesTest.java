@@ -56,7 +56,7 @@ public class FPEHBaseFeaturesTest extends SimpleHBaseTest {
                 Put put = new Put(Utils.intArrayToByteArray(Utils.integerToIntArray(counter, 10)));
                 put.add(cf, cq, Utils.intArrayToByteArray(Utils.integerToIntArray(cenas, 10)));
                 table.put(put);
-                this.sharedMap.put(counter, Utils.intArrayToByteArray(Utils.integerToIntArray(counter, 10)));
+                this.sharedMap.put(counter, put.getRow());
                 counter++;
                 data++;
             }
@@ -93,11 +93,13 @@ public class FPEHBaseFeaturesTest extends SimpleHBaseTest {
                 get.addColumn(cf, cq);
                 Result res = table.get(get);
                 if (res != null || !res.isEmpty()) {
-                    byte[] storedKey = res.getRow();
+                    byte[] encrypted_value = get.getRow();
+//                    byte[] storedKey = res.getRow();
                     if(this.sharedMap.containsKey(counter)) {
                         byte[] plainValue = this.sharedMap.get(counter);
-                        boolean value = Arrays.equals(storedKey, plainValue);
+                        boolean value = Arrays.equals(encrypted_value, plainValue);
                         Assert.assertTrue(value);
+                        System.out.println("("+counter+","+Arrays.toString(plainValue)+","+Arrays.toString(encrypted_value)+")");
                         totalOps++;
                     }
                     else {
