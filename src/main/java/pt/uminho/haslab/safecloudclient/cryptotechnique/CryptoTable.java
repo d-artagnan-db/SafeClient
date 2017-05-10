@@ -3,10 +3,7 @@ package pt.uminho.haslab.safecloudclient.cryptotechnique;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.Cell;
-import org.apache.hadoop.hbase.CellScanner;
-import org.apache.hadoop.hbase.CellUtil;
-import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 import pt.uminho.haslab.safecloudclient.schema.SchemaParser;
@@ -39,6 +36,17 @@ public class CryptoTable extends HTable {
 		this.tableSchema = schema;
 		this.cryptoProperties = new CryptoProperties(this.tableSchema);
 		this.resultScannerFactory = new ResultScannerFactory();
+	}
+
+	public CryptoTable(Configuration conf, String tableName) throws IOException {
+		super(conf, TableName.valueOf(tableName));
+		HBaseAdmin ha = new HBaseAdmin(conf);
+		HTableDescriptor descriptor = ha.getTableDescriptor(TableName.valueOf(tableName));
+		HColumnDescriptor[] columnDescriptors = descriptor.getColumnFamilies();
+
+		for(int i = 0; i < columnDescriptors.length; i++) {
+			System.out.println("Family: "+columnDescriptors[i].getNameAsString());
+		}
 	}
 
 	/**
