@@ -209,9 +209,12 @@ public class TableSchema {
 		CryptoTechnique.CryptoType cType = null;
 		for (Family f : this.columnFamilies) {
 			if (f.getFamilyName().equals(family)) {
+				System.out.println("Entrei aqui no family: "+family);
 				for (Qualifier q : f.getQualifiers()) {
 					if (q.getName().equals(qualifier)) {
+						System.out.println("Entrei aqui no qualifier: "+qualifier);
 						cType = q.getCryptoType();
+						System.out.println("CType: "+cType);
 						break;
 					}
 				}

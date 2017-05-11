@@ -4,24 +4,18 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 
 import pt.uminho.haslab.safecloudclient.clients.*;
 
-import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.Put;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import pt.uminho.haslab.safecloudclient.schema.Family;
-import pt.uminho.haslab.safecloudclient.schema.SchemaParser;
-import pt.uminho.haslab.safecloudclient.schema.TableSchema;
-import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
 import pt.uminho.haslab.testingutils.ValuesGenerator;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -29,13 +23,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import static pt.uminho.haslab.cryptoenv.CryptoTechnique.CryptoType.DET;
-import static pt.uminho.haslab.cryptoenv.CryptoTechnique.CryptoType.OPE;
-import static pt.uminho.haslab.cryptoenv.CryptoTechnique.CryptoType.STD;
-import pt.uminho.haslab.cryptoenv.Utils;
 
 @RunWith(Parameterized.class)
-public abstract class LeanXScaleTest {
+public abstract class QEngineTest {
 
     static final Log LOG = LogFactory.getLog(SimpleHBaseTest.class.getName());
 
@@ -50,8 +40,7 @@ public abstract class LeanXScaleTest {
 
     private final Map<TestClient, String> clients;
 
-    protected LeanXScaleTest(int maxBits, List<BigInteger> values)
-            throws Exception {
+    protected QEngineTest(int maxBits, List<BigInteger> values) throws Exception {
         testingValues = values;
         clients = addClients();
     }
@@ -60,28 +49,24 @@ public abstract class LeanXScaleTest {
         Map<TestClient, String> theClients = new HashMap<TestClient, String>();
 
         LOG.debug("Creating clients");
-
-        theClients.put(new LeanXScaleClient(), "usertable");
-
+        theClients.put(new QEngineClient(), "usertable");
         System.out.println("Client created");
 
         return theClients;
     }
 
-    protected void createTestTable(TestClient client, String tableName)
-            throws ZooKeeperConnectionException, IOException, Exception {
-
+    protected void createTestTable(TestClient client, String tableName) throws ZooKeeperConnectionException, IOException, Exception {
         if (!client.checkTableExists(tableName)) {
-//            TableSchema ts = schema.getTableSchema();
-//            System.out.println("Table schema: "+ts.toString());
+            String[] families = new String[]{"Col1","Col2","Col3","Col4"};
 
             TableName tbname = TableName.valueOf("usertable");
             HTableDescriptor table = new HTableDescriptor(tbname);
-//            for (Family f : ts.getColumnFamilies()) {
-//                HColumnDescriptor family = new HColumnDescriptor(
-//                        f.getFamilyName());
-//                table.addFamily(family);
-//            }
+
+            for (int i = 0; i < families.length; i++) {
+                HColumnDescriptor family = new HColumnDescriptor(families[i]);
+                table.addFamily(family);
+            }
+
             client.createTestTable(table);
 
         }
@@ -106,11 +91,11 @@ public abstract class LeanXScaleTest {
                 Configuration conf = new Configuration();
                 conf.addResource("conf.xml");
 
-                HBaseAdmin admin = new HBaseAdmin(conf);
-                admin.disableTable(tableName);
-                LOG.debug("Table disabled.");
-                admin.deleteTable(tableName);
-                LOG.debug("Table dropped.");
+//                HBaseAdmin admin = new HBaseAdmin(conf);
+//                admin.disableTable(tableName);
+//                LOG.debug("Table disabled.");
+//                admin.deleteTable(tableName);
+//                LOG.debug("Table dropped.");
             }
 
             client.stopCluster();

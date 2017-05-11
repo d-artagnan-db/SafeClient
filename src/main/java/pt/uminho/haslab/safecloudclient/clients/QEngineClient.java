@@ -15,19 +15,18 @@ import java.io.IOException;
 /**
  * Created by rgmacedo on 5/10/17.
  */
-public class LeanXScaleClient implements TestClient {
+public class QEngineClient implements TestClient {
 
     private final HBaseAdmin admin;
 
-    public LeanXScaleClient()
+    public QEngineClient()
             throws ZooKeeperConnectionException, IOException {
         Configuration conf = new Configuration();
         conf.addResource("conf.xml");
         admin = new HBaseAdmin(conf);
     }
 
-    public void createTestTable(HTableDescriptor testTable)
-            throws ZooKeeperConnectionException, IOException {
+    public void createTestTable(HTableDescriptor testTable) throws ZooKeeperConnectionException, IOException {
         admin.createTable(testTable);
     }
 

@@ -6,6 +6,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
+import pt.uminho.haslab.safecloudclient.schema.Qualifier;
 import pt.uminho.haslab.safecloudclient.schema.SchemaParser;
 import pt.uminho.haslab.safecloudclient.schema.TableSchema;
 
@@ -23,6 +24,7 @@ public class CryptoTable extends HTable {
 	public CryptoProperties cryptoProperties;
 	public ResultScannerFactory resultScannerFactory;
 	public TableSchema tableSchema;
+	public QEngineIntegration qEngine;
 
 	public CryptoTable(Configuration conf, String tableName, String schemaFilename) throws IOException {
 		super(conf, TableName.valueOf(tableName));
@@ -46,7 +48,13 @@ public class CryptoTable extends HTable {
 
 		for(int i = 0; i < columnDescriptors.length; i++) {
 			System.out.println("Family: "+columnDescriptors[i].getNameAsString());
+			System.out.println("> "+columnDescriptors[i].toString());
 		}
+
+		this.qEngine = new QEngineIntegration();
+		this.tableSchema = this.qEngine.buildQEngineTableSchema(tableName, columnDescriptors);
+		this.cryptoProperties = new CryptoProperties(this.tableSchema);
+		this.resultScannerFactory = new ResultScannerFactory();
 	}
 
 	/**
@@ -98,7 +106,15 @@ public class CryptoTable extends HTable {
 				if (qualifierString.length() >= opeValues.length()) {
 					verifyProperty = qualifierString.substring(qualifierString.length() - opeValues.length(), qualifierString.length()).equals(opeValues);
 				}
+
+//				TODO temporary
 				if (!verifyProperty) {
+					if(!this.qEngine.doesFamilyContainsQualifier(this.tableSchema, new String(family, Charset.forName("UTF-8")), qualifierString)) {
+						this.tableSchema.addQualifier(new String(family, Charset.forName("UTF-8")), this.qEngine.createDefaultQualifier(qualifierString));
+						this.cryptoProperties.replaceQualifierCryptoHandler(new String(family, Charset.forName("UTF-8")), qualifierString, CryptoTechnique.CryptoType.OPE, this.qEngine.getFamilyFormatSize());
+						System.out.println(this.cryptoProperties.opeValueHandler.toString());
+						System.out.println("Eu estive aqui");
+					}
 //					Encode the original value with the corresponding CryptoBox
 					encPut.add(
 							family,

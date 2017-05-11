@@ -130,6 +130,20 @@ public class CryptoProperties {
 		return familyCryptoHandler;
 	}
 
+	public void replaceQualifierCryptoHandler(String family, String qualifier, CryptoTechnique.CryptoType cType, int formatSize) {
+		CryptoHandler cryptoHandler = new CryptoHandler(cType, opeArguments(formatSize, formatSize*2));
+
+		if(this.opeValueHandler.containsKey(family)) {
+			System.out.println("Entrei no contains key family");
+			Map<String, CryptoHandler> temp_handlers = this.opeValueHandler.get(family);
+
+			if(temp_handlers != null) {
+				System.out.println("Entrei no ope value handler");
+				this.opeValueHandler.get(family).put(qualifier, cryptoHandler);
+			}
+		}
+	}
+
 	/**
 	 * verifyOpeValueHandler() method : only used to check the OPE CryptoHandlers
 	 */
