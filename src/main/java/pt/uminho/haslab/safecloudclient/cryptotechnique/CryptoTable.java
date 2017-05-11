@@ -26,7 +26,7 @@ public class CryptoTable extends HTable {
 
 	public CryptoTable(Configuration conf, String tableName, String schemaFilename) throws IOException {
 		super(conf, TableName.valueOf(tableName));
-		this.tableSchema = this.init(schemaFilename);
+		this.tableSchema = this.init(schemaFilename, tableName);
 		this.cryptoProperties = new CryptoProperties(this.tableSchema);
 		this.resultScannerFactory = new ResultScannerFactory();
 	}
@@ -54,7 +54,7 @@ public class CryptoTable extends HTable {
 	 * @param filename path to the database schema
 	 * @return TableSchema object
 	 */
-	public TableSchema init(String filename) {
+	public TableSchema init(String filename, String tablename) {
 		if (filename == null) {
 			throw new NullPointerException("Schema file name cannot be null.");
 		}
@@ -62,7 +62,7 @@ public class CryptoTable extends HTable {
 		SchemaParser schemaParser = new SchemaParser();
 		schemaParser.parse(filename);
 //		System.out.println(schemaParser.tableSchema.toString());
-		return schemaParser.getTableSchema();
+		return schemaParser.getTableSchema(tablename);
 	}
 
 	/**
