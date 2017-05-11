@@ -3,10 +3,7 @@ package pt.uminho.haslab.safecloudclient.schema;
 import com.sun.tools.javac.util.Name;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties.whichFpeInstance;
 
@@ -224,6 +221,27 @@ public class TableSchema {
 		return cType;
 	}
 
+//	public CryptoTechnique.CryptoType getCryptoTypeFromQualifier(String family, String qualifier) {
+//		CryptoTechnique.CryptoType cType = null;
+//		Iterator<Family> family_iterator = this.columnFamilies.iterator();
+//		boolean catched = false;
+//		while(family_iterator.hasNext() && !catched) {
+//			Family temp_family = family_iterator.next();
+//			if(temp_family.getFamilyName().equals(family)) {
+//				Iterator<Qualifier> qualifier_iterator = temp_family.getQualifiers().iterator();
+//				while(qualifier_iterator.hasNext() && !catched) {
+//					Qualifier temp_qualifier = qualifier_iterator.next();
+//					if(temp_qualifier.getName().equals(qualifier)) {
+//						System.out.println(">>>>>>>>>>>>>>>>>>>>Encontrou<<<<<<<<<<<<<<<<<<<<<");
+//						catched = true;
+//						cType = temp_qualifier.getCryptoType();
+//					}
+//				}
+//			}
+//		}
+//		return cType;
+//	}
+
 	/**
 	 * getGeneratorTypeFromQualifier(family : String, qualifier : String)  method : get the generator type of a given family:qualifier (e.g., String, Date, Integer)
 	 * @param family column family
@@ -268,25 +286,7 @@ public class TableSchema {
 		return formatSize;
 	}
 
-//	TODO: adjust this method, since if there is two or more qualifiers with the same name, the returned value will be the same everytime
-	/**
-	 * whichFamilyContainsQualifier(qualifier : String) method : verify in which family a given qualifier is inserted
-	 * @param qualifier column qualifier
-	 * @return column family in String format
-	 */
-	public String whichFamilyContainsQualifier(String qualifier) {
-		String family = "";
-
-		for (Family f : columnFamilies) {
-			if (f.containsQualifier(qualifier)) {
-				family = f.getFamilyName();
-				break;
-			}
-		}
-
-		return family;
-	}
-
+	
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Table Schema\n");

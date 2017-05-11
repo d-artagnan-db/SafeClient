@@ -35,9 +35,9 @@ public class FPEHBaseFeaturesTest extends SimpleHBaseTest {
         LOG.debug("Test Execution [" + tableName + "]\n");
         System.out.println("Table execution " + tableName);
 
-//        long quantity = timingPutTest(table, time);
-//        System.out.println("Quantity: " + quantity);
-//        timingGetTest(table, time, quantity);
+        long quantity = timingPutTest(table, time);
+        System.out.println("Quantity: " + quantity);
+        timingGetTest(table, time, quantity);
 
     }
 
