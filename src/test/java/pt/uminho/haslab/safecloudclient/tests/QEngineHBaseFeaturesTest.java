@@ -23,6 +23,7 @@ public class QEngineHBaseFeaturesTest extends QEngineTest {
     public Utils utils;
     public List<String> families;
     public String[] qualifiers;
+    public Random random;
     HBaseAdmin admin;
 
     public QEngineHBaseFeaturesTest(int maxBits, List<BigInteger> values) throws Exception {
@@ -30,6 +31,8 @@ public class QEngineHBaseFeaturesTest extends QEngineTest {
         this.utils = new Utils();
         this.qualifiers = new String[]{"qal1","qal2","qal3","qal4","qal5","qal6","qal7","qal8","qal9"};
         this.families = new ArrayList<>();
+        this.random = new Random(1024);
+
         Configuration conf = new Configuration();
         conf.addResource("conf.xml");
         this.admin = new HBaseAdmin(conf);
@@ -55,11 +58,16 @@ public class QEngineHBaseFeaturesTest extends QEngineTest {
                 p.add(family.getBytes(), chooseRandomQualifier().getBytes(), buildRandomValue().getBytes());
             }
             try {
+                System.out.println("Put<"+i+","+p.toString()+">");
                 table.put(p);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+    }
+
+    public void testGet(HTableInterface table, int totalOperations) {
+
     }
 
     public void getColumnFamilies(String tableName) throws IOException {
@@ -72,12 +80,10 @@ public class QEngineHBaseFeaturesTest extends QEngineTest {
     }
 
     public String chooseRandomQualifier() {
-        Random r = new Random();
-        return this.qualifiers[r.nextInt(qualifiers.length-1)];
+        return this.qualifiers[this.random.nextInt(qualifiers.length-1)];
     }
 
     public String buildRandomValue() {
-        Random r = new Random();
-        return String.valueOf(r.nextInt(500000));
+        return String.valueOf(this.random.nextInt(500000));
     }
 }

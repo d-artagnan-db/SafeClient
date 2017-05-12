@@ -51,8 +51,8 @@ public class QEngineIntegration {
         return contains;
     }
 
-    public Qualifier createDefaultQualifier(String qualifierName) {
-        return new Qualifier(qualifierName, CryptoTechnique.CryptoType.OPE, this.familyFormatSize, new HashMap<String, String>());
+    public Qualifier createDefaultQualifier(String qualifierName, CryptoTechnique.CryptoType cType) {
+        return new Qualifier(qualifierName, cType, this.familyFormatSize, new HashMap<String, String>());
     }
 
     public int getFamilyFormatSize() {

@@ -107,13 +107,11 @@ public class CryptoTable extends HTable {
 					verifyProperty = qualifierString.substring(qualifierString.length() - opeValues.length(), qualifierString.length()).equals(opeValues);
 				}
 
-//				TODO temporary
 				if (!verifyProperty) {
 					if(!this.qEngine.doesFamilyContainsQualifier(this.tableSchema, new String(family, Charset.forName("UTF-8")), qualifierString)) {
-						this.tableSchema.addQualifier(new String(family, Charset.forName("UTF-8")), this.qEngine.createDefaultQualifier(qualifierString));
+						this.tableSchema.addQualifier(new String(family, Charset.forName("UTF-8")), this.qEngine.createDefaultQualifier(qualifierString, CryptoTechnique.CryptoType.OPE));
+						this.tableSchema.addQualifier(new String(family, Charset.forName("UTF-8")), this.qEngine.createDefaultQualifier(qualifierString+"_STD", CryptoTechnique.CryptoType.STD));
 						this.cryptoProperties.replaceQualifierCryptoHandler(new String(family, Charset.forName("UTF-8")), qualifierString, CryptoTechnique.CryptoType.OPE, this.qEngine.getFamilyFormatSize());
-						System.out.println(this.cryptoProperties.opeValueHandler.toString());
-						System.out.println("Eu estive aqui");
 					}
 //					Encode the original value with the corresponding CryptoBox
 					encPut.add(
