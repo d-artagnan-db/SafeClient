@@ -4,10 +4,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.*;
 import pt.uminho.haslab.cryptoenv.Utils;
 import pt.uminho.haslab.safecloudclient.clients.TestClient;
 
@@ -44,18 +41,21 @@ public class QEngineHBaseFeaturesTest extends QEngineTest {
         int time = 10000;
         table = client.createTableInterface(tableName);
         LOG.debug("Test Execution [" + tableName + "]\n");
-        System.out.println("Table execution " + tableName);
 
         getColumnFamilies(tableName);
 
         testPut(table, 10);
+        testGet(table, 10);
     }
 
     public void testPut(HTableInterface table, int totalOperations) {
         for(int i = 0; i < totalOperations; i++) {
-            Put p = new Put(String.valueOf(i).getBytes());
+            Put p = new Put(Utils.addPadding(String.valueOf(i).getBytes(),32));
             for(String family : this.families) {
-                p.add(family.getBytes(), chooseRandomQualifier().getBytes(), buildRandomValue().getBytes());
+                for(String qualifier : this.qualifiers) {
+                    p.add(family.getBytes(), qualifier.getBytes(), "hello world".getBytes());
+                }
+//                p.add(family.getBytes(), chooseRandomQualifier().getBytes(), buildRandomValue().getBytes());
             }
             try {
                 System.out.println("Put<"+i+","+p.toString()+">");
@@ -67,7 +67,22 @@ public class QEngineHBaseFeaturesTest extends QEngineTest {
     }
 
     public void testGet(HTableInterface table, int totalOperations) {
-
+        for(int i = 0; i < totalOperations; i++) {
+            Get g = new Get(Utils.addPadding(String.valueOf(i).getBytes(),32));
+            for(String family : this.families) {
+                for( String qualifier : this.qualifiers) {
+                    g.addColumn(family.getBytes(), qualifier.getBytes());
+                }
+//                g.addColumn(family.getBytes(), chooseRandomQualifier().getBytes());
+            }
+            try {
+                System.out.println("Get<"+i+","+g.toString()+">");
+                Result res = table.get(g);
+                System.out.println("Result("+i+"): "+new String(res.getRow()));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public void getColumnFamilies(String tableName) throws IOException {

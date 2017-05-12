@@ -691,6 +691,56 @@ public class CryptoProperties {
 		return result;
 	}
 
+	public Map<byte[], List<byte[]>> getFamiliesAndQualifiers(Map<byte[], NavigableSet<byte[]>> familiesAndQualifiers, QEngineIntegration qEngine) {
+		Map<byte[],List<byte[]>> result = new HashMap<>();
+		for(byte[] temp_family : familiesAndQualifiers.keySet()) {
+			String family = new String(temp_family, Charset.forName("UTF-8"));
+			NavigableSet<byte[]> q = familiesAndQualifiers.get(temp_family);
+			if (!q.isEmpty()) {
+				Iterator i = q.iterator();
+				List<byte[]> qualifierList = new ArrayList<>();
+				while (i.hasNext()) {
+					byte[] temp_qualifier = (byte[]) i.next();
+					String qualifier = new String(temp_qualifier, Charset.forName("UTF-8"));
+					qualifierList.add(temp_qualifier);
+					if(!qEngine.doesFamilyContainsQualifier(this.tableSchema, family, qualifier)) {
+						this.tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier, CryptoTechnique.CryptoType.OPE));
+						this.tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier+"_STD", CryptoTechnique.CryptoType.STD));
+						replaceQualifierCryptoHandler(family, qualifier, CryptoTechnique.CryptoType.OPE, qEngine.getFamilyFormatSize());
+					}
+				}
+				result.put(temp_family, qualifierList);
+			}
+		}
+
+		return result;
+	}
+
+	public Map<byte[], List<byte[]>> getFamiliesAndQualifiers(NavigableMap<byte[], List<Cell>> familiesAndQualifiers, QEngineIntegration qEngine) {
+		Map<byte[], List<byte[]>> result = new HashMap<>();
+		if(!familiesAndQualifiers.isEmpty()) {
+			NavigableSet<byte[]> temp_navigable_set = familiesAndQualifiers.navigableKeySet();
+			Iterator i = temp_navigable_set.iterator();
+			while(i.hasNext()) {
+				byte[] temp_family = (byte[]) i.next();
+				String family = new String(temp_family, Charset.forName("UTF-8"));
+				List<Cell> temp_qualifiers = familiesAndQualifiers.get(temp_family);
+				List<byte[]> qualifiers = new ArrayList<>();
+				for(Cell c : temp_qualifiers) {
+					byte[] temp_qualifier = CellUtil.cloneQualifier(c);
+					String qualifier = new String(temp_qualifier, Charset.forName("UTF-8"));
+					qualifiers.add(temp_qualifier);
+					if(!qEngine.doesFamilyContainsQualifier(this.tableSchema, family, qualifier)) {
+						this.tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier, CryptoTechnique.CryptoType.OPE));
+						this.tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier+"_STD", CryptoTechnique.CryptoType.STD));
+						replaceQualifierCryptoHandler(family, qualifier, CryptoTechnique.CryptoType.OPE, qEngine.getFamilyFormatSize());
+					}
+				}
+				result.put(temp_family, qualifiers);
+			}
+		}
+		return result;
+	}
 
 	public static CryptoTechnique.FFX whichFpeInstance(String instance) {
 		switch (instance) {

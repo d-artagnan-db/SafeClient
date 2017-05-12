@@ -19,8 +19,7 @@ public class QEngineClient implements TestClient {
 
     private final HBaseAdmin admin;
 
-    public QEngineClient()
-            throws ZooKeeperConnectionException, IOException {
+    public QEngineClient() throws ZooKeeperConnectionException, IOException {
         Configuration conf = new Configuration();
         conf.addResource("conf.xml");
         admin = new HBaseAdmin(conf);
@@ -36,11 +35,11 @@ public class QEngineClient implements TestClient {
         conf.addResource("conf.xml");
 
         CryptoTable ct = new CryptoTable(conf, tableName);
-//        byte[] key = Utils.readKeyFromFile("key.txt");
+        byte[] key = Utils.readKeyFromFile("key.txt");
 //
 //        ct.cryptoProperties.setKey(CryptoTechnique.CryptoType.STD, key);
 //        ct.cryptoProperties.setKey(CryptoTechnique.CryptoType.DET, key);
-//        ct.cryptoProperties.setKey(CryptoTechnique.CryptoType.OPE, key);
+        ct.cryptoProperties.setKey(CryptoTechnique.CryptoType.OPE, key);
 //        ct.cryptoProperties.setKey(CryptoTechnique.CryptoType.FPE, key);
 
         System.out.println("Table created Successfully");

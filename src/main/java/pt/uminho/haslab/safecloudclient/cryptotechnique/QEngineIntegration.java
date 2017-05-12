@@ -15,8 +15,8 @@ import java.util.List;
  * Created by rgmacedo on 5/11/17.
  */
 public class QEngineIntegration {
-    private final int keyFormatSize = 64;
-    private final int familyFormatSize = 256;
+    private final int keyFormatSize = 32;
+    private final int familyFormatSize = 32;
 
     public QEngineIntegration() {
 

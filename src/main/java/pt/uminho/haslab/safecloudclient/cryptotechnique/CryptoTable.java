@@ -46,11 +46,6 @@ public class CryptoTable extends HTable {
 		HTableDescriptor descriptor = ha.getTableDescriptor(TableName.valueOf(tableName));
 		HColumnDescriptor[] columnDescriptors = descriptor.getColumnFamilies();
 
-		for(int i = 0; i < columnDescriptors.length; i++) {
-			System.out.println("Family: "+columnDescriptors[i].getNameAsString());
-			System.out.println("> "+columnDescriptors[i].toString());
-		}
-
 		this.qEngine = new QEngineIntegration();
 		this.tableSchema = this.qEngine.buildQEngineTableSchema(tableName, columnDescriptors);
 		this.cryptoProperties = new CryptoProperties(this.tableSchema);
@@ -88,6 +83,9 @@ public class CryptoTable extends HTable {
 				throw new NullPointerException("Row Key cannot be null.");
 			}
 
+//			Acknowledge the existing qualifiers
+			this.cryptoProperties.getFamiliesAndQualifiers(put.getFamilyCellMap(), this.qEngine);
+
 //			Encode the row key
 			Put encPut = new Put(this.cryptoProperties.encodeRow(row));
 //			System.out.println("Going to put (plaintext): "+Arrays.toString(row));
@@ -108,11 +106,6 @@ public class CryptoTable extends HTable {
 				}
 
 				if (!verifyProperty) {
-					if(!this.qEngine.doesFamilyContainsQualifier(this.tableSchema, new String(family, Charset.forName("UTF-8")), qualifierString)) {
-						this.tableSchema.addQualifier(new String(family, Charset.forName("UTF-8")), this.qEngine.createDefaultQualifier(qualifierString, CryptoTechnique.CryptoType.OPE));
-						this.tableSchema.addQualifier(new String(family, Charset.forName("UTF-8")), this.qEngine.createDefaultQualifier(qualifierString+"_STD", CryptoTechnique.CryptoType.STD));
-						this.cryptoProperties.replaceQualifierCryptoHandler(new String(family, Charset.forName("UTF-8")), qualifierString, CryptoTechnique.CryptoType.OPE, this.qEngine.getFamilyFormatSize());
-					}
 //					Encode the original value with the corresponding CryptoBox
 					encPut.add(
 							family,
@@ -137,7 +130,7 @@ public class CryptoTable extends HTable {
 				}
 			}
 
-//			System.out.println("Going to put (ciphertext): "+Arrays.toString(encPut.getRow()));
+			System.out.println("Going to put (ciphertext): "+Arrays.toString(encPut.getRow()));
 			super.put(encPut);
 
 		} catch (IOException e) {
@@ -164,6 +157,9 @@ public class CryptoTable extends HTable {
 				throw new NullPointerException("Row Key cannot be null.");
 			}
 
+//			Acknowledge the existing qualifiers
+			this.cryptoProperties.getFamiliesAndQualifiers(get.getFamilyMap(), this.qEngine);
+
 //			Verify the row key CryptoBox
 			switch (this.cryptoProperties.tableSchema.getKey().getCryptoType()) {
 				case PLT :
@@ -184,7 +180,6 @@ public class CryptoTable extends HTable {
 				case OPE :
 				case FPE :
 					Get encGet = new Get(this.cryptoProperties.encodeRow(row));
-
 //					System.out.println("Going to get (ciphertext): "+Arrays.toString(encGet.getRow()));
 					Map<byte[],List<byte[]>> columns = this.cryptoProperties.getFamiliesAndQualifiers(get.getFamilyMap());
 
@@ -195,7 +190,6 @@ public class CryptoTable extends HTable {
 					}
 
 					Result res = super.get(encGet);
-					System.out.println("After get: "+ Arrays.toString(res.getRow()));
 
 					if (!res.isEmpty()) {
 						getResult = this.cryptoProperties.decodeResult(row, res);
@@ -271,6 +265,9 @@ public class CryptoTable extends HTable {
 		try {
 			byte[] startRow = scan.getStartRow();
 			byte[] endRow = scan.getStopRow();
+
+//			Acknowledge the existing qualifiers
+			this.cryptoProperties.getFamiliesAndQualifiers(scan.getFamilyMap(), this.qEngine);
 
 //			Transform the original object in an encrypted scan.
 			Scan encScan = this.cryptoProperties.encryptedScan(scan);
