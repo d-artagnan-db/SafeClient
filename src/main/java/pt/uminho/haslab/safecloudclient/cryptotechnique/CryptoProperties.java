@@ -236,17 +236,23 @@ public class CryptoProperties {
 	 * @return the resulting ciphertext
 	 */
 	public byte[] encodeRowCryptoType(CryptoTechnique.CryptoType cType, byte[] content) {
+		byte[] row = Utils.addPadding(content, tableSchema.getKey().getFormatSize());
 		switch (cType) {
 			case PLT :
-				return content;
+				return row;
+//				return content;
 			case STD :
-				return this.stdHandler.encrypt(this.stdKey, content);
+				return this.stdHandler.encrypt(this.stdKey, row);
+//				return this.stdHandler.encrypt(this.stdKey, content);
 			case DET :
-				return this.detHandler.encrypt(this.detKey, content);
+				return this.detHandler.encrypt(this.detKey, row);
+//				return this.detHandler.encrypt(this.detKey, content);
 			case OPE :
-				return this.opeHandler.encrypt(this.opeKey, content);
+				return this.opeHandler.encrypt(this.opeKey, row);
+//				return this.opeHandler.encrypt(this.opeKey, content);
 			case FPE :
-				return this.fpeHandler.encrypt(this.fpeKey.get("KEY"), content);
+				return this.fpeHandler.encrypt(this.fpeKey.get("KEY"), row);
+//				return this.fpeHandler.encrypt(this.fpeKey.get("KEY"), content);
 			default :
 				return null;
 		}
@@ -261,19 +267,25 @@ public class CryptoProperties {
 	 * @return the resulting ciphertext
 	 */
 	public byte[] encodeValueCryptoType(CryptoTechnique.CryptoType cType, byte[] content, String family, String qualifier) {
+		byte[] row = Utils.addPadding(content, tableSchema.getFormatSizeFromQualifier(family, qualifier));
 		switch (cType) {
 			case PLT :
-				return content;
+				return row;
+//				return content;
 			case STD :
-				return this.stdHandler.encrypt(this.stdKey, content);
+				return this.stdHandler.encrypt(this.stdKey, row);
+//				return this.stdHandler.encrypt(this.stdKey, content);
 			case DET :
-				return this.detHandler.encrypt(this.detKey, content);
+				return this.detHandler.encrypt(this.detKey, row);
+//				return this.detHandler.encrypt(this.detKey, content);
 			case OPE :
 				CryptoHandler opeCh = getCryptoHandler(CryptoTechnique.CryptoType.OPE, family, qualifier);
-				return opeCh.encrypt(this.opeKey, content);
+				return opeCh.encrypt(this.opeKey, row);
+//				return opeCh.encrypt(this.opeKey, content);
 			case FPE :
 				CryptoHandler fpeCH = getCryptoHandler(CryptoTechnique.CryptoType.FPE, family, qualifier);
-				return fpeCH.encrypt(this.fpeKey.get(family+":"+qualifier), content);
+				return fpeCH.encrypt(this.fpeKey.get(family+":"+qualifier), row);
+//				return fpeCH.encrypt(this.fpeKey.get(family+":"+qualifier), content);
 			default :
 				return null;
 		}
@@ -288,15 +300,20 @@ public class CryptoProperties {
 	public byte[] decodeRowCryptoType(CryptoTechnique.CryptoType cType, byte[] ciphertext) {
 		switch (cType) {
 			case PLT :
-				return ciphertext;
+				return Utils.removePadding(ciphertext);
+//				return ciphertext;
 			case STD :
-				return this.stdHandler.decrypt(this.stdKey, ciphertext);
+				return Utils.removePadding(this.stdHandler.decrypt(this.stdKey, ciphertext));
+//				return this.stdHandler.decrypt(this.stdKey, ciphertext);
 			case DET :
-				return this.detHandler.decrypt(this.detKey, ciphertext);
+				return Utils.removePadding(this.detHandler.decrypt(this.detKey, ciphertext));
+//				return this.detHandler.decrypt(this.detKey, ciphertext);
 			case OPE :
-				return this.opeHandler.decrypt(this.opeKey, ciphertext);
+				return Utils.removePadding(this.opeHandler.decrypt(this.opeKey, ciphertext));
+//				return this.opeHandler.decrypt(this.opeKey, ciphertext);
 			case FPE :
-				return this.fpeHandler.decrypt(this.fpeKey.get("KEY"), ciphertext);
+				return Utils.removePadding(this.fpeHandler.decrypt(this.fpeKey.get("KEY"), ciphertext));
+//				return this.fpeHandler.decrypt(this.fpeKey.get("KEY"), ciphertext);
 			default :
 				return null;
 		}
@@ -313,17 +330,22 @@ public class CryptoProperties {
 	public byte[] decodeValueCryptoType(CryptoTechnique.CryptoType cType, byte[] ciphertext, String family, String qualifier) {
 		switch (cType) {
 			case PLT :
-				return ciphertext;
+				return  Utils.removePadding(ciphertext);
+//				return ciphertext;
 			case STD :
-				return this.stdHandler.decrypt(this.stdKey, ciphertext);
+				return  Utils.removePadding(this.stdHandler.decrypt(this.stdKey, ciphertext));
+//				return this.stdHandler.decrypt(this.stdKey, ciphertext);
 			case DET :
-				return this.detHandler.decrypt(this.detKey, ciphertext);
+				return  Utils.removePadding(this.detHandler.decrypt(this.detKey, ciphertext));
+//				return this.detHandler.decrypt(this.detKey, ciphertext);
 			case OPE :
 				CryptoHandler opeCh = getCryptoHandler(CryptoTechnique.CryptoType.OPE, family, qualifier);
-				return opeCh.decrypt(this.opeKey, ciphertext);
+				return  Utils.removePadding(opeCh.decrypt(this.opeKey, ciphertext));
+//				return opeCh.decrypt(this.opeKey, ciphertext);
 			case FPE :
 				CryptoHandler fpeCH = getCryptoHandler(CryptoTechnique.CryptoType.FPE, family, qualifier);
-				return fpeCH.decrypt(this.fpeKey.get(family+":"+qualifier), ciphertext);
+				return  Utils.removePadding(fpeCH.decrypt(this.fpeKey.get(family+":"+qualifier), ciphertext));
+//				return fpeCH.decrypt(this.fpeKey.get(family+":"+qualifier), ciphertext);
 			default :
 				return null;
 		}

@@ -50,7 +50,7 @@ public class QEngineHBaseFeaturesTest extends QEngineTest {
 
     public void testPut(HTableInterface table, int totalOperations) {
         for(int i = 0; i < totalOperations; i++) {
-            Put p = new Put(Utils.addPadding(String.valueOf(i).getBytes(),32));
+            Put p = new Put(String.valueOf(i).getBytes());
             for(String family : this.families) {
                 for(String qualifier : this.qualifiers) {
                     p.add(family.getBytes(), qualifier.getBytes(), "hello world".getBytes());
@@ -68,7 +68,7 @@ public class QEngineHBaseFeaturesTest extends QEngineTest {
 
     public void testGet(HTableInterface table, int totalOperations) {
         for(int i = 0; i < totalOperations; i++) {
-            Get g = new Get(Utils.addPadding(String.valueOf(i).getBytes(),32));
+            Get g = new Get(String.valueOf(i).getBytes());
             for(String family : this.families) {
                 for( String qualifier : this.qualifiers) {
                     g.addColumn(family.getBytes(), qualifier.getBytes());
@@ -79,6 +79,11 @@ public class QEngineHBaseFeaturesTest extends QEngineTest {
                 System.out.println("Get<"+i+","+g.toString()+">");
                 Result res = table.get(g);
                 System.out.println("Result("+i+"): "+new String(res.getRow()));
+                for(String family : this.families) {
+                    for (String qualifier : this.qualifiers) {
+                        System.out.println("<"+family+","+qualifier+">="+new String(res.getValue(family.getBytes(), qualifier.getBytes())));
+                    }
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
