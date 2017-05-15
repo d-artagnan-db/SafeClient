@@ -1,4 +1,4 @@
-package pt.uminho.haslab.safecloudclient.cryptotechnique;
+package pt.uminho.haslab.safecloudclient.queryengine;
 
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;

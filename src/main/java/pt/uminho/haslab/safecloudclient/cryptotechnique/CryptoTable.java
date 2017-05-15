@@ -6,7 +6,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
-import pt.uminho.haslab.safecloudclient.schema.Qualifier;
+import pt.uminho.haslab.safecloudclient.queryengine.QEngineIntegration;
 import pt.uminho.haslab.safecloudclient.schema.SchemaParser;
 import pt.uminho.haslab.safecloudclient.schema.TableSchema;
 
@@ -49,6 +49,12 @@ public class CryptoTable extends HTable {
 		this.qEngine = new QEngineIntegration();
 		this.tableSchema = this.qEngine.buildQEngineTableSchema(tableName, columnDescriptors);
 		this.cryptoProperties = new CryptoProperties(this.tableSchema);
+		byte[] key = { (byte) 0x2B, (byte) 0x7E, (byte) 0x15, (byte) 0x16, (byte) 0x28, (byte) 0xAE, (byte) 0xD2,
+				(byte) 0xA6, (byte) 0xAB, (byte) 0xF7, (byte) 0x15, (byte) 0x88, (byte) 0x09, (byte) 0xCF,
+				(byte) 0x4F, (byte) 0x3C };
+
+		this.cryptoProperties.setKey(CryptoTechnique.CryptoType.OPE, key);
+
 		this.resultScannerFactory = new ResultScannerFactory();
 	}
 

@@ -9,6 +9,7 @@ import pt.uminho.haslab.OpeHgd;
 import pt.uminho.haslab.cryptoenv.CryptoHandler;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 import pt.uminho.haslab.cryptoenv.Utils;
+import pt.uminho.haslab.safecloudclient.queryengine.QEngineIntegration;
 import pt.uminho.haslab.safecloudclient.schema.*;
 
 import java.nio.charset.Charset;
@@ -160,10 +161,15 @@ public class CryptoProperties {
 	 * @param qualifier
 	 * @return the CryptoHandler that corresponds to the family and qualifier specified
 	 */
-	public CryptoHandler getCryptoHandler(CryptoTechnique.CryptoType ctype, String family, String qualifier) {
+	public CryptoHandler  getCryptoHandler(CryptoTechnique.CryptoType ctype, String family, String qualifier) {
 		switch(ctype) {
 			case OPE :
-				return this.opeValueHandler.get(family).get(qualifier);
+//				TODO too much hardcoded
+				if(this.opeValueHandler.containsKey(family) && this.opeValueHandler.get(family).containsKey(qualifier)) {
+					return this.opeValueHandler.get(family).get(qualifier);
+				} else {
+					return this.opeHandler;
+				}
 			case FPE :
 				return this.fpeValueHandler.get(family).get(qualifier);
 			default :
@@ -398,7 +404,10 @@ public class CryptoProperties {
 	public byte[] decodeValue(byte[] family, byte[] qualifier, byte[] value) {
 		String f = new String(family, Charset.forName("UTF-8"));
 		String q = new String(qualifier, Charset.forName("UTF-8"));
+//		TODO too much hardcoded
 		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getCryptoTypeFromQualifier(f, q);
+		if(cryptoType == null)
+			cryptoType = CryptoTechnique.CryptoType.OPE;
 //		System.out.println("Decode Value (" + f + "," + q + "): " + cryptoType);
 		return decodeValueCryptoType(cryptoType, value, f, q);
 	}
@@ -694,6 +703,9 @@ public class CryptoProperties {
 		Map<byte[],List<byte[]>> result = new HashMap<>();
 		for(byte[] family : familiesAndQualifiers.keySet()) {
 			NavigableSet<byte[]> q = familiesAndQualifiers.get(family);
+			if(q==null) {
+				System.out.println(familiesAndQualifiers.toString());
+			} else
 			if (!q.isEmpty()) {
 				Iterator i = q.iterator();
 				List<byte[]> qualifierList = new ArrayList<>();
@@ -718,6 +730,10 @@ public class CryptoProperties {
 		for(byte[] temp_family : familiesAndQualifiers.keySet()) {
 			String family = new String(temp_family, Charset.forName("UTF-8"));
 			NavigableSet<byte[]> q = familiesAndQualifiers.get(temp_family);
+			if(q == null) {
+				System.out.println(familiesAndQualifiers.toString());
+//				throw new NullPointerException("No qualifiers for "+family+" family.");
+			}else
 			if (!q.isEmpty()) {
 				Iterator i = q.iterator();
 				List<byte[]> qualifierList = new ArrayList<>();
