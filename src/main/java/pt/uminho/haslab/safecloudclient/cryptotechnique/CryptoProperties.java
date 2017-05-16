@@ -161,14 +161,19 @@ public class CryptoProperties {
 	 * @param qualifier
 	 * @return the CryptoHandler that corresponds to the family and qualifier specified
 	 */
-	public CryptoHandler  getCryptoHandler(CryptoTechnique.CryptoType ctype, String family, String qualifier) {
+	public CryptoHandler getCryptoHandler(CryptoTechnique.CryptoType ctype, String family, String qualifier) {
 		switch(ctype) {
 			case OPE :
-//				TODO too much hardcoded
+//				Check if Qualifier CryptoHandler is available. If not, return the CryptoHandler of the respective family
 				if(this.opeValueHandler.containsKey(family) && this.opeValueHandler.get(family).containsKey(qualifier)) {
 					return this.opeValueHandler.get(family).get(qualifier);
 				} else {
-					return this.opeHandler;
+					Family temp_family = this.tableSchema.getFamily(family);
+					List<Object> temp_args = new ArrayList<>();
+					temp_args.add(temp_family.getFormatSize());
+					temp_args.add(temp_family.getFormatSize()*2);
+
+					return new CryptoHandler(temp_family.getCryptoType(), temp_args);
 				}
 			case FPE :
 				return this.fpeValueHandler.get(family).get(qualifier);
@@ -404,10 +409,13 @@ public class CryptoProperties {
 	public byte[] decodeValue(byte[] family, byte[] qualifier, byte[] value) {
 		String f = new String(family, Charset.forName("UTF-8"));
 		String q = new String(qualifier, Charset.forName("UTF-8"));
-//		TODO too much hardcoded
+
 		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getCryptoTypeFromQualifier(f, q);
-		if(cryptoType == null)
-			cryptoType = CryptoTechnique.CryptoType.OPE;
+//		If CryptoType equals to null, it means that either an error occurred in the Qualifier creation or the Qualifier
+// 		instance does not exists.
+		if(cryptoType == null) {
+			cryptoType = this.tableSchema.getFamily(new String(family)).getCryptoType();
+		}
 //		System.out.println("Decode Value (" + f + "," + q + "): " + cryptoType);
 		return decodeValueCryptoType(cryptoType, value, f, q);
 	}
@@ -421,7 +429,7 @@ public class CryptoProperties {
 	public Result decodeResult(byte[] row, Result res) {
 //		byte[] decodedRow = this.decodeRow(row);
 		String opeValues = "_STD";
-		List<Cell> cellList = new ArrayList<Cell>();
+		List<Cell> cellList = new ArrayList<>();
 
 		while (res.advance()) {
 			Cell cell = res.current();
@@ -490,7 +498,7 @@ public class CryptoProperties {
 				return this.tableSchema.getCryptoTypeFromQualifier(family, qualifier);
 			}
 			else {
-				return null;
+				throw new UnsupportedOperationException("Unsupported Filter Operation.");
 			}
 		}
 		else {

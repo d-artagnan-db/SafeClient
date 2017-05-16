@@ -177,6 +177,21 @@ public class TableSchema {
 		this.columnFamilies.add(fam);
 	}
 
+	public Family getFamily(String familyName) {
+		Family wantedFamily = null;
+		boolean hasFamily = false;
+		Iterator<Family> family_iterator = this.columnFamilies.iterator();
+		while(family_iterator.hasNext() && !hasFamily) {
+			Family temp_family = family_iterator.next();
+			if(temp_family.getFamilyName().equals(familyName)) {
+				wantedFamily = temp_family;
+				hasFamily = true;
+			}
+		}
+
+		return wantedFamily;
+	}
+
 	/**
 	 * addQualifier(familyName : String, qualifier : Qualifier) method : add a new column qualifier to the respective family collection
 	 * @param familyName column family name

@@ -17,23 +17,24 @@ import java.util.List;
 public class QEngineIntegration {
     private final int keyFormatSize = 32;
     private final int familyFormatSize = 32;
+    private final CryptoTechnique.CryptoType cType = CryptoTechnique.CryptoType.OPE;
 
     public QEngineIntegration() {
 
     }
 
     public TableSchema buildQEngineTableSchema(String tablename, HColumnDescriptor[] descriptors) {
-        Key key = new Key(CryptoTechnique.CryptoType.OPE, keyFormatSize);
+        Key key = new Key(cType, keyFormatSize);
         List<Family> columnFamilies = new ArrayList<>(descriptors.length);
         for(int i = 0; i < descriptors.length; i++) {
-            Family temp_family = new Family(descriptors[i].getNameAsString(), CryptoTechnique.CryptoType.OPE, familyFormatSize);
+            Family temp_family = new Family(descriptors[i].getNameAsString(), cType, familyFormatSize);
             columnFamilies.add(temp_family);
         }
 
         return new TableSchema(
                 tablename, //tablename
-                CryptoTechnique.CryptoType.OPE,  //default key CryptoType
-                CryptoTechnique.CryptoType.OPE,  //default columns CryptoType
+                cType,  //default key CryptoType
+                cType,  //default columns CryptoType
                 64, //default format size for both key and columns
                 key, //key class (contains the secure properties to ensure the key privacy)
                 columnFamilies); // list of column families (contains the secure properties to ensure the families and qualifiers privacy)
