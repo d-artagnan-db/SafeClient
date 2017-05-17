@@ -38,7 +38,7 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
 
             testBatchingPuts(table, "Physician".getBytes(), "Physician ID".getBytes(), 10);
             testBatchingGets(table, "Physician".getBytes(), "Physician ID".getBytes(), 5);
-
+            testDelete(table, "Physician".getBytes(), "Physician ID".getBytes());
 
         } catch (IOException e) {
             LOG.error("Exception in test execution. " + e.getMessage());
@@ -108,47 +108,13 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
         }
     }
 
-    public void testDelete(HTableInterface table, byte[] cf, byte[] cq, byte[] value) {
+//    TODO test
+    public void testDelete(HTableInterface table, byte[] cf, byte[] cq) {
         try {
-            long start = System.currentTimeMillis();
-            Delete del = new Delete(value);
-            boolean deleted;
+            Delete del = new Delete(Utils.addPadding(String.valueOf(0).getBytes(), formatSize));
+            del.deleteFamily(cf);
 
             table.delete(del);
-            Get get = new Get(value);
-            get.addColumn(cf, cq);
-            Result res = table.get(get);
-
-            if (res != null) {
-                if (new String(res.getRow()).equals("")) {
-                    LOG.debug("Test Delete - Success ["
-                            + new String(table.getTableName()) + ","
-                            + new String(value) + "," + new String(cf) + ","
-                            + new String(cq) + "]\n");
-                    deleted = true;
-                } else {
-                    LOG.debug("Test Delete - Failed ["
-                            + new String(table.getTableName()) + ","
-                            + new String(value) + "," + new String(cf) + ","
-                            + new String(cq) + "]\n");
-                    System.out.println(res.toString());
-                    deleted = false;
-                }
-            } else {
-                LOG.debug("Test Delete - Success ["
-                        + new String(table.getTableName()) + ","
-                        + new String(value) + "," + new String(cf) + ","
-                        + new String(cq) + "]\n");
-                deleted = true;
-            }
-            long stop = System.currentTimeMillis();
-            assertTrue(deleted);
-
-            StringBuilder sb = new StringBuilder();
-            sb.append("TestDelete\n");
-            sb.append("Time: ").append((stop - start)).append("ms\n");
-
-            LOG.debug(sb.toString());
 
         } catch (IOException e) {
             LOG.error("HBaseFeaturesTest: testDelete exception. "

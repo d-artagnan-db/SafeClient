@@ -262,6 +262,7 @@ public class CryptoTable extends HTable {
 		return results;
 	}
 
+//	TODO UnitTest
 	/**
 	 * delete(Delete delete) method : secure delete method.
 	 * The original delete object sets the row key to search in the database system. Before the delete operation, the row key
@@ -277,6 +278,9 @@ public class CryptoTable extends HTable {
 				throw new NullPointerException("Row Key cannot be null.");
 			}
 
+			System.out.println("Delete: "+delete.toString());
+			List<String> cellsToDelete = this.htableUtils.deleteCells(delete.cellScanner());
+
 //			Verify the row key CryptoBox
 			switch (this.cryptoProperties.tableSchema.getKey().getCryptoType()) {
 				case PLT :
@@ -289,6 +293,7 @@ public class CryptoTable extends HTable {
 
 						if (Arrays.equals(row, resultValue)) {
 							Delete del = new Delete(r.getRow());
+							this.htableUtils.wrapDeletedCells(cellsToDelete, del);
 							super.delete(del);
 						}
 					}
@@ -297,6 +302,9 @@ public class CryptoTable extends HTable {
 				case OPE :
 				case FPE :
 					Delete encDelete = new Delete(this.cryptoProperties.encodeRow(row));
+					System.out.println("Delete (before wrapping): "+encDelete.toString());
+					this.htableUtils.wrapDeletedCells(cellsToDelete, encDelete);
+					System.out.println("Delete (after wrapping): "+encDelete.toString());
 					super.delete(encDelete);
 					break;
 				default :
@@ -307,9 +315,56 @@ public class CryptoTable extends HTable {
 		}
 	}
 
+//	TODO UnitTest
 	@Override
 	public void delete(List<Delete> deletes) {
+		try {
+			List<Delete> encryptedDeletes = new ArrayList<>(deletes.size());
+			for (Delete del : deletes) {
+				byte[] row = del.getRow();
+				if (row.length == 0) {
+					throw new NullPointerException("Row Key cannot be null.");
+				}
 
+				List<String> cellsToDelete = this.htableUtils.deleteCells(del.cellScanner());
+
+//			Verify the row key CryptoBox
+				switch (this.cryptoProperties.tableSchema.getKey().getCryptoType()) {
+					case PLT:
+						encryptedDeletes.add(del);
+						break;
+					case STD:
+						ResultScanner encScan = super.getScanner(new Scan());
+						for (Result r = encScan.next(); r != null; r = encScan.next()) {
+							byte[] resultValue = this.cryptoProperties.decodeRow(r.getRow());
+
+							if (Arrays.equals(row, resultValue)) {
+								Delete encryptedDelete = new Delete(r.getRow());
+								this.htableUtils.wrapDeletedCells(cellsToDelete, encryptedDelete);
+								encryptedDeletes.add(encryptedDelete);
+							}
+						}
+						break;
+					case DET:
+					case OPE:
+					case FPE:
+						Delete encryptedDelete = new Delete(this.cryptoProperties.encodeRow(row));
+						System.out.println("Delete (before wrapping): " + encryptedDelete.toString());
+						this.htableUtils.wrapDeletedCells(cellsToDelete, encryptedDelete);
+						System.out.println("Delete (after wrapping): " + encryptedDelete.toString());
+						encryptedDeletes.add(encryptedDelete);
+						break;
+					default:
+						break;
+				}
+			}
+
+			super.delete(encryptedDeletes);
+
+		} catch(IOException e) {
+			LOG.error("Exception in delete (list<Delete> deletes) method. " + e.getMessage());
+			System.out.println("Exception in delete (list<Delete> deletes) method. " + e.getMessage());
+		}
 	}
 
 	/**
