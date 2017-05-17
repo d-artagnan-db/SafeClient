@@ -37,6 +37,7 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
             System.out.println("Table execution "+ tableName);
 
             testBatchingPuts(table, "Physician".getBytes(), "Physician ID".getBytes(), 10);
+            testBatchingGets(table, "Physician".getBytes(), "Physician ID".getBytes(), 5);
 
 
         } catch (IOException e) {
@@ -51,7 +52,6 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
     public void testBatchingPuts(HTableInterface table, byte[] cf, byte[] cq, int batchSize) {
         try {
             List<Put> puts = new ArrayList<>(batchSize);
-            long start = System.currentTimeMillis();
 
             for(int i = 0; i < batchSize; i++) {
                 Put put = new Put(Utils.addPadding(String.valueOf(i).getBytes(), formatSize));
@@ -60,7 +60,6 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
             }
 
             table.put(puts);
-            long stop = System.currentTimeMillis();
 
             for(int i = 0; i < batchSize; i++) {
                 Get get = new Get(Utils.addPadding(String.valueOf(i).getBytes(), formatSize));
@@ -76,41 +75,36 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
                 }
             }
 
-            StringBuilder sb = new StringBuilder();
-            sb.append("TestPut\n");
-            sb.append("Time: ").append((stop - start)).append("ms\n");
-
-            System.out.println(sb.toString());
-
         } catch (IOException e) {
             LOG.error("TestPut exception. " + e.getMessage());
         }
     }
 
-    public void testGet(HTableInterface table, byte[] cf, byte[] cq, byte[] value) {
+//    TODO send result to LOGs
+    public void testBatchingGets(HTableInterface table, byte[] cf, byte[] cq, int batchSize) {
         try {
-            long start = System.currentTimeMillis();
+            List<Get> gets = new ArrayList<>(batchSize);
 
-            Get get = new Get(value);
-            get.addColumn(cf, cq);
-            Result res = table.get(get);
-            if (res != null) {
-                byte[] storedKey = res.getRow();
-                assertEquals(Arrays.toString(storedKey), Arrays.toString(value));
-                LOG.debug("Test Get - Success ["
-                        + new String(table.getTableName()) + ","
-                        + new String(value) + "," + new String(cf) + ","
-                        + new String(cq) + "]\n");
+            for (int i = 0; i < batchSize; i++) {
+                Get get = new Get(Utils.addPadding(String.valueOf(i).getBytes(), formatSize));
+                get.addColumn(cf, cq);
+                gets.add(get);
             }
-            long stop = System.currentTimeMillis();
 
-            StringBuilder sb = new StringBuilder();
-            sb.append("TestGet\n");
-            sb.append("Time: ").append((stop - start)).append("ms\n");
+            Result[] res = table.get(gets);
+            for (int i = 0; i < batchSize; i++) {
+                if (res[i] != null) {
+                    byte[] storedKey = res[i].getRow();
+                    assertEquals(Arrays.toString(storedKey), Arrays.toString(Utils.addPadding(String.valueOf(i).getBytes(), formatSize)));
+                    System.out.println("Test Get - Success ["
+                            + new String(table.getTableName()) + ","
+                            + new String(storedKey) + "," + new String(cf) + ","
+                            + new String(cq) + "," + new String(res[i].getValue(cf, cq)) + "]\n");
+                }
 
-            LOG.debug(sb.toString());
+            }
         } catch (IOException e) {
-            LOG.debug("HBaseFeaturesTest: testGet exception. " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
