@@ -112,7 +112,8 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
     public void testDelete(HTableInterface table, byte[] cf, byte[] cq) {
         try {
             Delete del = new Delete(Utils.addPadding(String.valueOf(0).getBytes(), formatSize));
-            del.deleteFamily(cf);
+//            del.deleteFamily(cf);
+            del.deleteColumns(cf,cq);
 
             table.delete(del);
 

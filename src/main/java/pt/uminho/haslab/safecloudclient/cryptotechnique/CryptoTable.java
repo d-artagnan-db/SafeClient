@@ -32,7 +32,7 @@ public class CryptoTable extends HTable {
 		this.tableSchema = this.init(schemaFilename, tableName);
 		this.cryptoProperties = new CryptoProperties(this.tableSchema);
 		this.resultScannerFactory = new ResultScannerFactory();
-		this.htableUtils = new HTableFeaturesUtils();
+		this.htableUtils = new HTableFeaturesUtils(this.cryptoProperties);
 	}
 
 	public CryptoTable(Configuration conf, String tableName, TableSchema schema) throws IOException {
@@ -40,7 +40,7 @@ public class CryptoTable extends HTable {
 		this.tableSchema = schema;
 		this.cryptoProperties = new CryptoProperties(this.tableSchema);
 		this.resultScannerFactory = new ResultScannerFactory();
-		this.htableUtils = new HTableFeaturesUtils();
+		this.htableUtils = new HTableFeaturesUtils(this.cryptoProperties);
 	}
 
 	/**
@@ -381,17 +381,17 @@ public class CryptoTable extends HTable {
 			byte[] endRow = scan.getStopRow();
 
 //			Transform the original object in an encrypted scan.
-			Scan encScan = this.cryptoProperties.encryptedScan(scan);
+			Scan encScan = this.htableUtils.encryptedScan(scan);
 			ResultScanner encryptedResultScanner = super.getScanner(encScan);
 
 //			Return the corresponding result scanner to decrypt the resulting set of values
 			return this.resultScannerFactory.getResultScanner(
-					this.cryptoProperties.verifyFilterCryptoType(scan),
+					this.htableUtils.verifyFilterCryptoType(scan),
 					this.cryptoProperties,
 					startRow,
 					endRow,
 					encryptedResultScanner,
-					this.cryptoProperties.parseFilter(scan.getFilter()));
+					this.htableUtils.parseFilter(scan.getFilter()));
 
 		} catch (Exception e) {
 			System.out.println("Exception in scan method. "+e.getMessage());
