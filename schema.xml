@@ -8,10 +8,7 @@
     </default>
     <key>
       <formatsize>10</formatsize>
-      <cryptotechnique>FPE</cryptotechnique>
-      <instance>FF3</instance>
-      <radix>10</radix>
-      <tweak>hello world</tweak>
+      <cryptotechnique>OPE</cryptotechnique>
     </key>
     <columns>
       <family>
@@ -19,11 +16,8 @@
         <cryptotechnique>PLT</cryptotechnique>
         <qualifier>
           <name>Physician ID</name>
-          <cryptotechnique>FPE</cryptotechnique>
+          <cryptotechnique>PLT</cryptotechnique>
           <formatsize>10</formatsize>
-          <instance>FF3</instance>
-          <radix>10</radix>
-          <tweak>12345678</tweak>
           <misc>
             <property>GENERATOR</property>
             <type>String</type>
