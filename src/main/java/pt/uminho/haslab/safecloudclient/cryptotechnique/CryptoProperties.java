@@ -223,7 +223,7 @@ public class CryptoProperties {
 	 * @param content plaintext row key
 	 * @return the resulting ciphertext
 	 */
-	public byte[] encodeRowCryptoType(CryptoTechnique.CryptoType cType, byte[] content) {
+	private byte[] encodeRowCryptoType(CryptoTechnique.CryptoType cType, byte[] content) {
 		switch (cType) {
 			case PLT :
 				return content;
@@ -248,7 +248,7 @@ public class CryptoProperties {
 	 * @param qualifier qualifier column
 	 * @return the resulting ciphertext
 	 */
-	public byte[] encodeValueCryptoType(CryptoTechnique.CryptoType cType, byte[] content, String family, String qualifier) {
+	private byte[] encodeValueCryptoType(CryptoTechnique.CryptoType cType, byte[] content, String family, String qualifier) {
 		switch (cType) {
 			case PLT :
 				return content;
@@ -273,7 +273,7 @@ public class CryptoProperties {
 	 * @param ciphertext protected row key
 	 * @return the original row key in byte[] format
 	 */
-	public byte[] decodeRowCryptoType(CryptoTechnique.CryptoType cType, byte[] ciphertext) {
+	private byte[] decodeRowCryptoType(CryptoTechnique.CryptoType cType, byte[] ciphertext) {
 		switch (cType) {
 			case PLT :
 				return ciphertext;
@@ -298,7 +298,7 @@ public class CryptoProperties {
 	 * @param qualifier qualifier column
 	 * @return the original value in byte[] format
 	 */
-	public byte[] decodeValueCryptoType(CryptoTechnique.CryptoType cType, byte[] ciphertext, String family, String qualifier) {
+	private byte[] decodeValueCryptoType(CryptoTechnique.CryptoType cType, byte[] ciphertext, String family, String qualifier) {
 		switch (cType) {
 			case PLT :
 				return ciphertext;

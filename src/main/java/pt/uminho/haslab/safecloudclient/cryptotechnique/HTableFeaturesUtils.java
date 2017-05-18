@@ -27,7 +27,7 @@ public class HTableFeaturesUtils {
         cp = cryptoProperties;
     }
 
-    public void encryptCells(CellScanner cs, TableSchema tableSchema, Put encryptedPut, CryptoProperties cryptoProperties) {
+    public void encryptCells(CellScanner cs, TableSchema tableSchema, Put destination, CryptoProperties cryptoProperties) {
         try {
             while (cs.advance()) {
                 Cell cell = cs.current();
@@ -45,7 +45,7 @@ public class HTableFeaturesUtils {
                 }
                 if (!verifyProperty) {
     //					Encode the original value with the corresponding CryptoBox
-                    encryptedPut.add(
+                    destination.add(
                             family,
                             qualifier,
                             cryptoProperties.encodeValue(
@@ -55,7 +55,7 @@ public class HTableFeaturesUtils {
 
     //					If the actual qualifier CryptoType is equal to OPE, encode the same value with STD CryptoBox
                     if (tableSchema.getCryptoTypeFromQualifier(new String(family, Charset.forName("UTF-8")), qualifierString) == CryptoTechnique.CryptoType.OPE) {
-                        encryptedPut.add(
+                        destination.add(
                                 family,
                                 (qualifierString + opeValues).getBytes(Charset.forName("UTF-8")),
                                 cryptoProperties.encodeValue(

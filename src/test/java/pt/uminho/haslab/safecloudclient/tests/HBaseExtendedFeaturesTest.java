@@ -40,6 +40,9 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
             testBatchingGets(table, "Physician".getBytes(), "Physician ID".getBytes(), 5);
             testDelete(table, "Physician".getBytes(), "Physician ID".getBytes());
 
+            testGet(table, "Physician".getBytes(), "Physician ID".getBytes(), Utils.addPadding(String.valueOf(2).getBytes(), formatSize));
+            testCheckAndPut(table, "Physician".getBytes(), "Physician ID".getBytes(), "2:Hello:2".getBytes());
+
         } catch (IOException e) {
             LOG.error("Exception in test execution. " + e.getMessage());
         } catch (InvalidNumberOfBits e) {
@@ -108,6 +111,18 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
         }
     }
 
+    public void testGet(HTableInterface table, byte[] cf, byte[] cq, byte[] row) {
+        Get g = new Get(row);
+        g.addColumn(cf, cq);
+        try {
+            Result r = table.get(g);
+            System.out.println("\nResult: "+r.toString()+"\n");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
 //    TODO test
     public void testDelete(HTableInterface table, byte[] cf, byte[] cq) {
         try {
@@ -122,6 +137,18 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
                     + e.getMessage());
         }
 
+    }
+
+//    TODO test for all CryptoTypes (specially STD)
+    public void testCheckAndPut(HTableInterface table, byte[] cf, byte[] cq, byte[] value) {
+        Put p = new Put(Utils.addPadding(String.valueOf(2).getBytes(),formatSize));
+        p.add(cf, cq, "Hello cenas".getBytes());
+        try {
+            boolean test = table.checkAndPut(Utils.addPadding(String.valueOf(2).getBytes(),formatSize), cf, cq, value, p);
+            System.out.println("CheckAndPut - "+test);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void testScan(HTableInterface table, byte[] startRow, byte[] stopRow) {
