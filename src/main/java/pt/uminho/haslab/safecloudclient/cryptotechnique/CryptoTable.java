@@ -6,13 +6,11 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Pair;
-import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 import pt.uminho.haslab.safecloudclient.schema.SchemaParser;
 import pt.uminho.haslab.safecloudclient.schema.TableSchema;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.nio.charset.Charset;
 import java.util.*;
 
 /**
@@ -517,9 +515,54 @@ public class CryptoTable extends HTable {
 		return operationValue;
 	}
 
+//	TODO UnitTest missing
 	@Override
-	public List<HRegionLocation> getRegionsInRange(byte[] startKey, byte[] endKey) {
-		return null;
+	public NavigableMap<HRegionInfo, ServerName> getRegionLocations() {
+		try {
+			return super.getRegionLocations();
+		} catch (IOException e) {
+			System.out.println("Exception in getRegionLocations method. "+e.getMessage());
+			LOG.error("Exception in getRegionLocations method. "+e.getMessage());
+			return null;
+		}
+	}
+
+//	TODO UnitTest missing
+	@Override
+	public HRegionLocation getRegionLocation(byte[] row) {
+		try {
+			if(row.length == 0) {
+				throw new NullPointerException("Row Key cannot be null.");
+			}
+
+			switch(this.tableSchema.getKey().getCryptoType()) {
+				case PLT:
+					return super.getRegionLocation(row);
+				case STD:
+					HRegionLocation stdHRegionLocation = null;
+					ResultScanner rs = super.getScanner(new Scan());
+					for(Result r = rs.next(); r != null; r = rs.next()) {
+						if(!r.isEmpty()) {
+							byte[] temp_row = this.cryptoProperties.decodeRow(r.getRow());
+							if(Arrays.equals(temp_row, row)) {
+								stdHRegionLocation = super.getRegionLocation(r.getRow());
+								break;
+							}
+						}
+					}
+					return stdHRegionLocation;
+				case DET:
+				case OPE:
+				case FPE:
+					return super.getRegionLocation(this.cryptoProperties.encodeRow(row));
+				default:
+					return null;
+			}
+		} catch (IOException e) {
+			System.out.println("Exception in getRegionLocation method. "+e.getMessage());
+			LOG.error("Exception in getRegionLocation method. "+e.getMessage());
+			return null;
+		}
 	}
 
 	@Override
