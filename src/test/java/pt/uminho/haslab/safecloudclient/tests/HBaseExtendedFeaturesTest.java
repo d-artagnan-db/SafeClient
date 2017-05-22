@@ -3,16 +3,16 @@ package pt.uminho.haslab.safecloudclient.tests;
 import java.io.IOException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hbase.HRegionInfo;
+import org.apache.hadoop.hbase.HRegionLocation;
+import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.*;
 import pt.uminho.haslab.cryptoenv.Utils;
 import pt.uminho.haslab.safecloudclient.clients.TestClient;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -37,11 +37,21 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
             System.out.println("Table execution "+ tableName);
 
             testBatchingPuts(table, "Physician".getBytes(), "Physician ID".getBytes(), 10);
-            testBatchingGets(table, "Physician".getBytes(), "Physician ID".getBytes(), 5);
+            testBatchingGets(table, "Physician".getBytes(), "Physician ID".getBytes(), 20);
             testDelete(table, "Physician".getBytes(), "Physician ID".getBytes());
+            testBatchingDeletes(table, "Physician".getBytes(), "Physician ID".getBytes(), 5);
+            testBatchingPuts(table, "Physician".getBytes(), "Physician ID".getBytes(), 10);
 
             testGet(table, "Physician".getBytes(), "Physician ID".getBytes(), Utils.addPadding(String.valueOf(2).getBytes(), formatSize));
             testCheckAndPut(table, "Physician".getBytes(), "Physician ID".getBytes(), "2:Hello:2".getBytes());
+
+//            testIncrementColumnValue(table, Utils.addPadding(String.valueOf(2).getBytes(), formatSize), "Physician".getBytes(), "Incremental".getBytes(), 1L);
+
+            testGetRegionLocation((HTable) table, Utils.addPadding(String.valueOf(2).getBytes(), formatSize));
+            testGetRegionLocations((HTable) table);
+
+            testGetRowOrBefore(table, Utils.addPadding(String.valueOf(10).getBytes(), formatSize), "Physician".getBytes());
+            testGetRowOrBefore(table, Utils.addPadding(String.valueOf(0).getBytes(), formatSize), "Physician".getBytes());
 
         } catch (IOException e) {
             LOG.error("Exception in test execution. " + e.getMessage());
@@ -53,6 +63,7 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
 
 //    TODO send results to LOGs
     public void testBatchingPuts(HTableInterface table, byte[] cf, byte[] cq, int batchSize) {
+        System.out.println("\n== Test put(List<Put> puts) ::");
         try {
             List<Put> puts = new ArrayList<>(batchSize);
 
@@ -85,6 +96,7 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
 
 //    TODO send result to LOGs
     public void testBatchingGets(HTableInterface table, byte[] cf, byte[] cq, int batchSize) {
+        System.out.println("\n== Test get(List<Get> gets) ::");
         try {
             List<Get> gets = new ArrayList<>(batchSize);
 
@@ -111,6 +123,8 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
         }
     }
 
+
+//    TODO send results to LOGs
     public void testGet(HTableInterface table, byte[] cf, byte[] cq, byte[] row) {
         Get g = new Get(row);
         g.addColumn(cf, cq);
@@ -123,12 +137,19 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
 
     }
 
-//    TODO test
+//    TODO send results to LOGs
     public void testDelete(HTableInterface table, byte[] cf, byte[] cq) {
+        System.out.println("\n==Test delete(byte[] cf, byte[] cq) ::");
         try {
             Delete del = new Delete(Utils.addPadding(String.valueOf(0).getBytes(), formatSize));
-//            del.deleteFamily(cf);
-            del.deleteColumns(cf,cq);
+            if(cf != null && cf.length == 0) {
+                if(cq == null || cq.length == 0) {
+                    del.deleteFamily(cf);
+                }
+                else {
+                    del.deleteColumns(cf, cq);
+                }
+            }
 
             table.delete(del);
 
@@ -139,8 +160,25 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
 
     }
 
+//    TODO send results to LOGs
+    public void testBatchingDeletes(HTableInterface table, byte[] cf, byte[] cq, int batchSize) {
+        System.out.println("\n ==Test delete(List<Delete> deletes) ::");
+        List<Delete> deletes = new ArrayList<>(batchSize);
+        try {
+            for(int i = 0; i < batchSize; i++) {
+                Delete delete = new Delete(Utils.addPadding(String.valueOf(i).getBytes(), formatSize));
+                deletes.add(delete);
+            }
+
+            table.delete(deletes);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 //    TODO test for all CryptoTypes (specially STD)
     public void testCheckAndPut(HTableInterface table, byte[] cf, byte[] cq, byte[] value) {
+        System.out.println("\n== Test checkAndPut(byte[] cf, byte[] cq, byte[] value) ::");
         Put p = new Put(Utils.addPadding(String.valueOf(2).getBytes(),formatSize));
         p.add(cf, cq, "Hello cenas".getBytes());
         try {
@@ -150,6 +188,53 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
             e.printStackTrace();
         }
     }
+
+
+    public void testIncrementColumnValue(HTableInterface table, byte[] row, byte[] cf, byte[] cq, long amount) {
+        try {
+            System.out.println("\n== Test incrementColumnvalue(byte[] row, byte[] family, byte[] qualifier, long amount) ::");
+            table.incrementColumnValue(row, cf, cq, amount);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+//    TODO send results to LOGs
+    public void testGetRegionLocation(HTable table, byte[] row) {
+        System.out.println("\n== Test getRegionLocation(byte[] row) ::");
+        try {
+            HRegionLocation hrl = table.getRegionLocation(row);
+            System.out.println("test getRegionLocation : "+hrl.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+//    TODO send results to LOGs
+    public void testGetRegionLocations(HTable table) {
+        System.out.println("\n== Test getRegionLocations() ::");
+        try {
+            NavigableMap<HRegionInfo, ServerName> regions = table.getRegionLocations();
+            for(HRegionInfo hri : regions.keySet()) {
+                System.out.println("HRegionInfo: "+hri.toString());
+                System.out.println("ServerName: "+regions.get(hri).toString());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+//    TODO send results to LOGs
+    public void testGetRowOrBefore(HTableInterface table, byte[] row, byte[] cf) {
+        System.out.println("\n== test getRowOrBefore(byte[] row, byte[] cf) ::");
+        try {
+            Result res = table.getRowOrBefore(row, cf);
+            System.out.println("> "+res.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     public void testScan(HTableInterface table, byte[] startRow, byte[] stopRow) {
         try {

@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 import pt.uminho.haslab.safecloudclient.schema.SchemaParser;
 import pt.uminho.haslab.safecloudclient.schema.TableSchema;
@@ -56,6 +57,9 @@ public class CryptoTable extends HTable {
 //		System.out.println(schemaParser.tableSchema.toString());
 		return schemaParser.getTableSchema(tablename);
 	}
+
+
+//	TODO ter cuidado/mudar o que for necessário devido ao padding
 
 	/**
 	 * put(Put put) method : secure put/update method.
@@ -260,7 +264,6 @@ public class CryptoTable extends HTable {
 		return results;
 	}
 
-//	TODO UnitTest
 	/**
 	 * delete(Delete delete) method : secure delete method.
 	 * The original delete object sets the row key to search in the database system. Before the delete operation, the row key
@@ -314,7 +317,6 @@ public class CryptoTable extends HTable {
 		}
 	}
 
-//	TODO UnitTest
 	@Override
 	public void delete(List<Delete> deletes) {
 		try {
@@ -400,7 +402,6 @@ public class CryptoTable extends HTable {
 		return null;
 	}
 
-//	TODO complete UnitTest
 	@Override
 	public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier, byte[] value, Put put) {
 		boolean operationPerformed = false;
@@ -409,80 +410,85 @@ public class CryptoTable extends HTable {
 			if(row.length == 0) {
 				throw new NullPointerException("Row Key cannot be null.");
 			}
-			if(family != null && qualifier != null) {
-				switch (this.tableSchema.getKey().getCryptoType()) {
-					case PLT:
-						Put encPut;
-						if(!put.isEmpty()) {
-							encPut = new Put(put.getRow());
-							this.htableUtils.encryptCells(put.cellScanner(), this.tableSchema, encPut, this.cryptoProperties);
-						}
-						else {
-							throw new NullPointerException("Put object cannot be null");
-						}
-
-						super.checkAndPut(row, family, qualifier, value, encPut);
-						break;
-					case STD:
-//						step 1 : get all stored values
-						ResultScanner rs = super.getScanner(new Scan());
-//						step 2 : check if specified row exists
-						for(Result r = rs.next(); r != null; r = rs.next()) {
-							byte[] resultRow = this.cryptoProperties.decodeRow(r.getRow());
-							if (Arrays.equals(row, resultRow)) {
-//								Get the stored value for the specified family and qualifier and check if it's equal to a given value
-								byte[] encryptedValue = r.getValue(family, qualifier);
-								if(encryptedValue != null && encryptedValue.length > 0) {
-									byte[] resultValue = this.cryptoProperties.decodeValue(family, qualifier, encryptedValue);
-									if(Arrays.equals(value, resultValue)) {
-//										If the values match, build and encrypted put
-										Put encryptedPut;
-										if(!put.isEmpty()) {
-											encryptedPut = new Put(this.cryptoProperties.encodeRow(put.getRow()));
-											this.htableUtils.encryptCells(put.cellScanner(), this.tableSchema, encryptedPut, this.cryptoProperties);
-										}
-										else {
-											throw new NullPointerException("Put object cannot be null");
-										}
-//										Call super
-										operationPerformed = super.checkAndPut(r.getRow(), family, qualifier, encryptedValue, encryptedPut);
-									}
-								} else {
-									throw new NullPointerException("No matching Cell for the family and qualifier specified.");
-								}
-								break;
-							}
-						}
-						break;
-					case DET:
-					case OPE:
-					case FPE:
-//						step 1 : encrypt row and value
-						System.out.println("Entrou no DET: ");
-						byte[] encryptedRow = this.cryptoProperties.encodeRow(row);
-						System.out.println("Encode row "+Arrays.toString(encryptedRow));
-						byte[] encryptedValue = this.cryptoProperties.encodeValue(family, qualifier, value);
-						System.out.println("Encrypted value: "+Arrays.toString(encryptedValue));
-//						step 2 : encrypt put
-						Put encryptedPut;
-						if(!put.isEmpty()) {
-							encryptedPut = new Put(this.cryptoProperties.encodeRow(put.getRow()));
-							this.htableUtils.encryptCells(put.cellScanner(), this.tableSchema, encryptedPut, this.cryptoProperties);
-						}
-						else {
-							throw new NullPointerException("Put object cannot be null");
-						}
-						System.out.println("Encrypted Put: "+encryptedPut.toString());
-//						step 3 : call super
-						operationPerformed = super.checkAndPut(encryptedRow, family, qualifier, encryptedValue, encryptedPut);
-						System.out.println("Operation Performed "+operationPerformed);
-						break;
-					default:
-						break;
-				}
+			if(family == null) {
+				throw new NullPointerException("Column family cannot be null.");
 			}
-			else {
-				throw new NullPointerException("Column family and column qualifier cannot be null.");
+			if(qualifier == null) {
+				throw new NullPointerException("Column qualifier cannot be null.");
+			}
+			if(value == null) {
+				throw new NullPointerException("Value cannot be null.");
+			}
+
+			switch (this.tableSchema.getKey().getCryptoType()) {
+				case PLT:
+					Put encPut;
+					if(!put.isEmpty()) {
+						encPut = new Put(put.getRow());
+						this.htableUtils.encryptCells(put.cellScanner(), this.tableSchema, encPut, this.cryptoProperties);
+					}
+					else {
+						throw new NullPointerException("Put object cannot be null");
+					}
+
+					super.checkAndPut(row, family, qualifier, value, encPut);
+					break;
+				case STD:
+//						step 1 : get all stored values
+					ResultScanner rs = super.getScanner(new Scan());
+//						step 2 : check if specified row exists
+					for(Result r = rs.next(); r != null; r = rs.next()) {
+						byte[] resultRow = this.cryptoProperties.decodeRow(r.getRow());
+						if (Arrays.equals(row, resultRow)) {
+//								Get the stored value for the specified family and qualifier and check if it's equal to a given value
+							byte[] encryptedValue = r.getValue(family, qualifier);
+							if(encryptedValue != null && encryptedValue.length > 0) {
+								byte[] resultValue = this.cryptoProperties.decodeValue(family, qualifier, encryptedValue);
+								if(Arrays.equals(value, resultValue)) {
+//										If the values match, build and encrypted put
+									Put encryptedPut;
+									if(!put.isEmpty()) {
+										encryptedPut = new Put(this.cryptoProperties.encodeRow(put.getRow()));
+										this.htableUtils.encryptCells(put.cellScanner(), this.tableSchema, encryptedPut, this.cryptoProperties);
+									}
+									else {
+										throw new NullPointerException("Put object cannot be null");
+									}
+//										Call super
+									operationPerformed = super.checkAndPut(r.getRow(), family, qualifier, encryptedValue, encryptedPut);
+								}
+							} else {
+								throw new NullPointerException("No matching Cell for the family and qualifier specified.");
+							}
+							break;
+						}
+					}
+					break;
+				case DET:
+				case OPE:
+				case FPE:
+//						step 1 : encrypt row and value
+					System.out.println("Entrou no DET: ");
+					byte[] encryptedRow = this.cryptoProperties.encodeRow(row);
+					System.out.println("Encode row "+Arrays.toString(encryptedRow));
+					byte[] encryptedValue = this.cryptoProperties.encodeValue(family, qualifier, value);
+					System.out.println("Encrypted value: "+Arrays.toString(encryptedValue));
+//						step 2 : encrypt put
+					Put encryptedPut;
+					if(!put.isEmpty()) {
+						encryptedPut = new Put(this.cryptoProperties.encodeRow(put.getRow()));
+						this.htableUtils.encryptCells(put.cellScanner(), this.tableSchema, encryptedPut, this.cryptoProperties);
+					}
+					else {
+						throw new NullPointerException("Put object cannot be null");
+					}
+					System.out.println("Encrypted Put: "+encryptedPut.toString());
+//						step 3 : call super
+					operationPerformed = super.checkAndPut(encryptedRow, family, qualifier, encryptedValue, encryptedPut);
+					System.out.println("Operation Performed "+operationPerformed);
+					break;
+				default:
+					break;
 			}
 		} catch (IOException e) {
 			System.out.println("Exception in checkAndPut method. "+e.getMessage());
@@ -491,11 +497,20 @@ public class CryptoTable extends HTable {
 		return operationPerformed;
 	}
 
-//	TODO UnitTest
 	@Override
 	public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount) {
 		long operationValue = 0;
 		try {
+			if(row.length == 0) {
+				throw new NullPointerException("Row Key cannot be null.");
+			}
+			if(family == null) {
+				throw new NullPointerException("Column family cannot be null.");
+			}
+			if(qualifier == null) {
+				throw new NullPointerException("Column qualifier cannot be null.");
+			}
+//			TODO check this. (Cannot be null)
 			switch (this.tableSchema.getCryptoTypeFromQualifier(new String(family), new String(qualifier))) {
 			case PLT:
 				operationValue = super.incrementColumnValue(this.cryptoProperties.encodeRow(row), family, qualifier, amount);
@@ -504,7 +519,7 @@ public class CryptoTable extends HTable {
 			case DET:
 			case OPE:
 			case FPE:
-				throw new UnsupportedOperationException("Secure operation not supported. Only for vanilla operations.");
+				throw new UnsupportedOperationException("Secure operation not supported. Only for vanilla instance.");
 			default:
 				break;
 			}
@@ -515,7 +530,6 @@ public class CryptoTable extends HTable {
 		return operationValue;
 	}
 
-//	TODO UnitTest missing
 	@Override
 	public NavigableMap<HRegionInfo, ServerName> getRegionLocations() {
 		try {
@@ -527,7 +541,6 @@ public class CryptoTable extends HTable {
 		}
 	}
 
-//	TODO UnitTest missing
 	@Override
 	public HRegionLocation getRegionLocation(byte[] row) {
 		try {
@@ -567,11 +580,68 @@ public class CryptoTable extends HTable {
 
 	@Override
 	public Result getRowOrBefore(byte[] row, byte[] family) {
+		try {
+			if (row.length == 0) {
+				throw new NullPointerException("Row Key cannot be null.");
+			}
+			if (family == null) {
+				throw new NullPointerException("Column family cannot be null.");
+			}
+
+			switch(this.tableSchema.getKey().getCryptoType()) {
+				case PLT:
+					Result pltEncryptedResult = super.getRowOrBefore(row, family);
+					return this.cryptoProperties.decodeResult(row, pltEncryptedResult);
+				case STD:
+				case DET:
+				case FPE:
+					ResultScanner rs = super.getScanner(new Scan());
+					byte[] encryptedRowBefore = null;
+					byte[] plaintextRowBefore = null;
+					byte[] decodedRow;
+					Result encryptedResult = null;
+					Bytes.ByteArrayComparator bcomp = new Bytes.ByteArrayComparator();
+					for(Result r = rs.next(); r != null; r = rs.next()) {
+						decodedRow = this.cryptoProperties.decodeRow(r.getRow());
+						if(Arrays.equals(decodedRow, row)) {
+							encryptedResult = super.getRowOrBefore(r.getRow(), family);
+							break;
+						} else {
+							if(plaintextRowBefore == null) {
+								encryptedRowBefore = r.getRow();
+								plaintextRowBefore = decodedRow.clone();
+							} else if(bcomp.compare(row, decodedRow) > 0 && bcomp.compare(plaintextRowBefore, decodedRow) < 0) {
+								plaintextRowBefore = decodedRow.clone();
+								encryptedRowBefore = r.getRow();
+							}
+						}
+					}
+
+					if(encryptedResult == null) {
+						encryptedResult = super.getRowOrBefore(encryptedRowBefore, family);
+					}
+
+					return this.cryptoProperties.decodeResult(this.cryptoProperties.decodeRow(encryptedResult.getRow()), encryptedResult);
+				case OPE:
+					Result opeEncryptedResult = super.getRowOrBefore(this.cryptoProperties.encodeRow(row), family);
+					return this.cryptoProperties.decodeResult(this.cryptoProperties.decodeRow(opeEncryptedResult.getRow()), opeEncryptedResult);
+				default:
+					return null;
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		return null;
 	}
 
 	@Override
 	public Pair<byte[][], byte[][]> getStartEndKeys() {
+		try {
+			Pair<byte[][], byte[][]> encryptedStartEndKey = super.getStartEndKeys();
+			System.out.println("-> "+encryptedStartEndKey.toString());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		return null;
 	}
 
