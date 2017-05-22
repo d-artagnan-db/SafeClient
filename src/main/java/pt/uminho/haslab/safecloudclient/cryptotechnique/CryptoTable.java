@@ -9,10 +9,13 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
+import pt.uminho.haslab.cryptoenv.Utils;
 import pt.uminho.haslab.safecloudclient.queryengine.QEngineIntegration;
 import pt.uminho.haslab.safecloudclient.schema.SchemaParser;
 import pt.uminho.haslab.safecloudclient.schema.TableSchema;
+import sun.misc.Resource;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.util.*;
@@ -23,6 +26,7 @@ import java.util.*;
  */
 public class CryptoTable extends HTable {
 	static final Log LOG = LogFactory.getLog(CryptoTable.class.getName());
+	static boolean SCHEMA_FILE = false;
 
 	public CryptoProperties cryptoProperties;
 	public ResultScannerFactory resultScannerFactory;
@@ -49,18 +53,47 @@ public class CryptoTable extends HTable {
 
 	public CryptoTable(Configuration conf, String tableName) throws IOException {
 		super(conf, TableName.valueOf(tableName));
-		HBaseAdmin ha = new HBaseAdmin(conf);
-		HTableDescriptor descriptor = ha.getTableDescriptor(TableName.valueOf(tableName));
-		HColumnDescriptor[] columnDescriptors = descriptor.getColumnFamilies();
+		File file = new File("src/main/resources/s.xml");
 
-		this.qEngine = new QEngineIntegration();
-		this.tableSchema = this.qEngine.buildQEngineTableSchema(tableName, columnDescriptors);
+		if(file.isFile() && file.getName().equals("schema.xml")) {
+			SCHEMA_FILE = true;
+			this.tableSchema = this.init(file.getPath(), tableName);
+		} else {
+			SCHEMA_FILE = false;
+			HBaseAdmin ha = new HBaseAdmin(conf);
+			HTableDescriptor descriptor = ha.getTableDescriptor(TableName.valueOf(tableName));
+			HColumnDescriptor[] columnDescriptors = descriptor.getColumnFamilies();
+
+			this.qEngine = new QEngineIntegration();
+			this.tableSchema = this.qEngine.buildQEngineTableSchema(tableName, columnDescriptors);
+		}
+
 		this.cryptoProperties = new CryptoProperties(this.tableSchema);
-		byte[] key = { (byte) 0x2B, (byte) 0x7E, (byte) 0x15, (byte) 0x16, (byte) 0x28, (byte) 0xAE, (byte) 0xD2,
-				(byte) 0xA6, (byte) 0xAB, (byte) 0xF7, (byte) 0x15, (byte) 0x88, (byte) 0x09, (byte) 0xCF,
-				(byte) 0x4F, (byte) 0x3C };
 
-		this.cryptoProperties.setKey(CryptoTechnique.CryptoType.OPE, key);
+//		While the cryptographic keys management is not defined, read keys from specific files
+//		arrange cryptographic keys properties
+		File cryptographicKey = new File("src/main/resources/key.txt");
+		byte[] key;
+		if(cryptographicKey.isFile() && cryptographicKey.getName().equals("key.txt")) {
+			key = Utils.readKeyFromFile(cryptographicKey.getPath());
+		}
+		else {
+			key = new byte[]{(byte) 0x2B, (byte) 0x7E, (byte) 0x15, (byte) 0x16, (byte) 0x28, (byte) 0xAE, (byte) 0xD2,
+					(byte) 0xA6, (byte) 0xAB, (byte) 0xF7, (byte) 0x15, (byte) 0x88, (byte) 0x09, (byte) 0xCF,
+					(byte) 0x4F, (byte) 0x3C};
+		}
+
+//		WARNING: missing FPE instantiation
+		if(SCHEMA_FILE) {
+			this.cryptoProperties.setKey(CryptoTechnique.CryptoType.STD, key);
+			this.cryptoProperties.setKey(CryptoTechnique.CryptoType.DET, key);
+			this.cryptoProperties.setKey(CryptoTechnique.CryptoType.OPE, key);
+		}
+		else {
+			this.cryptoProperties.setKey(CryptoTechnique.CryptoType.OPE, key);
+		}
+
+//		this is common for both cases
 		this.resultScannerFactory = new ResultScannerFactory();
 		this.htableUtils = new HTableFeaturesUtils(this.cryptoProperties);
 	}
@@ -82,7 +115,6 @@ public class CryptoTable extends HTable {
 	}
 
 
-//	TODO ter cuidado/mudar o que for necessário devido ao padding
 
 	/**
 	 * put(Put put) method : secure put/update method.
@@ -100,7 +132,9 @@ public class CryptoTable extends HTable {
 			}
 
 //			Acknowledge the existing qualifiers
-			this.cryptoProperties.getFamiliesAndQualifiers(put.getFamilyCellMap(), this.qEngine);
+			if(!SCHEMA_FILE) {
+				this.cryptoProperties.getFamiliesAndQualifiers(put.getFamilyCellMap(), this.qEngine);
+			}
 
 //			Encode the row key
 			Put encPut = new Put(this.cryptoProperties.encodeRow(row));
@@ -126,8 +160,9 @@ public class CryptoTable extends HTable {
 					throw new NullPointerException("Row Key cannot be null.");
 				}
 //				Acknowledge the existing qualifiers
-				this.cryptoProperties.getFamiliesAndQualifiers(p.getFamilyCellMap(), this.qEngine);
-
+				if(!SCHEMA_FILE) {
+					this.cryptoProperties.getFamiliesAndQualifiers(p.getFamilyCellMap(), this.qEngine);
+				}
 //				Encode the row key
 				Put encPut = new Put(this.cryptoProperties.encodeRow(row));
 //				System.out.println("Going to put (plaintext): "+Arrays.toString(row));
@@ -164,7 +199,9 @@ public class CryptoTable extends HTable {
 			}
 
 //			Acknowledge the existing qualifiers
-			this.cryptoProperties.getFamiliesAndQualifiers(get.getFamilyMap(), this.qEngine);
+			if(!SCHEMA_FILE) {
+				this.cryptoProperties.getFamiliesAndQualifiers(get.getFamilyMap(), this.qEngine);
+			}
 
 //			Verify the row key CryptoBox
 			switch (this.cryptoProperties.tableSchema.getKey().getCryptoType()) {
@@ -226,7 +263,9 @@ public class CryptoTable extends HTable {
 			}
 
 //			Acknowledge the existing qualifiers
-			this.cryptoProperties.getFamiliesAndQualifiers(g.getFamilyMap(), this.qEngine);
+			if(!SCHEMA_FILE) {
+				this.cryptoProperties.getFamiliesAndQualifiers(g.getFamilyMap(), this.qEngine);
+			}
 
 //			First phase: Encrypt all get objects
 			switch (this.cryptoProperties.tableSchema.getKey().getCryptoType()) {
@@ -316,7 +355,9 @@ public class CryptoTable extends HTable {
 			}
 
 //			Acknowledge the existing qualifiers
-			this.cryptoProperties.getFamiliesAndQualifiers(delete.getFamilyCellMap(), this.qEngine);
+			if(!SCHEMA_FILE) {
+				this.cryptoProperties.getFamiliesAndQualifiers(delete.getFamilyCellMap(), this.qEngine);
+			}
 
 			System.out.println("Delete: "+delete.toString());
 			List<String> cellsToDelete = this.htableUtils.deleteCells(delete.cellScanner());
@@ -367,7 +408,9 @@ public class CryptoTable extends HTable {
 				}
 
 //				Acknowledge the existing qualifiers
-				this.cryptoProperties.getFamiliesAndQualifiers(del.getFamilyCellMap(), this.qEngine);
+				if(!SCHEMA_FILE) {
+					this.cryptoProperties.getFamiliesAndQualifiers(del.getFamilyCellMap(), this.qEngine);
+				}
 
 				List<String> cellsToDelete = this.htableUtils.deleteCells(del.cellScanner());
 
@@ -425,7 +468,9 @@ public class CryptoTable extends HTable {
 			byte[] endRow = scan.getStopRow();
 
 //			Acknowledge the existing qualifiers
-			this.cryptoProperties.getFamiliesAndQualifiers(scan.getFamilyMap(), this.qEngine);
+			if(!SCHEMA_FILE) {
+				this.cryptoProperties.getFamiliesAndQualifiers(scan.getFamilyMap(), this.qEngine);
+			}
 
 //			Transform the original object in an encrypted scan.
 			Scan encScan = this.htableUtils.encryptedScan(scan);
