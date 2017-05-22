@@ -21,7 +21,7 @@ import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
 public class HBaseFeaturesTest extends SimpleHBaseTest {
 
 	static final Log LOG = LogFactory.getLog(HBaseFeaturesTest.class.getName());
-	final int formatSize = 20;
+	final int formatSize = 10;
 	public Utils utils;
 
 	public HBaseFeaturesTest(int maxBits, List<BigInteger> values) throws Exception {
@@ -31,7 +31,7 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 
 	protected void testExecution(TestClient client, String tableName) {
 		HTableInterface table;
-		int time = 10000;
+		int time = 2000;
 		try {
 			table = client.createTableInterface(tableName);
 			LOG.debug("Test Execution [" + tableName + "]\n");
@@ -41,9 +41,9 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 			System.out.println("Quantity: " + quantity);
 			timingGetTest(table, time, quantity);
 
-			testScan(table, Utils.intArrayToByteArray(Utils.integerToIntArray(2000, 10)), Utils.intArrayToByteArray(Utils.integerToIntArray(2010, 10)));
-			testFilter(table, "RowFilter", CompareFilter.CompareOp.EQUAL,  Utils.intArrayToByteArray(Utils.integerToIntArray(2450, 10)));
-			testFilter(table, "SingleColumnValueFilter", CompareFilter.CompareOp.EQUAL, Utils.intArrayToByteArray(Utils.integerToIntArray(244, 10)));
+//			testScan(table, Utils.intArrayToByteArray(Utils.integerToIntArray(2000, 10)), Utils.intArrayToByteArray(Utils.integerToIntArray(2010, 10)));
+//			testFilter(table, "RowFilter", CompareFilter.CompareOp.EQUAL,  Utils.intArrayToByteArray(Utils.integerToIntArray(2450, 10)));
+//			testFilter(table, "SingleColumnValueFilter", CompareFilter.CompareOp.EQUAL, Utils.intArrayToByteArray(Utils.integerToIntArray(244, 10)));
 //			timingGetTest(table, time, quantity);
 
 			// byte[] cf = columnDescriptor.getBytes();
@@ -366,7 +366,7 @@ public class HBaseFeaturesTest extends SimpleHBaseTest {
 			long data = 0;
 			int counter = 1234;
 			while ((System.currentTimeMillis() - startTime) < time) {
-				Get get = new Get(Utils.addPadding(String.valueOf(data), formatSize));
+				Get get = new Get(Utils.addPadding(String.valueOf(data).getBytes(), formatSize));
 				get.addColumn(cf, cq);
 				Result res = table.get(get);
 				if (res != null) {
