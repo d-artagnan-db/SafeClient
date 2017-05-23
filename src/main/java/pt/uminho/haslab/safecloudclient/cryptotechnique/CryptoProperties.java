@@ -9,6 +9,7 @@ import pt.uminho.haslab.OpeHgd;
 import pt.uminho.haslab.cryptoenv.CryptoHandler;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 import pt.uminho.haslab.cryptoenv.Utils;
+import pt.uminho.haslab.safecloudclient.queryengine.QEngineIntegration;
 import pt.uminho.haslab.safecloudclient.schema.*;
 
 import java.nio.charset.Charset;
@@ -130,6 +131,29 @@ public class CryptoProperties {
 		return familyCryptoHandler;
 	}
 
+	public void replaceQualifierCryptoHandler(String family, String qualifier, CryptoTechnique.CryptoType cType, int formatSize) {
+		switch(cType) {
+			case OPE:
+				CryptoHandler cryptoHandler = new CryptoHandler(cType, opeArguments(formatSize, formatSize * 2));
+
+				if (this.opeValueHandler.containsKey(family)) {
+					Map<String, CryptoHandler> temp_handlers = this.opeValueHandler.get(family);
+
+					if (temp_handlers != null) {
+						this.opeValueHandler.get(family).put(qualifier, cryptoHandler);
+					}
+				}
+				break;
+			case FPE:
+				throw new UnsupportedOperationException("FPE instance does not support this operation.");
+			case PLT:
+			case STD:
+			case DET:
+			default:
+				break;
+		}
+	}
+
 	/**
 	 * verifyOpeValueHandler() method : only used to check the OPE CryptoHandlers
 	 */
@@ -151,7 +175,17 @@ public class CryptoProperties {
 	public CryptoHandler getCryptoHandler(CryptoTechnique.CryptoType ctype, String family, String qualifier) {
 		switch(ctype) {
 			case OPE :
-				return this.opeValueHandler.get(family).get(qualifier);
+//				Check if Qualifier CryptoHandler is available. If not, return the CryptoHandler of the respective family
+				if(this.opeValueHandler.containsKey(family) && this.opeValueHandler.get(family).containsKey(qualifier)) {
+					return this.opeValueHandler.get(family).get(qualifier);
+				} else {
+					Family temp_family = this.tableSchema.getFamily(family);
+					List<Object> temp_args = new ArrayList<>();
+					temp_args.add(temp_family.getFormatSize());
+					temp_args.add(temp_family.getFormatSize()*2);
+
+					return new CryptoHandler(temp_family.getCryptoType(), temp_args);
+				}
 			case FPE :
 				return this.fpeValueHandler.get(family).get(qualifier);
 			default :
@@ -206,6 +240,24 @@ public class CryptoProperties {
 //		System.out.println("The key was setted. Key - " + Arrays.toString(key));
 	}
 
+	public byte[] generateCryptographicKey(CryptoTechnique.CryptoType cType) {
+		switch(cType) {
+			case PLT:
+				return null;
+			case STD:
+				return stdHandler.gen();
+			case DET:
+				return detHandler.gen();
+			case OPE:
+				return opeHandler.gen();
+			case FPE:
+				return fpeHandler.gen();
+			default:
+				return null;
+		}
+	}
+
+
 	public void setQualifiersFPEKey(byte[] key) {
 		for (Family f : this.tableSchema.getColumnFamilies()) {
 			for (Qualifier q : f.getQualifiers()) {
@@ -223,18 +275,24 @@ public class CryptoProperties {
 	 * @param content plaintext row key
 	 * @return the resulting ciphertext
 	 */
-	private byte[] encodeRowCryptoType(CryptoTechnique.CryptoType cType, byte[] content) {
+	public byte[] encodeRowCryptoType(CryptoTechnique.CryptoType cType, byte[] content) {
+		byte[] row = Utils.addPadding(content, tableSchema.getKey().getFormatSize());
 		switch (cType) {
 			case PLT :
-				return content;
+				return row;
+//				return content;
 			case STD :
-				return this.stdHandler.encrypt(this.stdKey, content);
+				return this.stdHandler.encrypt(this.stdKey, row);
+//				return this.stdHandler.encrypt(this.stdKey, content);
 			case DET :
-				return this.detHandler.encrypt(this.detKey, content);
+				return this.detHandler.encrypt(this.detKey, row);
+//				return this.detHandler.encrypt(this.detKey, content);
 			case OPE :
-				return this.opeHandler.encrypt(this.opeKey, content);
+				return this.opeHandler.encrypt(this.opeKey, row);
+//				return this.opeHandler.encrypt(this.opeKey, content);
 			case FPE :
-				return this.fpeHandler.encrypt(this.fpeKey.get("KEY"), content);
+				return this.fpeHandler.encrypt(this.fpeKey.get("KEY"), row);
+//				return this.fpeHandler.encrypt(this.fpeKey.get("KEY"), content);
 			default :
 				return null;
 		}
@@ -248,20 +306,26 @@ public class CryptoProperties {
 	 * @param qualifier qualifier column
 	 * @return the resulting ciphertext
 	 */
-	private byte[] encodeValueCryptoType(CryptoTechnique.CryptoType cType, byte[] content, String family, String qualifier) {
+	public byte[] encodeValueCryptoType(CryptoTechnique.CryptoType cType, byte[] content, String family, String qualifier) {
+		byte[] row = Utils.addPadding(content, tableSchema.getFormatSizeFromQualifier(family, qualifier));
 		switch (cType) {
 			case PLT :
-				return content;
+				return row;
+//				return content;
 			case STD :
-				return this.stdHandler.encrypt(this.stdKey, content);
+				return this.stdHandler.encrypt(this.stdKey, row);
+//				return this.stdHandler.encrypt(this.stdKey, content);
 			case DET :
-				return this.detHandler.encrypt(this.detKey, content);
+				return this.detHandler.encrypt(this.detKey, row);
+//				return this.detHandler.encrypt(this.detKey, content);
 			case OPE :
 				CryptoHandler opeCh = getCryptoHandler(CryptoTechnique.CryptoType.OPE, family, qualifier);
-				return opeCh.encrypt(this.opeKey, content);
+				return opeCh.encrypt(this.opeKey, row);
+//				return opeCh.encrypt(this.opeKey, content);
 			case FPE :
 				CryptoHandler fpeCH = getCryptoHandler(CryptoTechnique.CryptoType.FPE, family, qualifier);
-				return fpeCH.encrypt(this.fpeKey.get(family+":"+qualifier), content);
+				return fpeCH.encrypt(this.fpeKey.get(family+":"+qualifier), row);
+//				return fpeCH.encrypt(this.fpeKey.get(family+":"+qualifier), content);
 			default :
 				return null;
 		}
@@ -276,15 +340,20 @@ public class CryptoProperties {
 	private byte[] decodeRowCryptoType(CryptoTechnique.CryptoType cType, byte[] ciphertext) {
 		switch (cType) {
 			case PLT :
-				return ciphertext;
+				return Utils.removePadding(ciphertext);
+//				return ciphertext;
 			case STD :
-				return this.stdHandler.decrypt(this.stdKey, ciphertext);
+				return Utils.removePadding(this.stdHandler.decrypt(this.stdKey, ciphertext));
+//				return this.stdHandler.decrypt(this.stdKey, ciphertext);
 			case DET :
-				return this.detHandler.decrypt(this.detKey, ciphertext);
+				return Utils.removePadding(this.detHandler.decrypt(this.detKey, ciphertext));
+//				return this.detHandler.decrypt(this.detKey, ciphertext);
 			case OPE :
-				return this.opeHandler.decrypt(this.opeKey, ciphertext);
+				return Utils.removePadding(this.opeHandler.decrypt(this.opeKey, ciphertext));
+//				return this.opeHandler.decrypt(this.opeKey, ciphertext);
 			case FPE :
-				return this.fpeHandler.decrypt(this.fpeKey.get("KEY"), ciphertext);
+				return Utils.removePadding(this.fpeHandler.decrypt(this.fpeKey.get("KEY"), ciphertext));
+//				return this.fpeHandler.decrypt(this.fpeKey.get("KEY"), ciphertext);
 			default :
 				return null;
 		}
@@ -301,17 +370,22 @@ public class CryptoProperties {
 	private byte[] decodeValueCryptoType(CryptoTechnique.CryptoType cType, byte[] ciphertext, String family, String qualifier) {
 		switch (cType) {
 			case PLT :
-				return ciphertext;
+				return  Utils.removePadding(ciphertext);
+//				return ciphertext;
 			case STD :
-				return this.stdHandler.decrypt(this.stdKey, ciphertext);
+				return  Utils.removePadding(this.stdHandler.decrypt(this.stdKey, ciphertext));
+//				return this.stdHandler.decrypt(this.stdKey, ciphertext);
 			case DET :
-				return this.detHandler.decrypt(this.detKey, ciphertext);
+				return  Utils.removePadding(this.detHandler.decrypt(this.detKey, ciphertext));
+//				return this.detHandler.decrypt(this.detKey, ciphertext);
 			case OPE :
 				CryptoHandler opeCh = getCryptoHandler(CryptoTechnique.CryptoType.OPE, family, qualifier);
-				return opeCh.decrypt(this.opeKey, ciphertext);
+				return  Utils.removePadding(opeCh.decrypt(this.opeKey, ciphertext));
+//				return opeCh.decrypt(this.opeKey, ciphertext);
 			case FPE :
 				CryptoHandler fpeCH = getCryptoHandler(CryptoTechnique.CryptoType.FPE, family, qualifier);
-				return fpeCH.decrypt(this.fpeKey.get(family+":"+qualifier), ciphertext);
+				return  Utils.removePadding(fpeCH.decrypt(this.fpeKey.get(family+":"+qualifier), ciphertext));
+//				return fpeCH.decrypt(this.fpeKey.get(family+":"+qualifier), ciphertext);
 			default :
 				return null;
 		}
@@ -364,7 +438,13 @@ public class CryptoProperties {
 	public byte[] decodeValue(byte[] family, byte[] qualifier, byte[] value) {
 		String f = new String(family, Charset.forName("UTF-8"));
 		String q = new String(qualifier, Charset.forName("UTF-8"));
+
 		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getCryptoTypeFromQualifier(f, q);
+//		If CryptoType equals to null, it means that either an error occurred in the Qualifier creation or the Qualifier
+// 		instance does not exists.
+		if(cryptoType == null) {
+			cryptoType = this.tableSchema.getFamily(new String(family)).getCryptoType();
+		}
 //		System.out.println("Decode Value (" + f + "," + q + "): " + cryptoType);
 		return decodeValueCryptoType(cryptoType, value, f, q);
 	}
@@ -378,7 +458,7 @@ public class CryptoProperties {
 	public Result decodeResult(byte[] row, Result res) {
 //		byte[] decodedRow = this.decodeRow(row);
 		String opeValues = "_STD";
-		List<Cell> cellList = new ArrayList<Cell>();
+		List<Cell> cellList = new ArrayList<>();
 
 		while (res.advance()) {
 			Cell cell = res.current();
@@ -440,6 +520,9 @@ public class CryptoProperties {
 		Map<byte[],List<byte[]>> result = new HashMap<>();
 		for(byte[] family : familiesAndQualifiers.keySet()) {
 			NavigableSet<byte[]> q = familiesAndQualifiers.get(family);
+			if(q==null) {
+				System.out.println(familiesAndQualifiers.toString());
+			} else
 			if (!q.isEmpty()) {
 				Iterator i = q.iterator();
 				List<byte[]> qualifierList = new ArrayList<>();
@@ -459,6 +542,60 @@ public class CryptoProperties {
 		return result;
 	}
 
+	public Map<byte[], List<byte[]>> getFamiliesAndQualifiers(Map<byte[], NavigableSet<byte[]>> familiesAndQualifiers, QEngineIntegration qEngine) {
+		Map<byte[],List<byte[]>> result = new HashMap<>();
+		for(byte[] temp_family : familiesAndQualifiers.keySet()) {
+			String family = new String(temp_family, Charset.forName("UTF-8"));
+			NavigableSet<byte[]> q = familiesAndQualifiers.get(temp_family);
+			if(q == null) {
+				System.out.println(familiesAndQualifiers.toString());
+//				throw new NullPointerException("No qualifiers for "+family+" family.");
+			}else
+			if (!q.isEmpty()) {
+				Iterator i = q.iterator();
+				List<byte[]> qualifierList = new ArrayList<>();
+				while (i.hasNext()) {
+					byte[] temp_qualifier = (byte[]) i.next();
+					String qualifier = new String(temp_qualifier, Charset.forName("UTF-8"));
+					qualifierList.add(temp_qualifier);
+					if(!qEngine.doesFamilyContainsQualifier(this.tableSchema, family, qualifier)) {
+						this.tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier, CryptoTechnique.CryptoType.OPE));
+						this.tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier+"_STD", CryptoTechnique.CryptoType.STD));
+						replaceQualifierCryptoHandler(family, qualifier, CryptoTechnique.CryptoType.OPE, qEngine.getFamilyFormatSize());
+					}
+				}
+				result.put(temp_family, qualifierList);
+			}
+		}
+
+		return result;
+	}
+
+	public Map<byte[], List<byte[]>> getFamiliesAndQualifiers(NavigableMap<byte[], List<Cell>> familiesAndQualifiers, QEngineIntegration qEngine) {
+		Map<byte[], List<byte[]>> result = new HashMap<>();
+		if(!familiesAndQualifiers.isEmpty()) {
+			NavigableSet<byte[]> temp_navigable_set = familiesAndQualifiers.navigableKeySet();
+			Iterator i = temp_navigable_set.iterator();
+			while(i.hasNext()) {
+				byte[] temp_family = (byte[]) i.next();
+				String family = new String(temp_family, Charset.forName("UTF-8"));
+				List<Cell> temp_qualifiers = familiesAndQualifiers.get(temp_family);
+				List<byte[]> qualifiers = new ArrayList<>();
+				for(Cell c : temp_qualifiers) {
+					byte[] temp_qualifier = CellUtil.cloneQualifier(c);
+					String qualifier = new String(temp_qualifier, Charset.forName("UTF-8"));
+					qualifiers.add(temp_qualifier);
+					if(!qEngine.doesFamilyContainsQualifier(this.tableSchema, family, qualifier)) {
+						this.tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier, CryptoTechnique.CryptoType.OPE));
+						this.tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier+"_STD", CryptoTechnique.CryptoType.STD));
+						replaceQualifierCryptoHandler(family, qualifier, CryptoTechnique.CryptoType.OPE, qEngine.getFamilyFormatSize());
+					}
+				}
+				result.put(temp_family, qualifiers);
+			}
+		}
+		return result;
+	}
 
 	public static CryptoTechnique.FFX whichFpeInstance(String instance) {
 		switch (instance) {
