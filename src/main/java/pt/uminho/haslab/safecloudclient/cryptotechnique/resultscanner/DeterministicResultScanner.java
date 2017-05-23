@@ -1,18 +1,19 @@
-package pt.uminho.haslab.safecloudclient.cryptotechnique;
+package pt.uminho.haslab.safecloudclient.cryptotechnique.resultscanner;
 
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.util.Bytes;
+import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties;
 
 import java.io.IOException;
 import java.util.Iterator;
 
 /**
- * StandardResultScanner class.
- * ResultScanner instance, providing a secure ResultScanner with the STD CryptoBox.
+ * DeterministicResultScanner class.
+ * ResultScanner instance, providing a secure ResultScanner with the DET CryptoBox.
  */
-public class StandardResultScanner implements ResultScanner {
+public class DeterministicResultScanner implements ResultScanner {
 	public ResultScanner scanner;
 	public CryptoProperties cProperties;
 	public byte[] startRow;
@@ -26,7 +27,7 @@ public class StandardResultScanner implements ResultScanner {
 //	public byte[] qualifier;
 	public String filterType;
 
-	public StandardResultScanner(CryptoProperties cp, byte[] startRow, byte[] endRow, ResultScanner encryptedScanner, Object filterResult) {
+	public DeterministicResultScanner(CryptoProperties cp, byte[] startRow, byte[] endRow, ResultScanner encryptedScanner, Object filterResult) {
 		this.scanner = encryptedScanner;
 		this.cProperties = cp;
 		this.startRow = startRow;

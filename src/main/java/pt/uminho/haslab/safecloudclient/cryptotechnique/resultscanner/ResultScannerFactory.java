@@ -1,7 +1,8 @@
-package pt.uminho.haslab.safecloudclient.cryptotechnique;
+package pt.uminho.haslab.safecloudclient.cryptotechnique.resultscanner;
 
 import org.apache.hadoop.hbase.client.ResultScanner;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
+import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties;
 
 /**
  * ResultScannerFactory class.

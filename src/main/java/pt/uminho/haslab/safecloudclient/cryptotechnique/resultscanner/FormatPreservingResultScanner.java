@@ -1,9 +1,10 @@
-package pt.uminho.haslab.safecloudclient.cryptotechnique;
+package pt.uminho.haslab.safecloudclient.cryptotechnique.resultscanner;
 
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.util.Bytes;
+import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties;
 
 import java.io.IOException;
 import java.util.Iterator;
