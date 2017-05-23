@@ -53,8 +53,10 @@ public class CryptoTable extends HTable {
 
 	public CryptoTable(Configuration conf, String tableName) throws IOException {
 		super(conf, TableName.valueOf(tableName));
+//		Too much hardcoded
 		File file = new File("src/main/resources/s.xml");
 
+//		Too much hardcoded
 		if(file.isFile() && file.getName().equals("schema.xml")) {
 			SCHEMA_FILE = true;
 			this.tableSchema = this.init(file.getPath(), tableName);
@@ -70,21 +72,27 @@ public class CryptoTable extends HTable {
 
 		this.cryptoProperties = new CryptoProperties(this.tableSchema);
 
+//		Too much hardcoded
 //		While the cryptographic keys management is not defined, read keys from specific files
 //		arrange cryptographic keys properties
 		File cryptographicKey = new File("src/main/resources/key.txt");
 		byte[] key;
 		if(cryptographicKey.isFile() && cryptographicKey.getName().equals("key.txt")) {
+			System.out.println("File key available.");
 			key = Utils.readKeyFromFile(cryptographicKey.getPath());
 		}
 		else {
+			System.out.println("No key available. Default key used.");
 			key = new byte[]{(byte) 0x2B, (byte) 0x7E, (byte) 0x15, (byte) 0x16, (byte) 0x28, (byte) 0xAE, (byte) 0xD2,
 					(byte) 0xA6, (byte) 0xAB, (byte) 0xF7, (byte) 0x15, (byte) 0x88, (byte) 0x09, (byte) 0xCF,
 					(byte) 0x4F, (byte) 0x3C};
 		}
 
-//		WARNING: missing FPE instantiation
+//		Since the schema can be dynamically generated or build by a schema file, the Cryptographic Keys must be set
+//		in different ways. In case of schema file, all cryptographic keys are set. In case of default usage, only the OPE
+//		Key is set.
 		if(SCHEMA_FILE) {
+//			WARNING: missing FPE instantiation
 			this.cryptoProperties.setKey(CryptoTechnique.CryptoType.STD, key);
 			this.cryptoProperties.setKey(CryptoTechnique.CryptoType.DET, key);
 			this.cryptoProperties.setKey(CryptoTechnique.CryptoType.OPE, key);
@@ -510,6 +518,11 @@ public class CryptoTable extends HTable {
 				throw new NullPointerException("Value cannot be null.");
 			}
 
+//			In case of default schema, verify and/or create both family and qualifier instances in TableSchema
+			if(!SCHEMA_FILE) {
+				this.htableUtils.createDynamicColumnsForAtomicOperations(this.qEngine, this.tableSchema, new String(family), new String(qualifier));
+			}
+
 			switch (this.tableSchema.getKey().getCryptoType()) {
 				case PLT:
 					Put encPut;
@@ -600,19 +613,26 @@ public class CryptoTable extends HTable {
 			if(qualifier == null) {
 				throw new NullPointerException("Column qualifier cannot be null.");
 			}
-//			TODO check this. (Cannot be null)
-			switch (this.tableSchema.getCryptoTypeFromQualifier(new String(family), new String(qualifier))) {
-			case PLT:
-				operationValue = super.incrementColumnValue(this.cryptoProperties.encodeRow(row), family, qualifier, amount);
-				break;
-			case STD:
-			case DET:
-			case OPE:
-			case FPE:
-				throw new UnsupportedOperationException("Secure operation not supported. Only for vanilla instance.");
-			default:
-				break;
+			String temp_family = new String(family);
+			String temp_qualifier = new String(qualifier);
+
+//			In case of default schema, verify and/or create both family and qualifier instances in TableSchema
+			if(!SCHEMA_FILE) {
+				this.htableUtils.createDynamicColumnsForAtomicOperations(this.qEngine, this.tableSchema, temp_family, temp_qualifier);
 			}
+
+			switch (this.tableSchema.getCryptoTypeFromQualifier(temp_family, temp_qualifier)) {
+				case PLT:
+					operationValue = super.incrementColumnValue(this.cryptoProperties.encodeRow(row), family, qualifier, amount);
+					break;
+				case STD:
+				case DET:
+				case OPE:
+				case FPE:
+					throw new UnsupportedOperationException("Secure operation not supported. Only for vanilla instance.");
+				default:
+					break;
+				}
 		} catch (IOException e) {
 			System.out.println("Exception in incrementColumnValue method. "+e.getMessage());
 			LOG.error("Exception in incrementColumnValue method. "+e.getMessage());
@@ -676,6 +696,11 @@ public class CryptoTable extends HTable {
 			}
 			if (family == null) {
 				throw new NullPointerException("Column family cannot be null.");
+			}
+
+//			In case of default schema, verify and/or create both family and qualifier instances in TableSchema
+			if(!SCHEMA_FILE) {
+				this.htableUtils.createDynamicColumnsForAtomicOperations(this.qEngine, this.tableSchema, new String(family), null);
 			}
 
 			switch(this.tableSchema.getKey().getCryptoType()) {

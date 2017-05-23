@@ -9,6 +9,7 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.*;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
+import pt.uminho.haslab.safecloudclient.queryengine.QEngineIntegration;
 import pt.uminho.haslab.safecloudclient.schema.TableSchema;
 
 import java.io.IOException;
@@ -332,5 +333,22 @@ public class HTableFeaturesUtils {
         return cryptoType;
     }
 
+
+    public void createDynamicColumnsForAtomicOperations(QEngineIntegration qEngine, TableSchema tableSchema, String family, String qualifier){
+
+//		In case of default schema, verify and/or create both family and qualifier instances in TableSchema
+        if (!qEngine.doesColumnFamilyExist(tableSchema, family)) {
+            tableSchema.addFamily(qEngine.createDefaultFamily(family));
+        }
+
+        if(qualifier != null) {
+            if (!qEngine.doesFamilyContainsQualifier(tableSchema, family, qualifier)) {
+                tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier, CryptoTechnique.CryptoType.OPE));
+                tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier + "_STD", CryptoTechnique.CryptoType.STD));
+                cp.replaceQualifierCryptoHandler(family, qualifier, qEngine.getCryptographicTechnique(), qEngine.getFamilyFormatSize());
+            }
+        }
+
+    }
 
 }

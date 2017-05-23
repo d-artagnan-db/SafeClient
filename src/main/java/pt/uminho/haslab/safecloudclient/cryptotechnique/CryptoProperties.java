@@ -132,14 +132,25 @@ public class CryptoProperties {
 	}
 
 	public void replaceQualifierCryptoHandler(String family, String qualifier, CryptoTechnique.CryptoType cType, int formatSize) {
-		CryptoHandler cryptoHandler = new CryptoHandler(cType, opeArguments(formatSize, formatSize*2));
+		switch(cType) {
+			case OPE:
+				CryptoHandler cryptoHandler = new CryptoHandler(cType, opeArguments(formatSize, formatSize * 2));
 
-		if(this.opeValueHandler.containsKey(family)) {
-			Map<String, CryptoHandler> temp_handlers = this.opeValueHandler.get(family);
+				if (this.opeValueHandler.containsKey(family)) {
+					Map<String, CryptoHandler> temp_handlers = this.opeValueHandler.get(family);
 
-			if(temp_handlers != null) {
-				this.opeValueHandler.get(family).put(qualifier, cryptoHandler);
-			}
+					if (temp_handlers != null) {
+						this.opeValueHandler.get(family).put(qualifier, cryptoHandler);
+					}
+				}
+				break;
+			case FPE:
+				throw new UnsupportedOperationException("FPE instance does not support this operation.");
+			case PLT:
+			case STD:
+			case DET:
+			default:
+				break;
 		}
 	}
 
@@ -228,6 +239,24 @@ public class CryptoProperties {
 		}
 //		System.out.println("The key was setted. Key - " + Arrays.toString(key));
 	}
+
+	public byte[] generateCryptographicKey(CryptoTechnique.CryptoType cType) {
+		switch(cType) {
+			case PLT:
+				return null;
+			case STD:
+				return stdHandler.gen();
+			case DET:
+				return detHandler.gen();
+			case OPE:
+				return opeHandler.gen();
+			case FPE:
+				return fpeHandler.gen();
+			default:
+				return null;
+		}
+	}
+
 
 	public void setQualifiersFPEKey(byte[] key) {
 		for (Family f : this.tableSchema.getColumnFamilies()) {
