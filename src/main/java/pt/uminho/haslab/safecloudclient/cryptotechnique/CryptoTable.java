@@ -634,20 +634,5 @@ public class CryptoTable extends HTable {
 		return null;
 	}
 
-	@Override
-	public Pair<byte[][], byte[][]> getStartEndKeys() {
-		try {
-			Pair<byte[][], byte[][]> encryptedStartEndKey = super.getStartEndKeys();
-			System.out.println("-> "+encryptedStartEndKey.toString());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
-
-	@Override
-	public byte[][] getStartKeys() {
-		return null;
-	}
 
 }
