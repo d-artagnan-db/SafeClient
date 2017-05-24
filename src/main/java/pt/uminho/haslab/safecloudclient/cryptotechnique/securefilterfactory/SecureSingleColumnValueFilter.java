@@ -1,6 +1,5 @@
 package pt.uminho.haslab.safecloudclient.cryptotechnique.securefilterfactory;
 
-import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
@@ -9,20 +8,16 @@ import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties;
 /**
  * Created by rgmacedo on 5/23/17.
  */
-public class SecureSingleColumnValueFilter extends SingleColumnValueFilter implements SecureFilterProperties {
+public class SecureSingleColumnValueFilter implements SecureFilterProperties {
     public CryptoProperties cryptoProperties;
-    public byte[] family;
-    public byte[] qualifier;
 
-    public SecureSingleColumnValueFilter(CryptoProperties cryptoProperties, byte[] family, byte[] qualifier, CompareFilter.CompareOp compareOp, byte[] value) {
-        super(family, qualifier, compareOp, value);
+    public SecureSingleColumnValueFilter(CryptoProperties cryptoProperties) {
         this.cryptoProperties = cryptoProperties;
-        this.family = family;
-        this.qualifier = qualifier;
     }
 
     @Override
-    public Filter buildEncryptedFilter(Filter plaintextFilter) {
+    public Filter buildEncryptedFilter(Filter plaintextFilter, CryptoTechnique.CryptoType cryptoType) {
+
         return null;
     }
 
@@ -32,7 +27,8 @@ public class SecureSingleColumnValueFilter extends SingleColumnValueFilter imple
     }
 
     @Override
-    public CryptoTechnique.CryptoType getFilterCryptoType() {
-        return this.cryptoProperties.tableSchema.getCryptoTypeFromQualifier(new String(family), new String(qualifier));
+    public CryptoTechnique.CryptoType getFilterCryptoType(Filter plaintextFilter) {
+        SingleColumnValueFilter singleFilter = (SingleColumnValueFilter) plaintextFilter;
+        return this.cryptoProperties.tableSchema.getCryptoTypeFromQualifier(new String(singleFilter.getFamily()), new String(singleFilter.getQualifier()));
     }
 }

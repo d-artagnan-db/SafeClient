@@ -8,6 +8,7 @@ import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.*;
+import org.apache.hadoop.hbase.util.Bytes;
 import pt.uminho.haslab.cryptoenv.Utils;
 import pt.uminho.haslab.safecloudclient.clients.TestClient;
 
@@ -16,6 +17,8 @@ import java.util.*;
 
 import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertTrue;
+
+import pt.uminho.haslab.safecloudclient.cryptotechnique.securefilterfactory.SecureFilterConverter;
 import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
 
 public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
@@ -37,22 +40,24 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
             LOG.debug("Test Execution [" + tableName + "]\n");
             System.out.println("Table execution "+ tableName);
 
-            testBatchingPuts(table, "Physician".getBytes(), "Physician ID".getBytes(), 10);
-            testBatchingGets(table, "Physician".getBytes(), "Physician ID".getBytes(), 20);
-            testDelete(table, "Physician".getBytes(), "Physician ID".getBytes());
-            testBatchingDeletes(table, "Physician".getBytes(), "Physician ID".getBytes(), 5);
-            testBatchingPuts(table, "Physician".getBytes(), "Physician ID".getBytes(), 10);
-
-            testGet(table, "Physician".getBytes(), "Physician ID".getBytes(), String.valueOf(2).getBytes());
-            testCheckAndPut(table, "Physician".getBytes(), "Physician ID".getBytes(), "2:Hello:2".getBytes());
+//            testBatchingPuts(table, "Physician".getBytes(), "Physician ID".getBytes(), 10);
+//            testBatchingGets(table, "Physician".getBytes(), "Physician ID".getBytes(), 20);
+//            testDelete(table, "Physician".getBytes(), "Physician ID".getBytes());
+//            testBatchingDeletes(table, "Physician".getBytes(), "Physician ID".getBytes(), 5);
+//            testBatchingPuts(table, "Physician".getBytes(), "Physician ID".getBytes(), 10);
+//
+//            testGet(table, "Physician".getBytes(), "Physician ID".getBytes(), String.valueOf(2).getBytes());
+//            testCheckAndPut(table, "Physician".getBytes(), "Physician ID".getBytes(), "2:Hello:2".getBytes());
 
 //            testIncrementColumnValue(table, String.valueOf(2).getBytes(), "Physician".getBytes(), "Incremental".getBytes(), 1L);
 
-            testGetRegionLocation((HTable) table, String.valueOf(2).getBytes());
-            testGetRegionLocations((HTable) table);
+//            testGetRegionLocation((HTable) table, String.valueOf(2).getBytes());
+//            testGetRegionLocations((HTable) table);
+//
+//            testGetRowOrBefore(table, String.valueOf(10).getBytes(), "Physician".getBytes());
+//            testGetRowOrBefore(table, String.valueOf(0).getBytes(), "Physician".getBytes());
 
-            testGetRowOrBefore(table, String.valueOf(10).getBytes(), "Physician".getBytes());
-            testGetRowOrBefore(table, String.valueOf(0).getBytes(), "Physician".getBytes());
+            testSecureFilterConverter();
 
         } catch (IOException e) {
             LOG.error("Exception in test execution. " + e.getMessage());
@@ -295,6 +300,13 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void testSecureFilterConverter() {
+        BinaryComparator bc  = new BinaryComparator("Hello".getBytes());
+
+//        SecureFilterConverter sfc = new SecureFilterConverter();
+//        sfc.buildEncryptedFilter(new RowFilter(CompareFilter.CompareOp.GREATER, bc));
     }
 
 }

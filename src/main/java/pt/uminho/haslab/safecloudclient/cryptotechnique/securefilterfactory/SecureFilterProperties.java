@@ -8,10 +8,10 @@ import pt.uminho.haslab.cryptoenv.CryptoTechnique;
  */
 public interface SecureFilterProperties {
 
-    public Filter buildEncryptedFilter(Filter plaintextFilter);
+    public Filter buildEncryptedFilter(Filter plaintextFilter, CryptoTechnique.CryptoType cryptoType);
 
     public Object parseFilter(Filter plaintextFilter);
 
-    public CryptoTechnique.CryptoType getFilterCryptoType();
+    public CryptoTechnique.CryptoType getFilterCryptoType(Filter plaintextFilter);
 
 }

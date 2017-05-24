@@ -1,6 +1,5 @@
 package pt.uminho.haslab.safecloudclient.cryptotechnique;
 
-import javafx.util.Pair;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellScanner;
 import org.apache.hadoop.hbase.CellUtil;
@@ -9,7 +8,7 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.*;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
-import pt.uminho.haslab.safecloudclient.cryptotechnique.securefilterfactory.SecureFilterFactory;
+import pt.uminho.haslab.safecloudclient.cryptotechnique.securefilterfactory.SecureFilterConverter;
 import pt.uminho.haslab.safecloudclient.queryengine.QEngineIntegration;
 import pt.uminho.haslab.safecloudclient.schema.TableSchema;
 
@@ -24,11 +23,11 @@ import java.util.Map;
  */
 public class HTableFeaturesUtils {
     public CryptoProperties cp;
-    public SecureFilterFactory secureFilterFactory;
+    public SecureFilterConverter secureFilterConverter;
 
-    public HTableFeaturesUtils(CryptoProperties cryptoProperties, SecureFilterFactory secureFilterFactory) {
+    public HTableFeaturesUtils(CryptoProperties cryptoProperties, SecureFilterConverter secureFilterConverter) {
         cp = cryptoProperties;
-        this.secureFilterFactory = secureFilterFactory;
+        this.secureFilterConverter = secureFilterConverter;
     }
 
     public void encryptCells(CellScanner cs, TableSchema tableSchema, Put destination, CryptoProperties cryptoProperties) {
@@ -123,20 +122,20 @@ public class HTableFeaturesUtils {
      */
     public CryptoTechnique.CryptoType isScanOrFilter(Scan scan) {
         if(scan.hasFilter()) {
-//            Filter filter = scan.getFilter();
-//            if(filter instanceof RowFilter) {
-//                return cp.tableSchema.getKey().getCryptoType();
-//            }
-//            else if(scan.getFilter() instanceof SingleColumnValueFilter) {
-//                SingleColumnValueFilter singleColumn = (SingleColumnValueFilter) filter;
-//                String family = new String(singleColumn.getFamily(), Charset.forName("UTF-8"));
-//                String qualifier = new String(singleColumn.getQualifier(), Charset.forName("UTF-8"));
-//                return cp.tableSchema.getCryptoTypeFromQualifier(family, qualifier);
-//            }
-//            else {
-//                return null;
-//            }
-            return this.secureFilterFactory.getSecureFilter(this.cp, scan.getFilter()).getFilterCryptoType();
+            Filter filter = scan.getFilter();
+            if(filter instanceof RowFilter) {
+                return cp.tableSchema.getKey().getCryptoType();
+            }
+            else if(scan.getFilter() instanceof SingleColumnValueFilter) {
+                SingleColumnValueFilter singleColumn = (SingleColumnValueFilter) filter;
+                String family = new String(singleColumn.getFamily(), Charset.forName("UTF-8"));
+                String qualifier = new String(singleColumn.getQualifier(), Charset.forName("UTF-8"));
+                return cp.tableSchema.getCryptoTypeFromQualifier(family, qualifier);
+            }
+            else {
+                return null;
+            }
+//            return this.secureFilterFactory.getSecureFilter(this.cp, scan.getFilter()).getFilterCryptoType();
         }
         else {
             return cp.tableSchema.getKey().getCryptoType();

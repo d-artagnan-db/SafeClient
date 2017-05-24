@@ -9,16 +9,21 @@ import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties;
 /**
  * Created by rgmacedo on 5/23/17.
  */
-public class SecureRowFilter extends RowFilter implements SecureFilterProperties {
+public class SecureRowFilter implements SecureFilterProperties {
     public CryptoProperties cryptoProperties;
 
-    public SecureRowFilter(CryptoProperties cryptoProperties, CompareOp rowCompareOp, ByteArrayComparable rowComparator) {
-        super(rowCompareOp, rowComparator);
+    public SecureRowFilter(CryptoProperties cryptoProperties) {
         this.cryptoProperties = cryptoProperties;
     }
 
     @Override
-    public Filter buildEncryptedFilter(Filter plaintextFilter) {
+    public Filter buildEncryptedFilter(Filter plaintextFilter, CryptoTechnique.CryptoType cryptoType) {
+        RowFilter plainRowFilter = (RowFilter) plaintextFilter;
+        switch (cryptoType) {
+            case PLT:
+                return plainRowFilter;
+
+        }
         return null;
     }
 
@@ -28,7 +33,7 @@ public class SecureRowFilter extends RowFilter implements SecureFilterProperties
     }
 
     @Override
-    public CryptoTechnique.CryptoType getFilterCryptoType() {
+    public CryptoTechnique.CryptoType getFilterCryptoType(Filter plaintextFilter) {
         return this.cryptoProperties.tableSchema.getKey().getCryptoType();
     }
 

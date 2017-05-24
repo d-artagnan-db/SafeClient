@@ -6,11 +6,10 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
-
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 import pt.uminho.haslab.cryptoenv.Utils;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.resultscanner.ResultScannerFactory;
-import pt.uminho.haslab.safecloudclient.cryptotechnique.securefilterfactory.SecureFilterFactory;
+import pt.uminho.haslab.safecloudclient.cryptotechnique.securefilterfactory.SecureFilterConverter;
 import pt.uminho.haslab.safecloudclient.queryengine.QEngineIntegration;
 import pt.uminho.haslab.safecloudclient.schema.SchemaParser;
 import pt.uminho.haslab.safecloudclient.schema.TableSchema;
@@ -33,7 +32,7 @@ public class CryptoTable extends HTable {
 	public TableSchema tableSchema;
 	public QEngineIntegration qEngine;
 	public HTableFeaturesUtils htableUtils;
-	public SecureFilterFactory secureFilterFactory;
+	public SecureFilterConverter secureFilterConverter;
 
 
 	public CryptoTable(Configuration conf, String tableName, String schemaFilename) throws IOException {
@@ -41,8 +40,8 @@ public class CryptoTable extends HTable {
 		this.tableSchema = this.init(schemaFilename, tableName);
 		this.cryptoProperties = new CryptoProperties(this.tableSchema);
 		this.resultScannerFactory = new ResultScannerFactory();
-		this.secureFilterFactory = new SecureFilterFactory();
-		this.htableUtils = new HTableFeaturesUtils(this.cryptoProperties, this.secureFilterFactory);
+		this.secureFilterConverter = new SecureFilterConverter(this.cryptoProperties);
+		this.htableUtils = new HTableFeaturesUtils(this.cryptoProperties, this.secureFilterConverter);
 	}
 
 	public CryptoTable(Configuration conf, String tableName, TableSchema schema) throws IOException {
@@ -50,8 +49,8 @@ public class CryptoTable extends HTable {
 		this.tableSchema = schema;
 		this.cryptoProperties = new CryptoProperties(this.tableSchema);
 		this.resultScannerFactory = new ResultScannerFactory();
-		this.secureFilterFactory = new SecureFilterFactory();
-		this.htableUtils = new HTableFeaturesUtils(this.cryptoProperties, this.secureFilterFactory);
+		this.secureFilterConverter = new SecureFilterConverter(this.cryptoProperties);
+		this.htableUtils = new HTableFeaturesUtils(this.cryptoProperties, this.secureFilterConverter);
 	}
 
 	public CryptoTable(Configuration conf, String tableName) throws IOException {
@@ -106,8 +105,8 @@ public class CryptoTable extends HTable {
 
 //		this is common for both cases
 		this.resultScannerFactory = new ResultScannerFactory();
-		this.secureFilterFactory = new SecureFilterFactory();
-		this.htableUtils = new HTableFeaturesUtils(this.cryptoProperties, this.secureFilterFactory);
+		this.secureFilterConverter = new SecureFilterConverter(this.cryptoProperties);
+		this.htableUtils = new HTableFeaturesUtils(this.cryptoProperties, this.secureFilterConverter);
 	}
 
 	/**
