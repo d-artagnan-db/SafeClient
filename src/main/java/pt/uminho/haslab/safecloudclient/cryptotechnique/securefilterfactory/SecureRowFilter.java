@@ -1,6 +1,6 @@
 package pt.uminho.haslab.safecloudclient.cryptotechnique.securefilterfactory;
 
-import org.apache.hadoop.hbase.filter.ByteArrayComparable;
+import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.RowFilter;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
@@ -19,10 +19,18 @@ public class SecureRowFilter implements SecureFilterProperties {
     @Override
     public Filter buildEncryptedFilter(Filter plaintextFilter, CryptoTechnique.CryptoType cryptoType) {
         RowFilter plainRowFilter = (RowFilter) plaintextFilter;
+//      In the RowFilter case, the CryptoType is protecting the row key
         switch (cryptoType) {
             case PLT:
                 return plainRowFilter;
-
+            case STD:
+            case DET:
+            case FPE:
+                return null;
+            case OPE:
+                byte[] encryptedRowKey = this.cryptoProperties.encodeRow(plainRowFilter.getComparator().getValue());
+                BinaryComparator bc = new BinaryComparator(encryptedRowKey);
+                return new RowFilter(plainRowFilter.getOperator(), bc);
         }
         return null;
     }

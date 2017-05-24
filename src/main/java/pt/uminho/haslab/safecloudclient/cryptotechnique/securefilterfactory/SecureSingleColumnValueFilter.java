@@ -1,5 +1,6 @@
 package pt.uminho.haslab.safecloudclient.cryptotechnique.securefilterfactory;
 
+import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
@@ -17,8 +18,30 @@ public class SecureSingleColumnValueFilter implements SecureFilterProperties {
 
     @Override
     public Filter buildEncryptedFilter(Filter plaintextFilter, CryptoTechnique.CryptoType cryptoType) {
+        SingleColumnValueFilter singleFilter = (SingleColumnValueFilter) plaintextFilter;
 
-        return null;
+        switch (cryptoType) {
+            case PLT:
+                return singleFilter;
+            case STD:
+                return null;
+            case DET:
+            case FPE:
+            case OPE:
+                byte[] encryptedValue =
+                        this.cryptoProperties.encodeValue(
+                            singleFilter.getFamily(),
+                            singleFilter.getQualifier(),
+                            singleFilter.getComparator().getValue());
+
+                return new SingleColumnValueFilter(
+                        singleFilter.getFamily(),
+                        singleFilter.getQualifier(),
+                        singleFilter.getOperator(),
+                        new BinaryComparator(encryptedValue));
+            default:
+                return null;
+        }
     }
 
     @Override

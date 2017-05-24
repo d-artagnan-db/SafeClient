@@ -122,20 +122,21 @@ public class HTableFeaturesUtils {
      */
     public CryptoTechnique.CryptoType isScanOrFilter(Scan scan) {
         if(scan.hasFilter()) {
-            Filter filter = scan.getFilter();
-            if(filter instanceof RowFilter) {
-                return cp.tableSchema.getKey().getCryptoType();
-            }
-            else if(scan.getFilter() instanceof SingleColumnValueFilter) {
-                SingleColumnValueFilter singleColumn = (SingleColumnValueFilter) filter;
-                String family = new String(singleColumn.getFamily(), Charset.forName("UTF-8"));
-                String qualifier = new String(singleColumn.getQualifier(), Charset.forName("UTF-8"));
-                return cp.tableSchema.getCryptoTypeFromQualifier(family, qualifier);
-            }
-            else {
-                return null;
-            }
-//            return this.secureFilterFactory.getSecureFilter(this.cp, scan.getFilter()).getFilterCryptoType();
+//            WARNING: First modification
+            return secureFilterConverter.getFilterCryptoType(scan.getFilter());
+//            Filter filter = scan.getFilter();
+//            if(filter instanceof RowFilter) {
+//                return cp.tableSchema.getKey().getCryptoType();
+//            }
+//            else if(scan.getFilter() instanceof SingleColumnValueFilter) {
+//                SingleColumnValueFilter singleColumn = (SingleColumnValueFilter) filter;
+//                String family = new String(singleColumn.getFamily(), Charset.forName("UTF-8"));
+//                String qualifier = new String(singleColumn.getQualifier(), Charset.forName("UTF-8"));
+//                return cp.tableSchema.getCryptoTypeFromQualifier(family, qualifier);
+//            }
+//            else {
+//                return null;
+//            }
         }
         else {
             return cp.tableSchema.getKey().getCryptoType();
@@ -203,15 +204,22 @@ public class HTableFeaturesUtils {
 
 //				In case of filter, the compare value must be encrypted
                 if(s.hasFilter()) {
-                    if(s.getFilter() instanceof SingleColumnValueFilter) {
-//						System.out.println("Entrou no singlecolumn cenas");
-                        SingleColumnValueFilter f = (SingleColumnValueFilter) s.getFilter();
-                        ByteArrayComparable bComp = f.getComparator();
-                        byte[] value = bComp.getValue();
-
-                        encScan.setFilter(new SingleColumnValueFilter(f.getFamily(), f.getQualifier(), f.getOperator(), cp.encodeRow(value)));
-//						System.out.println("Fez set Filter");
+//                    Warning: second modification
+                    Filter encryptedFilter = this.secureFilterConverter.buildEncryptedFilter(s.getFilter(), scanCryptoType);
+                    if(encryptedFilter != null) {
+                        encScan.setFilter(encryptedFilter);
                     }
+
+//                    if(s.getFilter() instanceof SingleColumnValueFilter) {
+////						System.out.println("Entrou no singlecolumn cenas");
+//                        SingleColumnValueFilter f = (SingleColumnValueFilter) s.getFilter();
+//                        ByteArrayComparable bComp = f.getComparator();
+//                        byte[] value = bComp.getValue();
+//
+////                        FIXME: isto nao pode estar bem - é um value e estou a fazer encodeRow?
+//                        encScan.setFilter(new SingleColumnValueFilter(f.getFamily(), f.getQualifier(), f.getOperator(), cp.encodeRow(value)));
+////						System.out.println("Fez set Filter");
+//                    }
                 }
 
                 break;
@@ -231,8 +239,12 @@ public class HTableFeaturesUtils {
                     encScan = encodeDelimitingRows(encScan, startRow, stopRow);
                 }
                 if (s.hasFilter()) {
-                    Filter encryptedFilter = (Filter) parseFilter(s.getFilter());
-                    encScan.setFilter(encryptedFilter);
+//                    Filter encryptedFilter = (Filter) parseFilter(s.getFilter());
+//                    Warning: second modification
+                    Filter encryptedFilter = this.secureFilterConverter.buildEncryptedFilter(s.getFilter(), scanCryptoType);
+                    if(encryptedFilter != null) {
+                        encScan.setFilter(encryptedFilter);
+                    }
                 }
                 break;
             default :
@@ -326,15 +338,18 @@ public class HTableFeaturesUtils {
      * @return the respective CryptoType
      */
     public CryptoTechnique.CryptoType verifyFilterCryptoType(Scan scan) {
-        CryptoTechnique.CryptoType cryptoType = cp.tableSchema.getKey().getCryptoType();
 
+        CryptoTechnique.CryptoType cryptoType = cp.tableSchema.getKey().getCryptoType();
+//      Warning: third modification
         if(scan.hasFilter()) {
-            Filter filter = scan.getFilter();
-            if(filter instanceof SingleColumnValueFilter) {
-                String family = new String(((SingleColumnValueFilter) filter).getFamily(), Charset.forName("UTF-8"));
-                String qualifier = new String(((SingleColumnValueFilter)filter).getQualifier(), Charset.forName("UTF-8"));
-                cryptoType = cp.tableSchema.getCryptoTypeFromQualifier(family, qualifier);
-            }
+            cryptoType = this.secureFilterConverter.getFilterCryptoType(scan.getFilter());
+
+//            Filter filter = scan.getFilter();
+//            if(filter instanceof SingleColumnValueFilter) {
+//                String family = new String(((SingleColumnValueFilter) filter).getFamily(), Charset.forName("UTF-8"));
+//                String qualifier = new String(((SingleColumnValueFilter)filter).getQualifier(), Charset.forName("UTF-8"));
+//                cryptoType = cp.tableSchema.getCryptoTypeFromQualifier(family, qualifier);
+//            }
         }
         return cryptoType;
     }
