@@ -264,69 +264,71 @@ public class HTableFeaturesUtils {
         Object returnValue = null;
 
         if(filter != null) {
-            if(filter instanceof RowFilter) {
-                RowFilter rowFilter = (RowFilter) filter;
-                comp = rowFilter.getOperator();
-                bComp = rowFilter.getComparator();
-
-                switch (cp.tableSchema.getKey().getCryptoType()) {
-                    case PLT :
-                        returnValue = rowFilter;
-                        break;
-                    case STD :
-                    case DET :
-                    case FPE :
-                        Object[] parserResult = new Object[2];
-                        parserResult[0] = comp;
-                        parserResult[1] = bComp.getValue();
-
-                        returnValue = parserResult;
-                        break;
-                    case OPE :
-//						Generate a Binary Comparator to perform the comparison with the respective encrypted value
-                        BinaryComparator encBC = new BinaryComparator(cp.encodeRow(bComp.getValue()));
-                        returnValue = new RowFilter(comp, encBC);
-                        break;
-                    default:
-                        returnValue = null;
-                        break;
-                }
-            }
-            else if(filter instanceof SingleColumnValueFilter) {
-                SingleColumnValueFilter singleFilter = (SingleColumnValueFilter) filter;
-                byte[] family = singleFilter.getFamily();
-                byte[] qualifier = singleFilter.getQualifier();
-                comp = singleFilter.getOperator();
-                bComp = singleFilter.getComparator();
-
-                switch (cp.tableSchema.getCryptoTypeFromQualifier(new String(family, Charset.forName("UTF-8")), new String(qualifier, Charset.forName("UTF-8")))) {
-                    case PLT :
-                        returnValue = singleFilter;
-                        break;
-                    case STD :
-                    case DET :
-                    case FPE :
-                        Object[] parserResult = new Object[4];
-                        parserResult[0] = family;
-                        parserResult[1] = qualifier;
-                        parserResult[2] = comp;
-                        parserResult[3] = bComp.getValue();
-
-                        returnValue = parserResult;
-                        break;
-                    case OPE :
-//						Generate a Binary Comparator to perform the comparison with the respective encrypted value
-                        BinaryComparator encBC = new BinaryComparator(cp.encodeValue(family, qualifier, bComp.getValue()));
-                        returnValue = new SingleColumnValueFilter(family, qualifier, comp, encBC);
-                        break;
-                    default:
-                        returnValue = null;
-                        break;
-                }
-            }
-            else {
-                throw new UnsupportedOperationException("Secure filter operation not supported.");
-            }
+            CryptoTechnique.CryptoType cType = this.secureFilterConverter.getFilterCryptoType(filter);
+            returnValue = this.secureFilterConverter.parseFilter(filter, cType);
+//            if(filter instanceof RowFilter) {
+//                RowFilter rowFilter = (RowFilter) filter;
+//                comp = rowFilter.getOperator();
+//                bComp = rowFilter.getComparator();
+//
+//                switch (cp.tableSchema.getKey().getCryptoType()) {
+//                    case PLT :
+//                        returnValue = rowFilter;
+//                        break;
+//                    case STD :
+//                    case DET :
+//                    case FPE :
+//                        Object[] parserResult = new Object[2];
+//                        parserResult[0] = comp;
+//                        parserResult[1] = bComp.getValue();
+//
+//                        returnValue = parserResult;
+//                        break;
+//                    case OPE :
+////						Generate a Binary Comparator to perform the comparison with the respective encrypted value
+//                        BinaryComparator encBC = new BinaryComparator(cp.encodeRow(bComp.getValue()));
+//                        returnValue = new RowFilter(comp, encBC);
+//                        break;
+//                    default:
+//                        returnValue = null;
+//                        break;
+//                }
+//            }
+//            else if(filter instanceof SingleColumnValueFilter) {
+//                SingleColumnValueFilter singleFilter = (SingleColumnValueFilter) filter;
+//                byte[] family = singleFilter.getFamily();
+//                byte[] qualifier = singleFilter.getQualifier();
+//                comp = singleFilter.getOperator();
+//                bComp = singleFilter.getComparator();
+//
+//                switch (cp.tableSchema.getCryptoTypeFromQualifier(new String(family, Charset.forName("UTF-8")), new String(qualifier, Charset.forName("UTF-8")))) {
+//                    case PLT :
+//                        returnValue = singleFilter;
+//                        break;
+//                    case STD :
+//                    case DET :
+//                    case FPE :
+//                        Object[] parserResult = new Object[4];
+//                        parserResult[0] = family;
+//                        parserResult[1] = qualifier;
+//                        parserResult[2] = comp;
+//                        parserResult[3] = bComp.getValue();
+//
+//                        returnValue = parserResult;
+//                        break;
+//                    case OPE :
+////						Generate a Binary Comparator to perform the comparison with the respective encrypted value
+//                        BinaryComparator encBC = new BinaryComparator(cp.encodeValue(family, qualifier, bComp.getValue()));
+//                        returnValue = new SingleColumnValueFilter(family, qualifier, comp, encBC);
+//                        break;
+//                    default:
+//                        returnValue = null;
+//                        break;
+//                }
+//            }
+//            else {
+//                throw new UnsupportedOperationException("Secure filter operation not supported.");
+//            }
         }
 
         return returnValue;

@@ -10,7 +10,7 @@ public interface SecureFilterProperties {
 
     public Filter buildEncryptedFilter(Filter plaintextFilter, CryptoTechnique.CryptoType cryptoType);
 
-    public Object parseFilter(Filter plaintextFilter);
+    public Object parseFilter(Filter plaintextFilter, CryptoTechnique.CryptoType cryptoType);
 
     public CryptoTechnique.CryptoType getFilterCryptoType(Filter plaintextFilter);
 

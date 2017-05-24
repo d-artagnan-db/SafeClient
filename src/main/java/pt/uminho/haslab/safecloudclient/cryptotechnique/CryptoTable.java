@@ -56,7 +56,7 @@ public class CryptoTable extends HTable {
 	public CryptoTable(Configuration conf, String tableName) throws IOException {
 		super(conf, TableName.valueOf(tableName));
 //		Too much hardcoded
-		File file = new File("src/main/resources/s.xml");
+		File file = new File("src/main/resources/schema.xml");
 
 //		Too much hardcoded
 		if(file.isFile() && file.getName().equals("schema.xml")) {
@@ -118,10 +118,10 @@ public class CryptoTable extends HTable {
 		if (filename == null) {
 			throw new NullPointerException("Schema file name cannot be null.");
 		}
-
+		System.out.println("Fiz init table schema: ");
 		SchemaParser schemaParser = new SchemaParser();
 		schemaParser.parse(filename);
-//		System.out.println(schemaParser.tableSchema.toString());
+		System.out.println(schemaParser.getSchemas().get("usertable").toString());
 		return schemaParser.getTableSchema(tablename);
 	}
 
@@ -208,6 +208,7 @@ public class CryptoTable extends HTable {
 			if(row.length == 0) {
 				throw new NullPointerException("Row Key cannot be null.");
 			}
+			row = Utils.removePadding(row);
 
 //			Acknowledge the existing qualifiers
 			if(!SCHEMA_FILE) {
@@ -218,7 +219,7 @@ public class CryptoTable extends HTable {
 			switch (this.cryptoProperties.tableSchema.getKey().getCryptoType()) {
 				case PLT :
 					Result pltResult = super.get(get);
-					return this.cryptoProperties.decodeResult(get.getRow(), pltResult);
+					return this.cryptoProperties.decodeResult(row, pltResult);
 				case STD :
 					ResultScanner encScan = super.getScanner(getScan);
 					for (Result r = encScan.next(); r != null; r = encScan.next()) {

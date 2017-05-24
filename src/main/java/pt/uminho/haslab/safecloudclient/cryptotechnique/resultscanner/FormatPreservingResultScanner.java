@@ -4,6 +4,7 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.util.Bytes;
+import pt.uminho.haslab.cryptoenv.Utils;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties;
 
 import java.io.IOException;
@@ -62,14 +63,14 @@ public class FormatPreservingResultScanner implements ResultScanner {
             if(filterProperties.length == 2) {
                 this.filterType = "RowFilter";
                 this.compareOp = (CompareFilter.CompareOp) filterProperties[0];
-                this.compareValue = (byte[]) filterProperties[1];
+                this.compareValue = Utils.removePadding((byte[]) filterProperties[1]);
             }
             else if(filterProperties.length == 4) {
                 this.filterType = "SingleColumnValueFilter";
 //                this.family = (byte[]) filterProperties[0];
 //                this.qualifier = (byte[]) filterProperties[1];
                 this.compareOp = (CompareFilter.CompareOp) filterProperties[2];
-                this.compareValue = (byte[]) filterProperties[3];
+                this.compareValue = Utils.removePadding((byte[]) filterProperties[3]);
             }
         } else {
             this.hasFilter = false;

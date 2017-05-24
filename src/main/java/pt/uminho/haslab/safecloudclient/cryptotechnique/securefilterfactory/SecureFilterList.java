@@ -20,7 +20,7 @@ public class SecureFilterList implements SecureFilterProperties {
     }
 
     @Override
-    public Object parseFilter(Filter plaintextFilter) {
+    public Object parseFilter(Filter plaintextFilter, CryptoTechnique.CryptoType cryptoType) {
         return null;
     }
 

@@ -16,7 +16,7 @@ public class SecureFilterConverter implements SecureFilterProperties{
 
     CryptoProperties cryptoProperties;
 
-    enum FilterType {
+    public enum FilterType {
         RowFilter,
         SingleColumnValueFilter,
         FilterList
@@ -51,8 +51,23 @@ public class SecureFilterConverter implements SecureFilterProperties{
     }
 
     @Override
-    public Object parseFilter(Filter plaintextFilter) {
-        return null;
+    public Object parseFilter(Filter plaintextFilter, CryptoTechnique.CryptoType cryptoType) {
+        FilterType fType = getFilterType(plaintextFilter);
+        if(fType != null) {
+            switch (fType) {
+                case RowFilter:
+                    return new SecureRowFilter(this.cryptoProperties).parseFilter(plaintextFilter, cryptoType);
+                case SingleColumnValueFilter:
+                    return new SecureSingleColumnValueFilter(this.cryptoProperties).parseFilter(plaintextFilter, cryptoType);
+                case FilterList:
+                    return new SecureFilterList(this.cryptoProperties).parseFilter(plaintextFilter, cryptoType);
+                default:
+                    return null;
+            }
+        }
+        else {
+            throw new UnsupportedOperationException("Secure operation not supported for the specified filter.");
+        }
     }
 
     @Override

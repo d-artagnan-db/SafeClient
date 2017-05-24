@@ -40,7 +40,8 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
             LOG.debug("Test Execution [" + tableName + "]\n");
             System.out.println("Table execution "+ tableName);
 
-//            testBatchingPuts(table, "Physician".getBytes(), "Physician ID".getBytes(), 10);
+            padding = true;
+            testBatchingPuts(table, "Physician".getBytes(), "Physician ID".getBytes(), 10);
 //            testBatchingGets(table, "Physician".getBytes(), "Physician ID".getBytes(), 20);
 //            testDelete(table, "Physician".getBytes(), "Physician ID".getBytes());
 //            testBatchingDeletes(table, "Physician".getBytes(), "Physician ID".getBytes(), 5);
@@ -57,7 +58,12 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
 //            testGetRowOrBefore(table, String.valueOf(10).getBytes(), "Physician".getBytes());
 //            testGetRowOrBefore(table, String.valueOf(0).getBytes(), "Physician".getBytes());
 
-            testSecureFilterConverter();
+            testFilter(table, SecureFilterConverter.FilterType.RowFilter, CompareFilter.CompareOp.EQUAL, "5");
+            testFilter(table, SecureFilterConverter.FilterType.RowFilter, CompareFilter.CompareOp.NOT_EQUAL, "5");
+            testFilter(table, SecureFilterConverter.FilterType.RowFilter, CompareFilter.CompareOp.GREATER, "5");
+            testFilter(table, SecureFilterConverter.FilterType.RowFilter, CompareFilter.CompareOp.GREATER_OR_EQUAL, "5");
+            testFilter(table, SecureFilterConverter.FilterType.RowFilter, CompareFilter.CompareOp.LESS, "5");
+            testFilter(table, SecureFilterConverter.FilterType.RowFilter, CompareFilter.CompareOp.LESS_OR_EQUAL, "5");
 
         } catch (IOException e) {
             LOG.error("Exception in test execution. " + e.getMessage());
@@ -98,7 +104,7 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
                 if (res != null) {
                     byte[] storedKey = res.getRow();
                     if(padding)
-                        assertEquals(Arrays.toString(storedKey), Arrays.toString(Utils.addPadding(String.valueOf(i).getBytes(), formatSize)));
+                        assertEquals(Arrays.toString(storedKey), Arrays.toString(String.valueOf(i).getBytes()));
                     else
                         assertEquals(Arrays.toString(storedKey), Arrays.toString(String.valueOf(i).getBytes()));
 
@@ -299,6 +305,49 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
             System.out.println("> "+res.toString());
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    public RowFilter buildRowFilter(CompareFilter.CompareOp operation, byte[] rowKey) {
+        return new RowFilter(operation, new BinaryComparator(Utils.addPadding(rowKey, formatSize)));
+    }
+
+    public void testFilter(HTableInterface table, SecureFilterConverter.FilterType filterType, CompareFilter.CompareOp operation, String value) {
+        try {
+            System.out.println("\n==TestFilter ("+filterType+","+operation+","+value+") ==");
+            Scan s = new Scan();
+            if(filterType != null) {
+                Filter f = buildRowFilter(operation, value.getBytes());
+                s.setFilter(f);
+            }
+            s.addColumn("Physician".getBytes(), "Physician ID".getBytes());
+
+            ResultScanner rs = table.getScanner(s);
+
+            int total = 0;
+            int decoded = 0;
+            for (Result r = rs.next(); r != null; r = rs.next()) {
+                if (!r.isEmpty()) {
+                    System.out.println("Value: "+r.toString());
+                    System.out.println("Key [" +
+                            new String(r.getRow())+
+                            ":"+
+                            new String(r.getValue("Physician".getBytes(), "Physician ID".getBytes())) +
+                            "]\n");
+                    decoded++;
+                }
+                total++;
+            }
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("TestFilter\n");
+            sb.append("Decoded Values: ").append(decoded).append("\n");
+            sb.append("Total Values: ").append(total).append("\n");
+
+            System.out.println(sb.toString());
+
+        } catch (IOException e) {
+            LOG.error("Exception in testFilter. " + e.getMessage());
         }
     }
 

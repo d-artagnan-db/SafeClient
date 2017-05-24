@@ -4,9 +4,11 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.util.Bytes;
+import pt.uminho.haslab.cryptoenv.Utils;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Iterator;
 
 /**
@@ -62,14 +64,14 @@ public class DeterministicResultScanner implements ResultScanner {
 			if(filterProperties.length == 2) {
 				this.filterType = "RowFilter";
 				this.compareOp = (CompareFilter.CompareOp) filterProperties[0];
-				this.compareValue = (byte[]) filterProperties[1];
+				this.compareValue = Utils.removePadding((byte[]) filterProperties[1]);
 			}
 			else if(filterProperties.length == 4) {
 				this.filterType = "SingleColumnValueFilter";
 //				this.family = (byte[]) filterProperties[0];
 //				this.qualifier = (byte[]) filterProperties[1];
 				this.compareOp = (CompareFilter.CompareOp) filterProperties[2];
-				this.compareValue = (byte[]) filterProperties[3];
+				this.compareValue = Utils.removePadding((byte[]) filterProperties[3]);
 			}
 		} else {
 			this.hasFilter = false;
@@ -182,7 +184,11 @@ public class DeterministicResultScanner implements ResultScanner {
 			digest = digestStartEndRow(0, row);
 
 			if (hasFilter && digest) {
+				System.out.println("Deterministic Has filter");
 				if(this.filterType.equals("RowFilter")) {
+					System.out.println("Entrou no digest");
+					System.out.println("Row: "+ Arrays.toString(row));
+					System.out.println("Row: "+ Arrays.toString(this.compareValue));
 					digest = digestFilter(0, row, this.compareValue);
 				}
 //				else if(this.filterType.equals("SingleColumnValueFilter")) {

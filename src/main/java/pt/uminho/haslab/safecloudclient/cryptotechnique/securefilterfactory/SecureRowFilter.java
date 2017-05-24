@@ -31,13 +31,34 @@ public class SecureRowFilter implements SecureFilterProperties {
                 byte[] encryptedRowKey = this.cryptoProperties.encodeRow(plainRowFilter.getComparator().getValue());
                 BinaryComparator bc = new BinaryComparator(encryptedRowKey);
                 return new RowFilter(plainRowFilter.getOperator(), bc);
+            default:
+                return null;
         }
-        return null;
     }
 
     @Override
-    public Object parseFilter(Filter plaintextFilter) {
-        return null;
+    public Object parseFilter(Filter plaintextFilter, CryptoTechnique.CryptoType cryptoType) {
+        RowFilter plainRowFilter = (RowFilter) plaintextFilter;
+
+        switch (cryptoType) {
+            case PLT :
+                return plainRowFilter;
+            case STD :
+            case DET :
+            case FPE :
+//                TODO: adicionar parserResult[0] = RowFilter?
+                Object[] parserResult = new Object[2];
+                parserResult[0] = plainRowFilter.getOperator();
+                parserResult[1] = plainRowFilter.getComparator().getValue();
+
+                return parserResult;
+            case OPE :
+//				Generate a Binary Comparator to perform the comparison with the respective encrypted value
+                return buildEncryptedFilter(plaintextFilter, cryptoType);
+
+            default:
+                return null;
+        }
     }
 
     @Override

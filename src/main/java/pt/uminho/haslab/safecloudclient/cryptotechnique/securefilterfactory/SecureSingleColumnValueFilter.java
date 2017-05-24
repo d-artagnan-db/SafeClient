@@ -45,8 +45,32 @@ public class SecureSingleColumnValueFilter implements SecureFilterProperties {
     }
 
     @Override
-    public Object parseFilter(Filter plaintextFilter) {
-        return null;
+    public Object parseFilter(Filter plaintextFilter, CryptoTechnique.CryptoType cryptoType) {
+        SingleColumnValueFilter singleFilter = (SingleColumnValueFilter) plaintextFilter;
+
+        switch (cryptoType) {
+            case PLT :
+                return singleFilter;
+            case STD :
+                return null;
+            case DET :
+            case FPE :
+//                TODO: adicionar parserResult[0] = SingleColumnValueFilter e remover o getFamily e getQualifier??
+                Object[] parserResult = new Object[4];
+                parserResult[0] = singleFilter.getFamily();
+                parserResult[1] = singleFilter.getQualifier();
+                parserResult[2] = singleFilter.getOperator();
+                parserResult[3] = singleFilter.getComparator().getValue();
+
+                return parserResult;
+            case OPE :
+
+                return buildEncryptedFilter(plaintextFilter, cryptoType);
+
+            default:
+                return null;
+
+        }
     }
 
     @Override
