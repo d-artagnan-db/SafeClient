@@ -184,11 +184,7 @@ public class DeterministicResultScanner implements ResultScanner {
 			digest = digestStartEndRow(0, row);
 
 			if (hasFilter && digest) {
-				System.out.println("Deterministic Has filter");
 				if(this.filterType.equals("RowFilter")) {
-					System.out.println("Entrou no digest");
-					System.out.println("Row: "+ Arrays.toString(row));
-					System.out.println("Row: "+ Arrays.toString(this.compareValue));
 					digest = digestFilter(0, row, this.compareValue);
 				}
 //				else if(this.filterType.equals("SingleColumnValueFilter")) {

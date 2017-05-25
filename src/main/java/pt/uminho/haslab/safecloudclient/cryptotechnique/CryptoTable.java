@@ -200,7 +200,6 @@ public class CryptoTable extends HTable {
 	 */
 	@Override
 	public Result get(Get get) {
-		Scan getScan = new Scan();
 		Result getResult = Result.EMPTY_RESULT;
 
 		try {
@@ -208,22 +207,28 @@ public class CryptoTable extends HTable {
 			if(row.length == 0) {
 				throw new NullPointerException("Row Key cannot be null.");
 			}
-			row = Utils.removePadding(row);
 
 //			Acknowledge the existing qualifiers
 			if(!SCHEMA_FILE) {
 				this.cryptoProperties.getFamiliesAndQualifiers(get.getFamilyMap(), this.qEngine);
 			}
 
+			Map<byte[],List<byte[]>> columns = this.cryptoProperties.getFamiliesAndQualifiers(get.getFamilyMap());
+
 //			Verify the row key CryptoBox
 			switch (this.cryptoProperties.tableSchema.getKey().getCryptoType()) {
-				case PLT :
-					Result pltResult = super.get(get);
-					return this.cryptoProperties.decodeResult(row, pltResult);
 				case STD :
-					ResultScanner encScan = super.getScanner(getScan);
+					Scan stdGetScan = new Scan();
+					for(byte[] f : columns.keySet()) {
+						for(byte[] q : columns.get(f)){
+							stdGetScan.addColumn(f, q);
+						}
+					}
+
+					ResultScanner encScan = super.getScanner(stdGetScan);
 					for (Result r = encScan.next(); r != null; r = encScan.next()) {
 						byte[] aux = this.cryptoProperties.decodeRow(r.getRow());
+						row = Utils.removePadding(row);
 
 						if (Arrays.equals(row, aux)) {
 							getResult = this.cryptoProperties.decodeResult(row, r);
@@ -231,12 +236,12 @@ public class CryptoTable extends HTable {
 						}
 					}
 					return getResult;
+				case PLT :
 				case DET :
 				case OPE :
 				case FPE :
 					Get encGet = new Get(this.cryptoProperties.encodeRow(row));
 
-					Map<byte[],List<byte[]>> columns = this.cryptoProperties.getFamiliesAndQualifiers(get.getFamilyMap());
 					for(byte[] f : columns.keySet()) {
 						for(byte[] q : columns.get(f)){
 							encGet.addColumn(f, q);
@@ -249,7 +254,6 @@ public class CryptoTable extends HTable {
 						getResult = this.cryptoProperties.decodeResult(row, res);
 					}
 
-//					System.out.println("Going to get (plaintext): "+Arrays.toString(getResult.getRow())+" - "+Arrays.toString(getResult.getValue("Physician".getBytes(), "Physician ID".getBytes())));
 					return getResult;
 				default :
 					break;
@@ -279,18 +283,16 @@ public class CryptoTable extends HTable {
 				this.cryptoProperties.getFamiliesAndQualifiers(g.getFamilyMap(), this.qEngine);
 			}
 
+			Map<byte[],List<byte[]>> columns = this.cryptoProperties.getFamiliesAndQualifiers(g.getFamilyMap());
+
+
 //			First phase: Encrypt all get objects
 			switch (this.cryptoProperties.tableSchema.getKey().getCryptoType()) {
 				case PLT :
-				case STD :
-					encryptedGets.add(g);
-					break;
 				case DET :
 				case OPE :
 				case FPE :
 					Get encGet = new Get(this.cryptoProperties.encodeRow(row));
-
-					Map<byte[],List<byte[]>> columns = this.cryptoProperties.getFamiliesAndQualifiers(g.getFamilyMap());
 
 					for(byte[] f : columns.keySet()) {
 						for(byte[] q : columns.get(f)){
@@ -299,7 +301,15 @@ public class CryptoTable extends HTable {
 					}
 
 					encryptedGets.add(encGet);
+					break;
+				case STD :
+					for(byte[] f : columns.keySet()) {
+						for(byte[] q : columns.get(f)){
+							g.addColumn(f, q);
+						}
+					}
 
+					encryptedGets.add(g);
 					break;
 				default :
 					break;
@@ -309,15 +319,13 @@ public class CryptoTable extends HTable {
 //		Second phase: call super() to batch the Get's List
 		try {
 			switch (this.cryptoProperties.tableSchema.getKey().getCryptoType()) {
-				case PLT :
-					results = super.get(encryptedGets);
-					break;
 				case STD :
 					for(int i = 0; i < encryptedGets.size(); i++) {
 						byte[] row = encryptedGets.get(i).getRow();
 						ResultScanner encScan = super.getScanner(new Scan());
 						for (Result r = encScan.next(); r != null; r = encScan.next()) {
 							byte[] aux = this.cryptoProperties.decodeRow(r.getRow());
+							row = Utils.removePadding(row);
 
 //							Third phase: decode result
 							if (Arrays.equals(row, aux)) {
@@ -328,6 +336,7 @@ public class CryptoTable extends HTable {
 
 					}
 					break;
+				case PLT:
 				case DET:
 				case OPE:
 				case FPE:
@@ -359,7 +368,6 @@ public class CryptoTable extends HTable {
 	 */
 	@Override
 	public void delete(Delete delete) {
-		Scan deleteScan = new Scan();
 		try {
 			byte[] row = delete.getRow();
 			if(row.length == 0) {
@@ -371,20 +379,17 @@ public class CryptoTable extends HTable {
 				this.cryptoProperties.getFamiliesAndQualifiers(delete.getFamilyCellMap(), this.qEngine);
 			}
 
-			System.out.println("Delete: "+delete.toString());
 			List<String> cellsToDelete = this.htableUtils.deleteCells(delete.cellScanner());
 
 //			Verify the row key CryptoBox
 			switch (this.cryptoProperties.tableSchema.getKey().getCryptoType()) {
-				case PLT :
-					super.delete(delete);
-					break;
 				case STD :
-					ResultScanner encScan = super.getScanner(deleteScan);
+					ResultScanner encScan = super.getScanner(new Scan());
 					for (Result r = encScan.next(); r != null; r = encScan.next()) {
-						byte[] resultValue = this.cryptoProperties.decodeRow(r.getRow());
+						byte[] resultRowKey = this.cryptoProperties.decodeRow(r.getRow());
+						row = Utils.removePadding(row);
 
-						if (Arrays.equals(row, resultValue)) {
+						if (Arrays.equals(row, resultRowKey)) {
 							Delete del = new Delete(r.getRow());
 							this.htableUtils.wrapDeletedCells(cellsToDelete, del);
 							super.delete(del);
@@ -392,6 +397,7 @@ public class CryptoTable extends HTable {
 						}
 					}
 					break;
+				case PLT:
 				case DET :
 				case OPE :
 				case FPE :
@@ -428,13 +434,11 @@ public class CryptoTable extends HTable {
 
 //			Verify the row key CryptoBox
 				switch (this.cryptoProperties.tableSchema.getKey().getCryptoType()) {
-					case PLT:
-						encryptedDeletes.add(del);
-						break;
 					case STD:
 						ResultScanner encScan = super.getScanner(new Scan());
 						for (Result r = encScan.next(); r != null; r = encScan.next()) {
 							byte[] resultValue = this.cryptoProperties.decodeRow(r.getRow());
+							row = Utils.removePadding(row);
 
 							if (Arrays.equals(row, resultValue)) {
 								Delete encryptedDelete = new Delete(r.getRow());
@@ -444,6 +448,7 @@ public class CryptoTable extends HTable {
 							}
 						}
 						break;
+					case PLT:
 					case DET:
 					case OPE:
 					case FPE:
@@ -528,24 +533,13 @@ public class CryptoTable extends HTable {
 			}
 
 			switch (this.tableSchema.getKey().getCryptoType()) {
-				case PLT:
-					Put encPut;
-					if(!put.isEmpty()) {
-						encPut = new Put(put.getRow());
-						this.htableUtils.encryptCells(put.cellScanner(), this.tableSchema, encPut, this.cryptoProperties);
-					}
-					else {
-						throw new NullPointerException("Put object cannot be null");
-					}
-
-					super.checkAndPut(row, family, qualifier, value, encPut);
-					break;
 				case STD:
 //						step 1 : get all stored values
 					ResultScanner rs = super.getScanner(new Scan());
 //						step 2 : check if specified row exists
 					for(Result r = rs.next(); r != null; r = rs.next()) {
 						byte[] resultRow = this.cryptoProperties.decodeRow(r.getRow());
+						row = Utils.removePadding(row);
 						if (Arrays.equals(row, resultRow)) {
 //								Get the stored value for the specified family and qualifier and check if it's equal to a given value
 							byte[] encryptedValue = r.getValue(family, qualifier);
@@ -555,7 +549,7 @@ public class CryptoTable extends HTable {
 //										If the values match, build and encrypted put
 									Put encryptedPut;
 									if(!put.isEmpty()) {
-										encryptedPut = new Put(this.cryptoProperties.encodeRow(put.getRow()));
+										encryptedPut = new Put(r.getRow());
 										this.htableUtils.encryptCells(put.cellScanner(), this.tableSchema, encryptedPut, this.cryptoProperties);
 									}
 									else {
@@ -571,15 +565,30 @@ public class CryptoTable extends HTable {
 						}
 					}
 					break;
+				case PLT:
 				case DET:
 				case OPE:
 				case FPE:
 //						step 1 : encrypt row and value
-					System.out.println("Entrou no DET: ");
 					byte[] encryptedRow = this.cryptoProperties.encodeRow(row);
-					System.out.println("Encode row "+Arrays.toString(encryptedRow));
-					byte[] encryptedValue = this.cryptoProperties.encodeValue(family, qualifier, value);
-					System.out.println("Encrypted value: "+Arrays.toString(encryptedValue));
+					byte[] encryptedValue;
+//					TODO testar isto a fundo
+					if(cryptoProperties.tableSchema.getCryptoTypeFromQualifier(new String(family), new String(qualifier)) == CryptoTechnique.CryptoType.STD) {
+						Result encryptedResult = super.get(new Get(encryptedRow));
+						Result temp_result = this.cryptoProperties.decodeResult(row, encryptedResult);
+						byte[] temp_val = temp_result.getValue(family, qualifier);
+						value = Utils.removePadding(value);
+						if(Arrays.equals(temp_val, value)) {
+							encryptedValue = encryptedResult.getValue(family, qualifier);
+						}
+						else {
+							throw new NullPointerException("Specified value does not match with the stored version.");
+						}
+					}
+					else {
+						encryptedValue = this.cryptoProperties.encodeValue(family, qualifier, value);
+					}
+
 //						step 2 : encrypt put
 					Put encryptedPut;
 					if(!put.isEmpty()) {
@@ -589,10 +598,8 @@ public class CryptoTable extends HTable {
 					else {
 						throw new NullPointerException("Put object cannot be null");
 					}
-					System.out.println("Encrypted Put: "+encryptedPut.toString());
 //						step 3 : call super
 					operationPerformed = super.checkAndPut(encryptedRow, family, qualifier, encryptedValue, encryptedPut);
-					System.out.println("Operation Performed "+operationPerformed);
 					break;
 				default:
 					break;
@@ -604,6 +611,7 @@ public class CryptoTable extends HTable {
 		return operationPerformed;
 	}
 
+//	TODO/Warning o que fazer se o qualifier não existi?
 	@Override
 	public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount) {
 		long operationValue = 0;
@@ -627,7 +635,22 @@ public class CryptoTable extends HTable {
 
 			switch (this.tableSchema.getCryptoTypeFromQualifier(temp_family, temp_qualifier)) {
 				case PLT:
-					operationValue = super.incrementColumnValue(this.cryptoProperties.encodeRow(row), family, qualifier, amount);
+//					TODO testar isto a fundo
+					if(this.cryptoProperties.tableSchema.getKey().getCryptoType() != CryptoTechnique.CryptoType.STD) {
+						operationValue = super.incrementColumnValue(this.cryptoProperties.encodeRow(row), family, qualifier, amount);
+					}
+					else {
+						ResultScanner stdScanner = super.getScanner(new Scan());
+						for(Result r = stdScanner.next(); r != null; r = stdScanner.next()) {
+							byte[] aux = this.cryptoProperties.decodeRow(r.getRow());
+							row = Utils.removePadding(row);
+
+							if (Arrays.equals(row, aux)) {
+								operationValue = super.incrementColumnValue(r.getRow(), family, qualifier, amount);
+								break;
+							}
+						}
+					}
 					break;
 				case STD:
 				case DET:
@@ -663,14 +686,13 @@ public class CryptoTable extends HTable {
 			}
 
 			switch(this.tableSchema.getKey().getCryptoType()) {
-				case PLT:
-					return super.getRegionLocation(row);
 				case STD:
 					HRegionLocation stdHRegionLocation = null;
 					ResultScanner rs = super.getScanner(new Scan());
 					for(Result r = rs.next(); r != null; r = rs.next()) {
 						if(!r.isEmpty()) {
 							byte[] temp_row = this.cryptoProperties.decodeRow(r.getRow());
+							row = Utils.removePadding(row);
 							if(Arrays.equals(temp_row, row)) {
 								stdHRegionLocation = super.getRegionLocation(r.getRow());
 								break;
@@ -678,6 +700,7 @@ public class CryptoTable extends HTable {
 						}
 					}
 					return stdHRegionLocation;
+				case PLT:
 				case DET:
 				case OPE:
 				case FPE:
@@ -692,6 +715,7 @@ public class CryptoTable extends HTable {
 		}
 	}
 
+//	TODO testar isto a fundo
 	@Override
 	public Result getRowOrBefore(byte[] row, byte[] family) {
 		try {
@@ -708,9 +732,7 @@ public class CryptoTable extends HTable {
 			}
 
 			switch(this.tableSchema.getKey().getCryptoType()) {
-				case PLT:
-					Result pltEncryptedResult = super.getRowOrBefore(row, family);
-					return this.cryptoProperties.decodeResult(row, pltEncryptedResult);
+
 				case STD:
 				case DET:
 				case FPE:
@@ -718,12 +740,13 @@ public class CryptoTable extends HTable {
 					byte[] encryptedRowBefore = null;
 					byte[] plaintextRowBefore = null;
 					byte[] decodedRow;
-					Result encryptedResult = null;
+					Result encResult = null;
 					Bytes.ByteArrayComparator bcomp = new Bytes.ByteArrayComparator();
 					for(Result r = rs.next(); r != null; r = rs.next()) {
 						decodedRow = this.cryptoProperties.decodeRow(r.getRow());
+						row = Utils.removePadding(row);
 						if(Arrays.equals(decodedRow, row)) {
-							encryptedResult = super.getRowOrBefore(r.getRow(), family);
+							encResult = super.getRowOrBefore(r.getRow(), family);
 							break;
 						} else {
 							if(plaintextRowBefore == null) {
@@ -736,14 +759,15 @@ public class CryptoTable extends HTable {
 						}
 					}
 
-					if(encryptedResult == null) {
-						encryptedResult = super.getRowOrBefore(encryptedRowBefore, family);
+					if(encResult == null) {
+						encResult = super.getRowOrBefore(encryptedRowBefore, family);
 					}
 
-					return this.cryptoProperties.decodeResult(this.cryptoProperties.decodeRow(encryptedResult.getRow()), encryptedResult);
+					return this.cryptoProperties.decodeResult(this.cryptoProperties.decodeRow(encResult.getRow()), encResult);
+				case PLT:
 				case OPE:
-					Result opeEncryptedResult = super.getRowOrBefore(this.cryptoProperties.encodeRow(row), family);
-					return this.cryptoProperties.decodeResult(this.cryptoProperties.decodeRow(opeEncryptedResult.getRow()), opeEncryptedResult);
+					Result encryptedResult = super.getRowOrBefore(this.cryptoProperties.encodeRow(row), family);
+					return this.cryptoProperties.decodeResult(this.cryptoProperties.decodeRow(encryptedResult.getRow()), encryptedResult);
 				default:
 					return null;
 			}

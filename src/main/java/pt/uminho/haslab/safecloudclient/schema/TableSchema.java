@@ -233,7 +233,11 @@ public class TableSchema {
 				break;
 			}
 		}
-		return cType;
+		if (cType == null) {
+			throw new NullPointerException("The specified qualifier does not exists.");
+		} else {
+			return cType;
+		}
 	}
 
 //	public CryptoTechnique.CryptoType getCryptoTypeFromQualifier(String family, String qualifier) {

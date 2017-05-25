@@ -456,8 +456,8 @@ public class CryptoProperties {
 	 * @return decrypted HBase Result
 	 */
 	public Result decodeResult(byte[] row, Result res) {
-		System.out.println("Row: "+Arrays.toString(row));
 //		byte[] decodedRow = this.decodeRow(row);
+		row = Utils.removePadding(row);
 		String opeValues = "_STD";
 		List<Cell> cellList = new ArrayList<>();
 
@@ -468,7 +468,7 @@ public class CryptoProperties {
 			byte[] value = CellUtil.cloneValue(cell);
 			long timestamp = cell.getTimestamp();
 			byte type = cell.getTypeByte();
-			System.out.println(new String(cf)+" - "+new String(cq));
+
 			Cell decCell;
 			String qualifier = new String(cq, Charset.forName("UTF-8"));
 
@@ -481,21 +481,19 @@ public class CryptoProperties {
 			if(!verifyProperty) {
 //				If the qualifier's CryptoType equal to OPE, decrypt the auxiliary qualifier (<qualifier_STD>)
 				if (tableSchema.getCryptoTypeFromQualifier(new String(cf, Charset.forName("UTF-8")), qualifier) == CryptoTechnique.CryptoType.OPE) {
-					System.out.println(">"+qualifier);
-
 					Cell stdCell = res.getColumnLatestCell(cf, (qualifier + opeValues).getBytes(Charset.forName("UTF-8")));
-					System.out.println("Cenas"+stdCell.toString());
-					decCell = CellUtil.createCell(row,
+					decCell = CellUtil.createCell(
+							row,
+							cf,
+							cq,
+							stdCell.getTimestamp(),
+							stdCell.getTypeByte(),
+							this.decodeValue(
 								cf,
-								cq,
-								stdCell.getTimestamp(),
-								stdCell.getTypeByte(),
-								this.decodeValue(
-										cf,
-										CellUtil.cloneQualifier(stdCell),
-										CellUtil.cloneValue(stdCell))
+								CellUtil.cloneQualifier(stdCell),
+								CellUtil.cloneValue(stdCell))
 
-						);
+							);
 
 				} else {
 					decCell = CellUtil.createCell(

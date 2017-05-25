@@ -85,7 +85,13 @@ public class HTableFeaturesUtils {
                 byte[] qualifier = CellUtil.cloneQualifier(cell);
 
                 if(family.length != 0 && qualifier.length != 0) {
-                    cellsToDelete.add(new String(family)+"#"+new String(qualifier));
+                    if(this.cp.tableSchema.getCryptoTypeFromQualifier(new String(family), new String(qualifier)) == CryptoTechnique.CryptoType.OPE) {
+                        cellsToDelete.add(new String(family) + "#" + new String(qualifier));
+                        cellsToDelete.add(new String(family) + "#" + new String(qualifier)+"_STD");
+                    }
+                    else {
+                        cellsToDelete.add(new String(family) + "#" + new String(qualifier));
+                    }
                 }
                 else if(family.length != 0) {
                     cellsToDelete.add(new String(family));
@@ -180,7 +186,22 @@ public class HTableFeaturesUtils {
         switch (scanCryptoType) {
 //			In case of plaintext, return the same object as received
             case PLT :
-                encScan = s;
+                encScan = new Scan();
+                encScan = encodeDelimitingRows(encScan, startRow, stopRow);
+                for(byte[] f : columns.keySet()) {
+                    List<byte[]> qualifiersTemp = columns.get(f);
+                    for(byte[] q : qualifiersTemp) {
+                        encScan.addColumn(f, q);
+                    }
+                }
+
+                if (s.hasFilter()) {
+//                    Warning: second modification
+                    Filter encryptedFilter = this.secureFilterConverter.buildEncryptedFilter(s.getFilter(), scanCryptoType);
+                    if(encryptedFilter != null) {
+                        encScan.setFilter(encryptedFilter);
+                    }
+                }
                 break;
 //			In case of standard or deterministic encryption, since no order is preserved a full table scan must be performed.
 //			In case of Filter, the compare value must be encrypted.
