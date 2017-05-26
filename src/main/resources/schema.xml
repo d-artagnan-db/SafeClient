@@ -8,7 +8,7 @@
     </default>
     <key>
       <formatsize>10</formatsize>
-      <cryptotechnique>STD</cryptotechnique>
+      <cryptotechnique>PLT</cryptotechnique>
     </key>
     <columns>
       <family>

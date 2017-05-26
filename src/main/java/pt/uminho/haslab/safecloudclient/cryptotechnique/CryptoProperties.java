@@ -511,7 +511,7 @@ public class CryptoProperties {
 	}
 
 	/**
-	 * getFamiliesAndQualifiers(familiesAndQualifiers : Map<byte[], NavigableSet<byte[]>>) method : convert a mapper of the
+	 * getHColumnDescriptors(familiesAndQualifiers : Map<byte[], NavigableSet<byte[]>>) method : convert a mapper of the
 	 * column families and the respective column qualifiers in a user friendly one
 	 * @param familiesAndQualifiers received mapper
 	 * @return user friendly mapper, providing the column families and the respective column qualifiers in the Map<byte[], List<byte[]>> format.

@@ -71,6 +71,8 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
             testFilter(table, FilterType.SingleColumnValueFilter, CompareFilter.CompareOp.GREATER_OR_EQUAL, "5:Hello:5");
             testFilter(table, FilterType.SingleColumnValueFilter, CompareFilter.CompareOp.LESS, "5:Hello:5");
 
+            testFilter(table, FilterType.FilterList, CompareFilter.CompareOp.EQUAL, "5:Hello:5");
+
         } catch (IOException e) {
             LOG.error("Exception in test execution. " + e.getMessage());
         } catch (InvalidNumberOfBits e) {
@@ -271,6 +273,10 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
         return new SingleColumnValueFilter(family, qualifier, operation, new BinaryComparator(value));
     }
 
+    public FilterList buildFilterList(List<Filter> filters, FilterList.Operator operator) {
+        return new FilterList(operator, filters);
+    }
+
     public void testFilter(HTableInterface table, FilterType filterType, CompareFilter.CompareOp operation, String value) {
         try {
             System.out.println("\n==TestFilter ("+filterType+","+operation+","+value+") ==");
@@ -283,6 +289,13 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
                         break;
                     case SingleColumnValueFilter:
                         f = buildSingleColumnValueFilter("Physician".getBytes(), "Physician ID".getBytes(), operation, value.getBytes());
+                        break;
+                    case FilterList:
+                        List<Filter> fList = new ArrayList<>();
+                        fList.add(buildRowFilter(CompareFilter.CompareOp.GREATER, "3".getBytes()));
+                        fList.add(buildSingleColumnValueFilter("Physician".getBytes(), "Physician ID".getBytes(), CompareFilter.CompareOp.GREATER_OR_EQUAL, value.getBytes()));
+                        fList.add(buildSingleColumnValueFilter("Physician".getBytes(), "Physician ID".getBytes(), CompareFilter.CompareOp.EQUAL, value.getBytes()));
+                        f = buildFilterList(fList, FilterList.Operator.MUST_PASS_ALL);
                         break;
                     default:
                         f = null;

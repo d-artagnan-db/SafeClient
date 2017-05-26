@@ -173,73 +173,103 @@ public class HTableFeaturesUtils {
      * @param s scan object
      * @return the respective encrypted scan object
      */
-    public Scan encryptedScan(Scan s) {
+    public Scan buildEncryptedScan(Scan s) {
         byte[] startRow = s.getStartRow();
         byte[] stopRow = s.getStopRow();
         Scan encScan = null;
 
-//		get the CryptoType of the Scan/Filter operation
-        CryptoTechnique.CryptoType scanCryptoType = isScanOrFilter(s);
-//		Map the database column families and qualifiers into a collection
-        Map<byte[], List<byte[]>> columns = cp.getHColumnDescriptors(s.getFamilyMap());
 
-        switch (scanCryptoType) {
+        if(s.hasFilter() && (s.getFilter() instanceof FilterList)) {
+            Filter encryptedFilter = secureFilterConverter.buildEncryptedFilter(s.getFilter(), this.cp.tableSchema.getKey().getCryptoType());
+            encScan = new Scan();
+            Map<byte[], List<byte[]>> cols = cp.getHColumnDescriptors(s.getFamilyMap());
+            for (byte[] f : cols.keySet()) {
+                List<byte[]> qualifiersTemp = cols.get(f);
+                for (byte[] q : qualifiersTemp) {
+                    encScan.addColumn(f, q);
+                }
+            }
+
+            switch(this.cp.tableSchema.getKey().getCryptoType()) {
+                case PLT:
+                case OPE:
+                    encScan = encodeDelimitingRows(encScan, s.getStartRow(), s.getStopRow());
+                    encScan.setFilter(encryptedFilter);
+                    break;
+                case STD:
+                case DET:
+                case FPE:
+                    encScan.setFilter(encryptedFilter);
+                    break;
+                default:
+                    break;
+            }
+
+        } else {
+
+//		get the CryptoType of the Scan/Filter operation
+            CryptoTechnique.CryptoType scanCryptoType = isScanOrFilter(s);
+//		Map the database column families and qualifiers into a collection
+            Map<byte[], List<byte[]>> columns = cp.getHColumnDescriptors(s.getFamilyMap());
+
+            switch (scanCryptoType) {
 //			In case of standard or deterministic encryption, since no order is preserved a full table scan must be performed.
 //			In case of Filter, the compare value must be encrypted.
-            case STD :
-            case DET :
-            case FPE :
-                encScan = new Scan();
+                case STD:
+                case DET:
+                case FPE:
+                    encScan = new Scan();
 //				Add only the specified qualifiers in the original scan (s), instead of retrieve all (unnecessary) values).
-                for(byte[] f : columns.keySet()) {
-                    List<byte[]> qualifiersTemp = columns.get(f);
-                    for(byte[] q : qualifiersTemp) {
-                        encScan.addColumn(f, q);
+                    for (byte[] f : columns.keySet()) {
+                        List<byte[]> qualifiersTemp = columns.get(f);
+                        for (byte[] q : qualifiersTemp) {
+                            encScan.addColumn(f, q);
+                        }
                     }
-                }
 //				Since the scanCryptoType defines the CryptoType of the scan or filter operaion, in case of SingleColumnValueFilter,
 // 				the start and stop row must be encoded with the respective row key CryptoBox
-                if((cp.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.PLT) ||
-                        (cp.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.OPE)) {
-                    encScan = encodeDelimitingRows(encScan, startRow, stopRow);
-                }
+                    if ((cp.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.PLT) ||
+                            (cp.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.OPE)) {
+                        encScan = encodeDelimitingRows(encScan, startRow, stopRow);
+                    }
 
 //				In case of filter, the compare value must be encrypted
-                if(s.hasFilter()) {
+                    if (s.hasFilter()) {
 //                    Warning: second modification
-                    Filter encryptedFilter = this.secureFilterConverter.buildEncryptedFilter(s.getFilter(), scanCryptoType);
-                    if(encryptedFilter != null) {
-                        encScan.setFilter(encryptedFilter);
+                        Filter encryptedFilter = this.secureFilterConverter.buildEncryptedFilter(s.getFilter(), scanCryptoType);
+                        if (encryptedFilter != null) {
+                            encScan.setFilter(encryptedFilter);
+                        }
                     }
-                }
 
-                break;
-            case PLT:
-            case OPE :
-                encScan = new Scan();
+                    break;
+                case PLT:
+                case OPE:
+                    encScan = new Scan();
 //				Add only the specified qualifiers in the original scan (s), instead of retrieve all (unnecessary) values).
-                for(byte[] f : columns.keySet()) {
-                    List<byte[]> qualifiersTemp = columns.get(f);
-                    for(byte[] q : qualifiersTemp) {
-                        encScan.addColumn(f, q);
+                    for (byte[] f : columns.keySet()) {
+                        List<byte[]> qualifiersTemp = columns.get(f);
+                        for (byte[] q : qualifiersTemp) {
+                            encScan.addColumn(f, q);
+                        }
                     }
-                }
 //				Since the scanCryptoType defines the CryptoType of the scan or filter operaion, in case of SingleColumnValueFilter,
 // 				the start and stop row must be encoded with the respective row key CryptoBox
-                if((cp.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.PLT) ||
-                        (cp.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.OPE)) {
-                    encScan = encodeDelimitingRows(encScan, startRow, stopRow);
-                }
-                if (s.hasFilter()) {
-//                    Warning: second modification
-                    Filter encryptedFilter = this.secureFilterConverter.buildEncryptedFilter(s.getFilter(), scanCryptoType);
-                    if(encryptedFilter != null) {
-                        encScan.setFilter(encryptedFilter);
+                    if ((cp.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.PLT) ||
+                            (cp.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.OPE)) {
+                        encScan = encodeDelimitingRows(encScan, startRow, stopRow);
                     }
-                }
-                break;
-            default :
-                break;
+                    if (s.hasFilter()) {
+//                    Warning: second modification
+                        Filter encryptedFilter = this.secureFilterConverter.buildEncryptedFilter(s.getFilter(), scanCryptoType);
+                        if (encryptedFilter != null) {
+                            encScan.setFilter(encryptedFilter);
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
         }
         return encScan;
     }
@@ -250,76 +280,11 @@ public class HTableFeaturesUtils {
      * @return provide an encrypted Filter, with the respective operator and compare value.
      */
     public Object parseFilter(Filter filter) {
-        CompareFilter.CompareOp comp;
-        ByteArrayComparable bComp;
         Object returnValue = null;
 
         if(filter != null) {
             CryptoTechnique.CryptoType cType = this.secureFilterConverter.getFilterCryptoType(filter);
             returnValue = this.secureFilterConverter.parseFilter(filter, cType);
-//            if(filter instanceof RowFilter) {
-//                RowFilter rowFilter = (RowFilter) filter;
-//                comp = rowFilter.getOperator();
-//                bComp = rowFilter.getComparator();
-//
-//                switch (cp.tableSchema.getKey().getCryptoType()) {
-//                    case PLT :
-//                        returnValue = rowFilter;
-//                        break;
-//                    case STD :
-//                    case DET :
-//                    case FPE :
-//                        Object[] parserResult = new Object[2];
-//                        parserResult[0] = comp;
-//                        parserResult[1] = bComp.getValue();
-//
-//                        returnValue = parserResult;
-//                        break;
-//                    case OPE :
-////						Generate a Binary Comparator to perform the comparison with the respective encrypted value
-//                        BinaryComparator encBC = new BinaryComparator(cp.encodeRow(bComp.getValue()));
-//                        returnValue = new RowFilter(comp, encBC);
-//                        break;
-//                    default:
-//                        returnValue = null;
-//                        break;
-//                }
-//            }
-//            else if(filter instanceof SingleColumnValueFilter) {
-//                SingleColumnValueFilter singleFilter = (SingleColumnValueFilter) filter;
-//                byte[] family = singleFilter.getFamily();
-//                byte[] qualifier = singleFilter.getQualifier();
-//                comp = singleFilter.getOperator();
-//                bComp = singleFilter.getComparator();
-//
-//                switch (cp.tableSchema.getCryptoTypeFromQualifier(new String(family, Charset.forName("UTF-8")), new String(qualifier, Charset.forName("UTF-8")))) {
-//                    case PLT :
-//                        returnValue = singleFilter;
-//                        break;
-//                    case STD :
-//                    case DET :
-//                    case FPE :
-//                        Object[] parserResult = new Object[4];
-//                        parserResult[0] = family;
-//                        parserResult[1] = qualifier;
-//                        parserResult[2] = comp;
-//                        parserResult[3] = bComp.getValue();
-//
-//                        returnValue = parserResult;
-//                        break;
-//                    case OPE :
-////						Generate a Binary Comparator to perform the comparison with the respective encrypted value
-//                        BinaryComparator encBC = new BinaryComparator(cp.encodeValue(family, qualifier, bComp.getValue()));
-//                        returnValue = new SingleColumnValueFilter(family, qualifier, comp, encBC);
-//                        break;
-//                    default:
-//                        returnValue = null;
-//                        break;
-//                }
-//            }
-//            else {
-//                throw new UnsupportedOperationException("Secure filter operation not supported.");
-//            }
         }
 
         return returnValue;
@@ -336,13 +301,6 @@ public class HTableFeaturesUtils {
 //      Warning: third modification
         if(scan.hasFilter()) {
             cryptoType = this.secureFilterConverter.getFilterCryptoType(scan.getFilter());
-
-//            Filter filter = scan.getFilter();
-//            if(filter instanceof SingleColumnValueFilter) {
-//                String family = new String(((SingleColumnValueFilter) filter).getFamily(), Charset.forName("UTF-8"));
-//                String qualifier = new String(((SingleColumnValueFilter)filter).getQualifier(), Charset.forName("UTF-8"));
-//                cryptoType = cp.tableSchema.getCryptoTypeFromQualifier(family, qualifier);
-//            }
         }
         return cryptoType;
     }

@@ -90,7 +90,7 @@ public class SecureFilterConverter implements SecureFilterProperties{
         }
     }
 
-    private FilterType getFilterType(Filter filter) {
+    static FilterType getFilterType(Filter filter) {
         if(filter != null) {
             switch (filter.getClass().getSimpleName()) {
                 case "RowFilter":
