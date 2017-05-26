@@ -17,8 +17,10 @@ import java.util.*;
 
 import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static pt.uminho.haslab.safecloudclient.cryptotechnique.securefilterfactory.SecureFilterConverter.FilterType.RowFilter;
 
 import pt.uminho.haslab.safecloudclient.cryptotechnique.securefilterfactory.SecureFilterConverter;
+import pt.uminho.haslab.safecloudclient.cryptotechnique.securefilterfactory.SecureFilterConverter.FilterType;
 import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
 
 public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
@@ -43,27 +45,31 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
             padding = true;
             testBatchingPuts(table, "Physician".getBytes(), "Physician ID".getBytes(), 10);
             testBatchingGets(table, "Physician".getBytes(), "Physician ID".getBytes(), 20);
-            testDelete(table, "Physician".getBytes(), "Physician ID".getBytes());
-            testBatchingDeletes(table, "Physician".getBytes(), "Physician ID".getBytes(), 5);
-            testBatchingPuts(table, "Physician".getBytes(), "Physician ID".getBytes(), 10);
-
-            testGet(table, "Physician".getBytes(), "Physician ID".getBytes(), String.valueOf(2).getBytes());
-            testCheckAndPut(table, "Physician".getBytes(), "Physician ID".getBytes(), "2:Hello:2".getBytes());
-
+//            testDelete(table, "Physician".getBytes(), "Physician ID".getBytes());
+//            testBatchingDeletes(table, "Physician".getBytes(), "Physician ID".getBytes(), 5);
+//            testBatchingPuts(table, "Physician".getBytes(), "Physician ID".getBytes(), 10);
+//
+//            testGet(table, "Physician".getBytes(), "Physician ID".getBytes(), String.valueOf(2).getBytes());
+//            testCheckAndPut(table, "Physician".getBytes(), "Physician ID".getBytes(), "2:Hello:2".getBytes());
+//
 //            testIncrementColumnValue(table, String.valueOf(2).getBytes(), "Physician".getBytes(), "Incremental".getBytes(), 1L);
+//
+//            testGetRegionLocation((HTable) table, String.valueOf(2).getBytes());
+//            testGetRegionLocations((HTable) table);
+//
+//            testGetRowOrBefore(table, String.valueOf(10).getBytes(), "Physician".getBytes());
+//            testGetRowOrBefore(table, String.valueOf(0).getBytes(), "Physician".getBytes());
 
-            testGetRegionLocation((HTable) table, String.valueOf(2).getBytes());
-            testGetRegionLocations((HTable) table);
+            testFilter(table, RowFilter, CompareFilter.CompareOp.EQUAL, "5");
+            testFilter(table, RowFilter, CompareFilter.CompareOp.NOT_EQUAL, "5");
+            testFilter(table, RowFilter, CompareFilter.CompareOp.GREATER, "5");
+            testFilter(table, RowFilter, CompareFilter.CompareOp.GREATER_OR_EQUAL, "5");
+            testFilter(table, RowFilter, CompareFilter.CompareOp.LESS, "5");
+            testFilter(table, RowFilter, CompareFilter.CompareOp.LESS_OR_EQUAL, "5");
 
-            testGetRowOrBefore(table, String.valueOf(10).getBytes(), "Physician".getBytes());
-            testGetRowOrBefore(table, String.valueOf(0).getBytes(), "Physician".getBytes());
-
-            testFilter(table, SecureFilterConverter.FilterType.RowFilter, CompareFilter.CompareOp.EQUAL, "5");
-            testFilter(table, SecureFilterConverter.FilterType.RowFilter, CompareFilter.CompareOp.NOT_EQUAL, "5");
-            testFilter(table, SecureFilterConverter.FilterType.RowFilter, CompareFilter.CompareOp.GREATER, "5");
-            testFilter(table, SecureFilterConverter.FilterType.RowFilter, CompareFilter.CompareOp.GREATER_OR_EQUAL, "5");
-            testFilter(table, SecureFilterConverter.FilterType.RowFilter, CompareFilter.CompareOp.LESS, "5");
-            testFilter(table, SecureFilterConverter.FilterType.RowFilter, CompareFilter.CompareOp.LESS_OR_EQUAL, "5");
+            testFilter(table, FilterType.SingleColumnValueFilter, CompareFilter.CompareOp.EQUAL, "5:Hello:5");
+            testFilter(table, FilterType.SingleColumnValueFilter, CompareFilter.CompareOp.GREATER_OR_EQUAL, "5:Hello:5");
+            testFilter(table, FilterType.SingleColumnValueFilter, CompareFilter.CompareOp.LESS, "5:Hello:5");
 
         } catch (IOException e) {
             LOG.error("Exception in test execution. " + e.getMessage());
@@ -258,15 +264,30 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
     }
 
     public RowFilter buildRowFilter(CompareFilter.CompareOp operation, byte[] rowKey) {
-        return new RowFilter(operation, new BinaryComparator(Utils.addPadding(rowKey, formatSize)));
+        return new RowFilter(operation, new BinaryComparator(rowKey));
     }
 
-    public void testFilter(HTableInterface table, SecureFilterConverter.FilterType filterType, CompareFilter.CompareOp operation, String value) {
+    public SingleColumnValueFilter buildSingleColumnValueFilter(byte[] family, byte[] qualifier, CompareFilter.CompareOp operation, byte[] value) {
+        return new SingleColumnValueFilter(family, qualifier, operation, new BinaryComparator(value));
+    }
+
+    public void testFilter(HTableInterface table, FilterType filterType, CompareFilter.CompareOp operation, String value) {
         try {
             System.out.println("\n==TestFilter ("+filterType+","+operation+","+value+") ==");
             Scan s = new Scan();
             if(filterType != null) {
-                Filter f = buildRowFilter(operation, value.getBytes());
+                Filter f;
+                switch(filterType) {
+                    case RowFilter:
+                        f = buildRowFilter(operation, value.getBytes());
+                        break;
+                    case SingleColumnValueFilter:
+                        f = buildSingleColumnValueFilter("Physician".getBytes(), "Physician ID".getBytes(), operation, value.getBytes());
+                        break;
+                    default:
+                        f = null;
+                        break;
+                }
                 s.setFilter(f);
             }
             s.addColumn("Physician".getBytes(), "Physician ID".getBytes());

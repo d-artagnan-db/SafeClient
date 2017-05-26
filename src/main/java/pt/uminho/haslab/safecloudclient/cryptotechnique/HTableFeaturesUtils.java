@@ -181,28 +181,9 @@ public class HTableFeaturesUtils {
 //		get the CryptoType of the Scan/Filter operation
         CryptoTechnique.CryptoType scanCryptoType = isScanOrFilter(s);
 //		Map the database column families and qualifiers into a collection
-        Map<byte[], List<byte[]>> columns = cp.getFamiliesAndQualifiers(s.getFamilyMap());
+        Map<byte[], List<byte[]>> columns = cp.getHColumnDescriptors(s.getFamilyMap());
 
         switch (scanCryptoType) {
-//			In case of plaintext, return the same object as received
-            case PLT :
-                encScan = new Scan();
-                encScan = encodeDelimitingRows(encScan, startRow, stopRow);
-                for(byte[] f : columns.keySet()) {
-                    List<byte[]> qualifiersTemp = columns.get(f);
-                    for(byte[] q : qualifiersTemp) {
-                        encScan.addColumn(f, q);
-                    }
-                }
-
-                if (s.hasFilter()) {
-//                    Warning: second modification
-                    Filter encryptedFilter = this.secureFilterConverter.buildEncryptedFilter(s.getFilter(), scanCryptoType);
-                    if(encryptedFilter != null) {
-                        encScan.setFilter(encryptedFilter);
-                    }
-                }
-                break;
 //			In case of standard or deterministic encryption, since no order is preserved a full table scan must be performed.
 //			In case of Filter, the compare value must be encrypted.
             case STD :
@@ -230,20 +211,10 @@ public class HTableFeaturesUtils {
                     if(encryptedFilter != null) {
                         encScan.setFilter(encryptedFilter);
                     }
-
-//                    if(s.getFilter() instanceof SingleColumnValueFilter) {
-////						System.out.println("Entrou no singlecolumn cenas");
-//                        SingleColumnValueFilter f = (SingleColumnValueFilter) s.getFilter();
-//                        ByteArrayComparable bComp = f.getComparator();
-//                        byte[] value = bComp.getValue();
-//
-////                        FIXME: isto nao pode estar bem - é um value e estou a fazer encodeRow?
-//                        encScan.setFilter(new SingleColumnValueFilter(f.getFamily(), f.getQualifier(), f.getOperator(), cp.encodeRow(value)));
-////						System.out.println("Fez set Filter");
-//                    }
                 }
 
                 break;
+            case PLT:
             case OPE :
                 encScan = new Scan();
 //				Add only the specified qualifiers in the original scan (s), instead of retrieve all (unnecessary) values).
@@ -260,7 +231,6 @@ public class HTableFeaturesUtils {
                     encScan = encodeDelimitingRows(encScan, startRow, stopRow);
                 }
                 if (s.hasFilter()) {
-//                    Filter encryptedFilter = (Filter) parseFilter(s.getFilter());
 //                    Warning: second modification
                     Filter encryptedFilter = this.secureFilterConverter.buildEncryptedFilter(s.getFilter(), scanCryptoType);
                     if(encryptedFilter != null) {

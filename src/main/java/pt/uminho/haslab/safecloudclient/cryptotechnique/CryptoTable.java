@@ -144,7 +144,7 @@ public class CryptoTable extends HTable {
 
 //			Acknowledge the existing qualifiers
 			if(!SCHEMA_FILE) {
-				this.cryptoProperties.getFamiliesAndQualifiers(put.getFamilyCellMap(), this.qEngine);
+				this.cryptoProperties.dynamicHColumnDescriptorsAddition(put.getFamilyCellMap(), this.qEngine);
 			}
 
 //			Encode the row key
@@ -172,7 +172,7 @@ public class CryptoTable extends HTable {
 				}
 //				Acknowledge the existing qualifiers
 				if(!SCHEMA_FILE) {
-					this.cryptoProperties.getFamiliesAndQualifiers(p.getFamilyCellMap(), this.qEngine);
+					this.cryptoProperties.dynamicHColumnDescriptorsAddition(p.getFamilyCellMap(), this.qEngine);
 				}
 //				Encode the row key
 				Put encPut = new Put(this.cryptoProperties.encodeRow(row));
@@ -210,10 +210,10 @@ public class CryptoTable extends HTable {
 
 //			Acknowledge the existing qualifiers
 			if(!SCHEMA_FILE) {
-				this.cryptoProperties.getFamiliesAndQualifiers(get.getFamilyMap(), this.qEngine);
+				this.cryptoProperties.dynamicHColumnDescriptorsAddition(get.getFamilyMap(), this.qEngine);
 			}
 
-			Map<byte[],List<byte[]>> columns = this.cryptoProperties.getFamiliesAndQualifiers(get.getFamilyMap());
+			Map<byte[],List<byte[]>> columns = this.cryptoProperties.getHColumnDescriptors(get.getFamilyMap());
 
 //			Verify the row key CryptoBox
 			switch (this.cryptoProperties.tableSchema.getKey().getCryptoType()) {
@@ -280,10 +280,10 @@ public class CryptoTable extends HTable {
 
 //			Acknowledge the existing qualifiers
 			if(!SCHEMA_FILE) {
-				this.cryptoProperties.getFamiliesAndQualifiers(g.getFamilyMap(), this.qEngine);
+				this.cryptoProperties.dynamicHColumnDescriptorsAddition(g.getFamilyMap(), this.qEngine);
 			}
 
-			Map<byte[],List<byte[]>> columns = this.cryptoProperties.getFamiliesAndQualifiers(g.getFamilyMap());
+			Map<byte[],List<byte[]>> columns = this.cryptoProperties.getHColumnDescriptors(g.getFamilyMap());
 
 
 //			First phase: Encrypt all get objects
@@ -376,7 +376,7 @@ public class CryptoTable extends HTable {
 
 //			Acknowledge the existing qualifiers
 			if(!SCHEMA_FILE) {
-				this.cryptoProperties.getFamiliesAndQualifiers(delete.getFamilyCellMap(), this.qEngine);
+				this.cryptoProperties.dynamicHColumnDescriptorsAddition(delete.getFamilyCellMap(), this.qEngine);
 			}
 
 			List<String> cellsToDelete = this.htableUtils.deleteCells(delete.cellScanner());
@@ -427,7 +427,7 @@ public class CryptoTable extends HTable {
 
 //				Acknowledge the existing qualifiers
 				if(!SCHEMA_FILE) {
-					this.cryptoProperties.getFamiliesAndQualifiers(del.getFamilyCellMap(), this.qEngine);
+					this.cryptoProperties.dynamicHColumnDescriptorsAddition(del.getFamilyCellMap(), this.qEngine);
 				}
 
 				List<String> cellsToDelete = this.htableUtils.deleteCells(del.cellScanner());
@@ -486,7 +486,7 @@ public class CryptoTable extends HTable {
 
 //			Acknowledge the existing qualifiers
 			if(!SCHEMA_FILE) {
-				this.cryptoProperties.getFamiliesAndQualifiers(scan.getFamilyMap(), this.qEngine);
+				this.cryptoProperties.dynamicHColumnDescriptorsAddition(scan.getFamilyMap(), this.qEngine);
 			}
 
 //			Transform the original object in an encrypted scan.

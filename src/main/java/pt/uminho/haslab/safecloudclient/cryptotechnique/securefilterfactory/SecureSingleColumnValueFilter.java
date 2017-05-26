@@ -1,6 +1,7 @@
 package pt.uminho.haslab.safecloudclient.cryptotechnique.securefilterfactory;
 
 import org.apache.hadoop.hbase.filter.BinaryComparator;
+import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
@@ -21,12 +22,27 @@ public class SecureSingleColumnValueFilter implements SecureFilterProperties {
         SingleColumnValueFilter singleFilter = (SingleColumnValueFilter) plaintextFilter;
 
         switch (cryptoType) {
-            case PLT:
-                return singleFilter;
             case STD:
-                return null;
+                throw new UnsupportedOperationException("SingleColumnValueFilter is not supported for values protected with Standard Encryption (STD).");
             case DET:
             case FPE:
+                if(singleFilter.getOperator() == CompareFilter.CompareOp.EQUAL) {
+                    byte[] encryptedValue =
+                            this.cryptoProperties.encodeValue(
+                                    singleFilter.getFamily(),
+                                    singleFilter.getQualifier(),
+                                    singleFilter.getComparator().getValue());
+
+                    return new SingleColumnValueFilter(
+                            singleFilter.getFamily(),
+                            singleFilter.getQualifier(),
+                            singleFilter.getOperator(),
+                            new BinaryComparator(encryptedValue));
+                }
+                else {
+                    throw new UnsupportedOperationException("SingleColumnValueFilter: Only equality comparison is supported for values protected with Deterministic-based encryption schemes.");
+                }
+            case PLT:
             case OPE:
                 byte[] encryptedValue =
                         this.cryptoProperties.encodeValue(
@@ -49,8 +65,6 @@ public class SecureSingleColumnValueFilter implements SecureFilterProperties {
         SingleColumnValueFilter singleFilter = (SingleColumnValueFilter) plaintextFilter;
 
         switch (cryptoType) {
-            case PLT :
-                return singleFilter;
             case STD :
                 return null;
             case DET :
@@ -63,8 +77,8 @@ public class SecureSingleColumnValueFilter implements SecureFilterProperties {
                 parserResult[3] = singleFilter.getComparator().getValue();
 
                 return parserResult;
+            case PLT:
             case OPE :
-
                 return buildEncryptedFilter(plaintextFilter, cryptoType);
 
             default:
