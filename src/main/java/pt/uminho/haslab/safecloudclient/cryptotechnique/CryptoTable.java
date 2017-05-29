@@ -491,6 +491,10 @@ public class CryptoTable extends HTable {
 
 //			Transform the original object in an encrypted scan.
 			Scan encScan = this.htableUtils.buildEncryptedScan(scan);
+			encScan.setCaching(scan.getCaching());
+			encScan.setBatch(scan.getBatch());
+			encScan.setCacheBlocks(scan.getCacheBlocks());
+
 			ResultScanner encryptedResultScanner = super.getScanner(encScan);
 
 //			Return the corresponding result scanner to decrypt the resulting set of values

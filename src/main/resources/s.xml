@@ -3,7 +3,7 @@
     <name>usertable</name>
     <default>
       <key>OPE</key>
-      <columns>OPE</columns>
+      <columns>DET</columns>
       <formatsize>10</formatsize>
     </default>
     <key>

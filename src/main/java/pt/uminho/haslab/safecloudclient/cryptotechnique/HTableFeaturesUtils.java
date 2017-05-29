@@ -144,12 +144,12 @@ public class HTableFeaturesUtils {
      * @return an encrypted scan with the respective start and stop row, both encrypted with the row key CryptoBox
      */
     public Scan encodeDelimitingRows(Scan encScan, byte[] startRow, byte[] stopRow) {
-        if (startRow.length != 0 && stopRow.length != 0) {
+        if (startRow != null && stopRow != null) {
             encScan.setStartRow(cp.encodeRow(startRow));
             encScan.setStopRow(cp.encodeRow(stopRow));
-        } else if (startRow.length != 0 && stopRow.length == 0) {
+        } else if (startRow != null && stopRow == null) {
             encScan.setStartRow(cp.encodeRow(startRow));
-        } else if (startRow.length == 0 && stopRow.length != 0) {
+        } else if (startRow == null && stopRow != null) {
             encScan.setStopRow(cp.encodeRow(stopRow));
         }
         return encScan;
