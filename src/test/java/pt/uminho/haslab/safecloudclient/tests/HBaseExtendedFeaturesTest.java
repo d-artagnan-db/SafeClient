@@ -41,35 +41,41 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
             LOG.debug("Test Execution [" + tableName + "]\n");
             System.out.println("Table execution "+ tableName);
 
-            testBatchingPuts(table, "Physician".getBytes(), "Physician ID".getBytes(), 10);
-            testBatchingGets(table, "Physician".getBytes(), "Physician ID".getBytes(), 20);
-            testDelete(table, "Physician".getBytes(), "Physician ID".getBytes());
-            testBatchingDeletes(table, "Physician".getBytes(), "Physician ID".getBytes(), 5);
-            testBatchingPuts(table, "Physician".getBytes(), "Physician ID".getBytes(), 10);
-
-            testGet(table, "Physician".getBytes(), "Physician ID".getBytes(), String.valueOf(2).getBytes());
-            testCheckAndPut(table, "Physician".getBytes(), "Physician ID".getBytes(), "2:Hello:2".getBytes());
+            testBatchingPuts(table, "Physician".getBytes(), "Physician ID".getBytes(), 30);
+//            testBatchingGets(table, "Physician".getBytes(), "Physician ID".getBytes(), 20);
+//            testDelete(table, "Physician".getBytes(), "Physician ID".getBytes());
+//            testBatchingDeletes(table, "Physician".getBytes(), "Physician ID".getBytes(), 5);
+//            testBatchingPuts(table, "Physician".getBytes(), "Physician ID".getBytes(), 10);
+//
+//            testGet(table, "Physician".getBytes(), "Physician ID".getBytes(), String.valueOf(2).getBytes());
+//            testCheckAndPut(table, "Physician".getBytes(), "Physician ID".getBytes(), "2:Hello:2".getBytes());
 
 //            testIncrementColumnValue(table, String.valueOf(2).getBytes(), "Physician".getBytes(), "Incremental".getBytes(), 1L);
 
-            testGetRegionLocation((HTable) table, String.valueOf(2).getBytes());
-            testGetRegionLocations((HTable) table);
+//            testGetRegionLocation((HTable) table, String.valueOf(2).getBytes());
+//            testGetRegionLocations((HTable) table);
+//
+//            testGetRowOrBefore(table, String.valueOf(10).getBytes(), "Physician".getBytes());
+//            testGetRowOrBefore(table, String.valueOf(0).getBytes(), "Physician".getBytes());
 
-            testGetRowOrBefore(table, String.valueOf(10).getBytes(), "Physician".getBytes());
-            testGetRowOrBefore(table, String.valueOf(0).getBytes(), "Physician".getBytes());
-
-            testFilter(table, RowFilter, CompareFilter.CompareOp.EQUAL, "5");
-            testFilter(table, RowFilter, CompareFilter.CompareOp.NOT_EQUAL, "5");
-            testFilter(table, RowFilter, CompareFilter.CompareOp.GREATER, "5");
-            testFilter(table, RowFilter, CompareFilter.CompareOp.GREATER_OR_EQUAL, "5");
-            testFilter(table, RowFilter, CompareFilter.CompareOp.LESS, "5");
-            testFilter(table, RowFilter, CompareFilter.CompareOp.LESS_OR_EQUAL, "5");
-
-            testFilter(table, FilterType.SingleColumnValueFilter, CompareFilter.CompareOp.EQUAL, "5:Hello:5");
-            testFilter(table, FilterType.SingleColumnValueFilter, CompareFilter.CompareOp.GREATER_OR_EQUAL, "5:Hello:5");
-            testFilter(table, FilterType.SingleColumnValueFilter, CompareFilter.CompareOp.LESS, "5:Hello:5");
-
-            testFilter(table, FilterType.FilterList, CompareFilter.CompareOp.EQUAL, "5:Hello:5");
+//            testFilter(table, RowFilter, CompareFilter.CompareOp.EQUAL, "5");
+//            testFilter(table, RowFilter, CompareFilter.CompareOp.NOT_EQUAL, "5");
+//            testFilter(table, RowFilter, CompareFilter.CompareOp.GREATER, "5");
+//            testFilter(table, RowFilter, CompareFilter.CompareOp.GREATER_OR_EQUAL, "5");
+//            testFilter(table, RowFilter, CompareFilter.CompareOp.LESS, "5");
+//            testFilter(table, RowFilter, CompareFilter.CompareOp.LESS_OR_EQUAL, "5");
+//
+//            testFilter(table, FilterType.SingleColumnValueFilter, CompareFilter.CompareOp.EQUAL, "5:Hello:5");
+//            testFilter(table, FilterType.SingleColumnValueFilter, CompareFilter.CompareOp.GREATER_OR_EQUAL, "5:Hello:5");
+//            testFilter(table, FilterType.SingleColumnValueFilter, CompareFilter.CompareOp.LESS, "5:Hello:5");
+//
+//            testFilter(table, FilterType.FilterList, CompareFilter.CompareOp.EQUAL, "5:Hello:5");
+            byte[] startRow = "4".getBytes();
+            byte[] stopRow = "15".getBytes();
+            testScan(table, null, null);
+            testScan(table, startRow, null);
+            testScan(table, null, stopRow);
+            testScan(table, startRow, stopRow);
 
         } catch (IOException e) {
             LOG.error("Exception in test execution. " + e.getMessage());
@@ -337,6 +343,36 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
 
 //        SecureFilterConverter sfc = new SecureFilterConverter();
 //        sfc.buildEncryptedFilter(new RowFilter(CompareFilter.CompareOp.GREATER, bc));
+    }
+
+    public void testScan(HTableInterface table, byte[] startRow, byte[] stopRow) {
+        System.out.println("==Test Scan ::");
+        try {
+            ResultScanner rs = table.getScanner(new Scan(startRow, stopRow));
+            int total = 0;
+            int decoded = 0;
+            for (Result r = rs.next(); r != null; r = rs.next()) {
+                if (!r.isEmpty()) {
+                    System.out.println("Value: "+r.toString());
+                    System.out.println("Key [" +
+                            new String(r.getRow())+
+                            ":"+
+                            new String(r.getValue("Physician".getBytes(), "Physician ID".getBytes())) +
+                            "]\n");
+                    decoded++;
+                }
+                total++;
+            }
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("TestScan\n");
+            sb.append("Decoded Values: ").append(decoded).append("\n");
+            sb.append("Total Values: ").append(total).append("\n");
+
+            System.out.println(sb.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }
