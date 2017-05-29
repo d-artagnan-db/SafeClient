@@ -130,19 +130,6 @@ public class HTableFeaturesUtils {
         if(scan.hasFilter()) {
 //            WARNING: First modification
             return secureFilterConverter.getFilterCryptoType(scan.getFilter());
-//            Filter filter = scan.getFilter();
-//            if(filter instanceof RowFilter) {
-//                return cp.tableSchema.getKey().getCryptoType();
-//            }
-//            else if(scan.getFilter() instanceof SingleColumnValueFilter) {
-//                SingleColumnValueFilter singleColumn = (SingleColumnValueFilter) filter;
-//                String family = new String(singleColumn.getFamily(), Charset.forName("UTF-8"));
-//                String qualifier = new String(singleColumn.getQualifier(), Charset.forName("UTF-8"));
-//                return cp.tableSchema.getCryptoTypeFromQualifier(family, qualifier);
-//            }
-//            else {
-//                return null;
-//            }
         }
         else {
             return cp.tableSchema.getKey().getCryptoType();

@@ -40,8 +40,6 @@ public class SecureRowFilter implements SecureFilterProperties {
         RowFilter plainRowFilter = (RowFilter) plaintextFilter;
 
         switch (cryptoType) {
-            case PLT :
-                return plainRowFilter;
             case STD :
             case DET :
             case FPE :
@@ -51,6 +49,7 @@ public class SecureRowFilter implements SecureFilterProperties {
                 parserResult[1] = plainRowFilter.getComparator().getValue();
 
                 return parserResult;
+            case PLT :
             case OPE :
 //				Generate a Binary Comparator to perform the comparison with the respective encrypted value
                 return buildEncryptedFilter(plaintextFilter, cryptoType);

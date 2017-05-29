@@ -11,6 +11,7 @@ import pt.uminho.haslab.cryptoenv.Utils;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.resultscanner.ResultScannerFactory;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.securefilterfactory.SecureFilterConverter;
 import pt.uminho.haslab.safecloudclient.queryengine.QEngineIntegration;
+import pt.uminho.haslab.safecloudclient.schema.Family;
 import pt.uminho.haslab.safecloudclient.schema.SchemaParser;
 import pt.uminho.haslab.safecloudclient.schema.TableSchema;
 
@@ -270,7 +271,6 @@ public class CryptoTable extends HTable {
 	public Result[] get(List<Get> gets) {
 		Result[] results = new Result[gets.size()];
 		List<Get> encryptedGets = new ArrayList<>(gets.size());
-
 
 		for(Get g : gets) {
 			byte[] row = g.getRow();
@@ -611,7 +611,6 @@ public class CryptoTable extends HTable {
 		return operationPerformed;
 	}
 
-//	TODO/Warning o que fazer se o qualifier não existi?
 	@Override
 	public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount) {
 		long operationValue = 0;
@@ -631,6 +630,11 @@ public class CryptoTable extends HTable {
 //			In case of default schema, verify and/or create both family and qualifier instances in TableSchema
 			if(!SCHEMA_FILE) {
 				this.htableUtils.createDynamicColumnsForAtomicOperations(this.qEngine, this.tableSchema, temp_family, temp_qualifier);
+			}
+			else {
+				if(!this.tableSchema.containsQualifier(temp_family, temp_qualifier)) {
+					throw new NullPointerException("Column qualifier "+temp_family+":"+temp_qualifier+" not defined in schema file.");
+				}
 			}
 
 			switch (this.tableSchema.getCryptoTypeFromQualifier(temp_family, temp_qualifier)) {
@@ -729,6 +733,11 @@ public class CryptoTable extends HTable {
 //			In case of default schema, verify and/or create both family and qualifier instances in TableSchema
 			if(!SCHEMA_FILE) {
 				this.htableUtils.createDynamicColumnsForAtomicOperations(this.qEngine, this.tableSchema, new String(family), null);
+			}
+			else {
+				if(!this.tableSchema.containsFamily(new String(family))) {
+					throw new NullPointerException("Column family "+new String(family)+" not defined in schema file.");
+				}
 			}
 
 			switch(this.tableSchema.getKey().getCryptoType()) {

@@ -28,7 +28,6 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
     static final Log LOG = LogFactory.getLog(HBaseFeaturesTest.class.getName());
     final int formatSize = 10;
     public Utils utils;
-    public boolean padding = false;
 
     public HBaseExtendedFeaturesTest(int maxBits, List<BigInteger> values) throws Exception {
         super(maxBits, values);
@@ -42,23 +41,22 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
             LOG.debug("Test Execution [" + tableName + "]\n");
             System.out.println("Table execution "+ tableName);
 
-            padding = true;
             testBatchingPuts(table, "Physician".getBytes(), "Physician ID".getBytes(), 10);
             testBatchingGets(table, "Physician".getBytes(), "Physician ID".getBytes(), 20);
-//            testDelete(table, "Physician".getBytes(), "Physician ID".getBytes());
-//            testBatchingDeletes(table, "Physician".getBytes(), "Physician ID".getBytes(), 5);
-//            testBatchingPuts(table, "Physician".getBytes(), "Physician ID".getBytes(), 10);
-//
-//            testGet(table, "Physician".getBytes(), "Physician ID".getBytes(), String.valueOf(2).getBytes());
-//            testCheckAndPut(table, "Physician".getBytes(), "Physician ID".getBytes(), "2:Hello:2".getBytes());
-//
+            testDelete(table, "Physician".getBytes(), "Physician ID".getBytes());
+            testBatchingDeletes(table, "Physician".getBytes(), "Physician ID".getBytes(), 5);
+            testBatchingPuts(table, "Physician".getBytes(), "Physician ID".getBytes(), 10);
+
+            testGet(table, "Physician".getBytes(), "Physician ID".getBytes(), String.valueOf(2).getBytes());
+            testCheckAndPut(table, "Physician".getBytes(), "Physician ID".getBytes(), "2:Hello:2".getBytes());
+
 //            testIncrementColumnValue(table, String.valueOf(2).getBytes(), "Physician".getBytes(), "Incremental".getBytes(), 1L);
-//
-//            testGetRegionLocation((HTable) table, String.valueOf(2).getBytes());
-//            testGetRegionLocations((HTable) table);
-//
-//            testGetRowOrBefore(table, String.valueOf(10).getBytes(), "Physician".getBytes());
-//            testGetRowOrBefore(table, String.valueOf(0).getBytes(), "Physician".getBytes());
+
+            testGetRegionLocation((HTable) table, String.valueOf(2).getBytes());
+            testGetRegionLocations((HTable) table);
+
+            testGetRowOrBefore(table, String.valueOf(10).getBytes(), "Physician".getBytes());
+            testGetRowOrBefore(table, String.valueOf(0).getBytes(), "Physician".getBytes());
 
             testFilter(table, RowFilter, CompareFilter.CompareOp.EQUAL, "5");
             testFilter(table, RowFilter, CompareFilter.CompareOp.NOT_EQUAL, "5");

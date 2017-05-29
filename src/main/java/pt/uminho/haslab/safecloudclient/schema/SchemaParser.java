@@ -4,10 +4,12 @@ import org.dom4j.*;
 import org.dom4j.io.SAXReader;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 
+import javax.naming.directory.SchemaViolationException;
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 /**
  * SchemaParser class.
@@ -82,9 +84,11 @@ public class SchemaParser {
 	public void parseTablename(Element rootElement, TableSchema tableSchema) {
 		Element nameElement = rootElement.element("name");
 		String name = nameElement.getText();
-		if (name != null) {
-			tableSchema.setTablename(name);
+		if(name == null || name.isEmpty()) {
+			throw new NullPointerException("Table name cannot be null nor empty.");
 		}
+
+		tableSchema.setTablename(name);
 	}
 
 	/**
@@ -98,15 +102,22 @@ public class SchemaParser {
 			String columns = defaultElement.elementText("columns");
 			String formatsize = defaultElement.elementText("formatsize");
 
-			if (key != null) {
-				tableSchema.setDefaultKeyCryptoType(switchCryptoType(key));
+			if (key == null || key.isEmpty()) {
+				throw new NullPointerException("Default row key Cryptographic Type cannot be null nor empty.");
 			}
-			if (columns != null) {
-				tableSchema.setDefaultColumnsCryptoType(switchCryptoType(columns));
+			if (columns == null || columns.isEmpty()) {
+				throw new NullPointerException("Default columns Cryptographic Type cannot be null nor empty.");
 			}
-			if (formatsize != null) {
-				tableSchema.setDefaultFormatSize(formatSizeIntegerValue(formatsize));
+			if (formatsize == null || formatsize.isEmpty()) {
+				throw new NullPointerException("Default format size cannot be null nor empty.");
 			}
+
+			tableSchema.setDefaultKeyCryptoType(switchCryptoType(key));
+			tableSchema.setDefaultColumnsCryptoType(switchCryptoType(columns));
+			tableSchema.setDefaultFormatSize(formatSizeIntegerValue(formatsize));
+		}
+		else {
+			throw new NullPointerException("Default arguments specification cannot be null nor empty.");
 		}
 	}
 
@@ -117,11 +128,23 @@ public class SchemaParser {
 	public void parseKey(Element rootElement, TableSchema tableSchema) {
 		Element keyElement = rootElement.element("key");
 		if (keyElement != null) {
-			String formatsize = keyElement.elementText("formatsize");
 			String cryptotechnique = keyElement.elementText("cryptotechnique");
+			String formatsize = keyElement.elementText("formatsize");
 			String instance = keyElement.elementText("instance");
 			String radix = keyElement.elementText("radix");
 			String tweak = keyElement.elementText("tweak");
+
+			if(cryptotechnique == null || cryptotechnique.isEmpty()) {
+				cryptotechnique = tableSchema.getDefaultKeyCryptoType().toString();
+			}
+
+			if(formatsize == null || formatsize.isEmpty()) {
+				formatsize = String.valueOf(tableSchema.getDefaultFormatSize());
+			}
+
+			if(cryptotechnique.equals("FPE")) {
+				validateFPEArguments(instance, radix, tweak);
+			}
 
 			if(!cryptotechnique.equals("FPE")) {
 				Key key = new Key(switchCryptoType(cryptotechnique), formatSizeIntegerValue(formatsize));
@@ -137,6 +160,10 @@ public class SchemaParser {
 				tableSchema.setKey(key);
 			}
 		}
+		else {
+//			If key arguments are not specified in schema file create key with the default values
+			tableSchema.setKey(new Key(tableSchema.getDefaultKeyCryptoType(), tableSchema.getDefaultFormatSize()));
+		}
 	}
 
 	/**
@@ -145,77 +172,108 @@ public class SchemaParser {
 	 */
 	public void parseColumns(Element rootElement, TableSchema tableSchema) {
 		Element columnsElement = rootElement.element("columns");
-		if (columnsElement != null) {
-			List<Element> familiesElement = columnsElement.elements("family");
-			for (Element family : familiesElement) {
-				if (family != null) {
-					String familyName = family.elementText("name");
-					String cryptotechnique = family.elementText("cryptotechnique");
-					String formatsize = family.elementText("formatsize");
+		if(columnsElement == null) {
+			throw new NoSuchElementException("Columns arguments cannot be null.");
+		}
 
-					Family f = new Family(
-							familyName,
-							switchCryptoType(cryptotechnique),
-							formatSizeIntegerValue(formatsize));
+		List<Element> familiesElement = columnsElement.elements("family");
+		for (Element family : familiesElement) {
+			if (family != null) {
+				String familyName = family.elementText("name");
+				String cryptotechnique = family.elementText("cryptotechnique");
+				String formatsize = family.elementText("formatsize");
 
-					tableSchema.addFamily(f);
+				if(familyName == null || familyName.isEmpty()) {
+					throw new NullPointerException("Column Family name cannot be null nor empty.");
+				}
 
-					List<Element> qualifiersElement = family.elements("qualifier");
-					for (Element qualifier : qualifiersElement) {
-						String qualifierName = qualifier.elementText("name");
-						String cryptotechniqueQualifier = qualifier.elementText("cryptotechnique");
-						String qualifierFormatsize = qualifier.elementText("formatsize");
-						String instance = qualifier.elementText("instance");
-						String radix = qualifier.elementText("radix");
-						String tweak = qualifier.elementText("tweak");
+				if(cryptotechnique == null || cryptotechnique.isEmpty()) {
+					cryptotechnique = tableSchema.getDefaultColumnsCryptoType().toString();
+				}
 
-						List<Element> misc = qualifier.elements("misc");
-						Map<String,String> properties = parseMiscellaneous(misc);
+				if(formatsize == null || formatsize.isEmpty()) {
+					formatsize = String.valueOf(tableSchema.getDefaultFormatSize());
+				}
 
-						Qualifier q;
-						if (!cryptotechniqueQualifier.equals("FPE")) {
-							q = new Qualifier(
-									qualifierName,
-									switchCryptoType(cryptotechniqueQualifier),
-									formatSizeIntegerValue(qualifierFormatsize),
-									properties);
+				Family f = new Family(
+						familyName,
+						switchCryptoType(cryptotechnique),
+						formatSizeIntegerValue(formatsize));
 
-						}
-						else {
-							q = new QualifierFPE(
-									qualifierName,
-									switchCryptoType(cryptotechniqueQualifier),
-									formatSizeIntegerValue(qualifierFormatsize),
-									properties,
-									instance,
-									radixIntegerValue(radix),
-									tweak
-							);
-						}
+				tableSchema.addFamily(f);
 
-						tableSchema.addQualifier(familyName, q);
+				List<Element> qualifiersElement = family.elements("qualifier");
+				for (Element qualifier : qualifiersElement) {
+					String qualifierName = qualifier.elementText("name");
+					String cryptotechniqueQualifier = qualifier.elementText("cryptotechnique");
+					String qualifierFormatsize = qualifier.elementText("formatsize");
+					String instance = qualifier.elementText("instance");
+					String radix = qualifier.elementText("radix");
+					String tweak = qualifier.elementText("tweak");
 
-						if(cryptotechniqueQualifier.equals("OPE")) {
-							String stdQualifierName = qualifierName+"_STD";
-							String stdCType = "STD";
+					List<Element> misc = qualifier.elements("misc");
+					Map<String,String> properties = parseMiscellaneous(misc);
 
-							Qualifier std = new Qualifier(
-									stdQualifierName,
-									switchCryptoType(stdCType),
-									formatSizeIntegerValue(qualifierFormatsize),
-									properties
-							);
+					if(qualifierName == null || qualifierName.isEmpty()) {
+						throw new NullPointerException("Column qualifier name cannot be null nor empty.");
+					}
 
-							tableSchema.addQualifier(familyName, std);
-						}
+					if(cryptotechniqueQualifier == null || cryptotechniqueQualifier.isEmpty()) {
+						cryptotechniqueQualifier = cryptotechnique;
+					}
+
+					if(qualifierFormatsize == null || qualifierFormatsize.isEmpty()) {
+						qualifierFormatsize = formatsize;
+					}
+
+					if(cryptotechniqueQualifier.equals("FPE")) {
+						validateFPEArguments(instance, radix, tweak);
+					}
+
+					Qualifier q;
+					if (!cryptotechniqueQualifier.equals("FPE")) {
+						q = new Qualifier(
+								qualifierName,
+								switchCryptoType(cryptotechniqueQualifier),
+								formatSizeIntegerValue(qualifierFormatsize),
+								properties);
 
 					}
+					else {
+						q = new QualifierFPE(
+								qualifierName,
+								switchCryptoType(cryptotechniqueQualifier),
+								formatSizeIntegerValue(qualifierFormatsize),
+								properties,
+								instance,
+								radixIntegerValue(radix),
+								tweak
+						);
+					}
+
+					tableSchema.addQualifier(familyName, q);
+
+					if(cryptotechniqueQualifier.equals("OPE")) {
+						String stdQualifierName = qualifierName+"_STD";
+						String stdCType = "STD";
+
+						Qualifier std = new Qualifier(
+								stdQualifierName,
+								switchCryptoType(stdCType),
+								formatSizeIntegerValue(qualifierFormatsize),
+								properties
+						);
+
+						tableSchema.addQualifier(familyName, std);
+					}
+
 				}
+			}
+			else {
+				throw new NoSuchElementException("Column family element cannot be null nor empty.");
 			}
 		}
 	}
-
-//		TODO falta por o default
 
 	/**
 	 * parseMiscellaneous(properties : List<Element>) method : parse random properties from the database schema
@@ -261,6 +319,20 @@ public class SchemaParser {
 			return 10;
 		else
 			return Integer.parseInt(radix);
+	}
+
+	public void validateFPEArguments(String instance, String radix, String tweak) {
+		if(instance == null || instance.isEmpty()) {
+			throw new NullPointerException("Format-Preserving Encryption instance cannot be null nor empty.");
+		}
+
+		if(radix == null || radix.isEmpty()) {
+			throw new NullPointerException("Format-Preserving Encryption radix cannot be null nor empty.");
+		}
+
+		if(tweak == null) {
+			throw new NullPointerException("Format-Preserving Encryption tweak cannot be null.");
+		}
 	}
 
 	public String printDatabaseSchemas() {
