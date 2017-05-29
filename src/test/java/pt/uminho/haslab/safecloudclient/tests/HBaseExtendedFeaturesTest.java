@@ -17,8 +17,10 @@ import java.util.*;
 
 import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static pt.uminho.haslab.safecloudclient.cryptotechnique.securefilterfactory.SecureFilterConverter.FilterType.RowFilter;
 
 import pt.uminho.haslab.safecloudclient.cryptotechnique.securefilterfactory.SecureFilterConverter;
+import pt.uminho.haslab.safecloudclient.cryptotechnique.securefilterfactory.SecureFilterConverter.FilterType;
 import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
 
 public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
@@ -26,7 +28,6 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
     static final Log LOG = LogFactory.getLog(HBaseFeaturesTest.class.getName());
     final int formatSize = 10;
     public Utils utils;
-    public boolean padding = false;
 
     public HBaseExtendedFeaturesTest(int maxBits, List<BigInteger> values) throws Exception {
         super(maxBits, values);
@@ -40,7 +41,6 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
             LOG.debug("Test Execution [" + tableName + "]\n");
             System.out.println("Table execution "+ tableName);
 
-            padding = true;
             testBatchingPuts(table, "Physician".getBytes(), "Physician ID".getBytes(), 10);
             testBatchingGets(table, "Physician".getBytes(), "Physician ID".getBytes(), 20);
             testDelete(table, "Physician".getBytes(), "Physician ID".getBytes());
@@ -58,12 +58,18 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
             testGetRowOrBefore(table, String.valueOf(10).getBytes(), "Physician".getBytes());
             testGetRowOrBefore(table, String.valueOf(0).getBytes(), "Physician".getBytes());
 
-            testFilter(table, SecureFilterConverter.FilterType.RowFilter, CompareFilter.CompareOp.EQUAL, "5");
-            testFilter(table, SecureFilterConverter.FilterType.RowFilter, CompareFilter.CompareOp.NOT_EQUAL, "5");
-            testFilter(table, SecureFilterConverter.FilterType.RowFilter, CompareFilter.CompareOp.GREATER, "5");
-            testFilter(table, SecureFilterConverter.FilterType.RowFilter, CompareFilter.CompareOp.GREATER_OR_EQUAL, "5");
-            testFilter(table, SecureFilterConverter.FilterType.RowFilter, CompareFilter.CompareOp.LESS, "5");
-            testFilter(table, SecureFilterConverter.FilterType.RowFilter, CompareFilter.CompareOp.LESS_OR_EQUAL, "5");
+            testFilter(table, RowFilter, CompareFilter.CompareOp.EQUAL, "5");
+            testFilter(table, RowFilter, CompareFilter.CompareOp.NOT_EQUAL, "5");
+            testFilter(table, RowFilter, CompareFilter.CompareOp.GREATER, "5");
+            testFilter(table, RowFilter, CompareFilter.CompareOp.GREATER_OR_EQUAL, "5");
+            testFilter(table, RowFilter, CompareFilter.CompareOp.LESS, "5");
+            testFilter(table, RowFilter, CompareFilter.CompareOp.LESS_OR_EQUAL, "5");
+
+            testFilter(table, FilterType.SingleColumnValueFilter, CompareFilter.CompareOp.EQUAL, "5:Hello:5");
+            testFilter(table, FilterType.SingleColumnValueFilter, CompareFilter.CompareOp.GREATER_OR_EQUAL, "5:Hello:5");
+            testFilter(table, FilterType.SingleColumnValueFilter, CompareFilter.CompareOp.LESS, "5:Hello:5");
+
+            testFilter(table, FilterType.FilterList, CompareFilter.CompareOp.EQUAL, "5:Hello:5");
 
         } catch (IOException e) {
             LOG.error("Exception in test execution. " + e.getMessage());
@@ -258,15 +264,41 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
     }
 
     public RowFilter buildRowFilter(CompareFilter.CompareOp operation, byte[] rowKey) {
-        return new RowFilter(operation, new BinaryComparator(Utils.addPadding(rowKey, formatSize)));
+        return new RowFilter(operation, new BinaryComparator(rowKey));
     }
 
-    public void testFilter(HTableInterface table, SecureFilterConverter.FilterType filterType, CompareFilter.CompareOp operation, String value) {
+    public SingleColumnValueFilter buildSingleColumnValueFilter(byte[] family, byte[] qualifier, CompareFilter.CompareOp operation, byte[] value) {
+        return new SingleColumnValueFilter(family, qualifier, operation, new BinaryComparator(value));
+    }
+
+    public FilterList buildFilterList(List<Filter> filters, FilterList.Operator operator) {
+        return new FilterList(operator, filters);
+    }
+
+    public void testFilter(HTableInterface table, FilterType filterType, CompareFilter.CompareOp operation, String value) {
         try {
             System.out.println("\n==TestFilter ("+filterType+","+operation+","+value+") ==");
             Scan s = new Scan();
             if(filterType != null) {
-                Filter f = buildRowFilter(operation, value.getBytes());
+                Filter f;
+                switch(filterType) {
+                    case RowFilter:
+                        f = buildRowFilter(operation, value.getBytes());
+                        break;
+                    case SingleColumnValueFilter:
+                        f = buildSingleColumnValueFilter("Physician".getBytes(), "Physician ID".getBytes(), operation, value.getBytes());
+                        break;
+                    case FilterList:
+                        List<Filter> fList = new ArrayList<>();
+                        fList.add(buildRowFilter(CompareFilter.CompareOp.GREATER, "3".getBytes()));
+                        fList.add(buildSingleColumnValueFilter("Physician".getBytes(), "Physician ID".getBytes(), CompareFilter.CompareOp.GREATER_OR_EQUAL, value.getBytes()));
+                        fList.add(buildSingleColumnValueFilter("Physician".getBytes(), "Physician ID".getBytes(), CompareFilter.CompareOp.EQUAL, value.getBytes()));
+                        f = buildFilterList(fList, FilterList.Operator.MUST_PASS_ALL);
+                        break;
+                    default:
+                        f = null;
+                        break;
+                }
                 s.setFilter(f);
             }
             s.addColumn("Physician".getBytes(), "Physician ID".getBytes());

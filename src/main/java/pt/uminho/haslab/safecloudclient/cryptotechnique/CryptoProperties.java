@@ -370,7 +370,7 @@ public class CryptoProperties {
 	private byte[] decodeValueCryptoType(CryptoTechnique.CryptoType cType, byte[] ciphertext, String family, String qualifier) {
 		switch (cType) {
 			case PLT :
-				return  Utils.removePadding(ciphertext);
+				return Utils.removePadding(ciphertext);
 //				return ciphertext;
 			case STD :
 				return  Utils.removePadding(this.stdHandler.decrypt(this.stdKey, ciphertext));
@@ -511,12 +511,12 @@ public class CryptoProperties {
 	}
 
 	/**
-	 * getFamiliesAndQualifiers(familiesAndQualifiers : Map<byte[], NavigableSet<byte[]>>) method : convert a mapper of the
+	 * getHColumnDescriptors(familiesAndQualifiers : Map<byte[], NavigableSet<byte[]>>) method : convert a mapper of the
 	 * column families and the respective column qualifiers in a user friendly one
 	 * @param familiesAndQualifiers received mapper
 	 * @return user friendly mapper, providing the column families and the respective column qualifiers in the Map<byte[], List<byte[]>> format.
 	 */
-	public Map<byte[], List<byte[]>> getFamiliesAndQualifiers(Map<byte[], NavigableSet<byte[]>> familiesAndQualifiers) {
+	public Map<byte[], List<byte[]>> getHColumnDescriptors(Map<byte[], NavigableSet<byte[]>> familiesAndQualifiers) {
 		String opeValue = "_STD";
 		Map<byte[],List<byte[]>> result = new HashMap<>();
 		for(byte[] family : familiesAndQualifiers.keySet()) {
@@ -543,8 +543,7 @@ public class CryptoProperties {
 		return result;
 	}
 
-	public Map<byte[], List<byte[]>> getFamiliesAndQualifiers(Map<byte[], NavigableSet<byte[]>> familiesAndQualifiers, QEngineIntegration qEngine) {
-		Map<byte[],List<byte[]>> result = new HashMap<>();
+	public void dynamicHColumnDescriptorsAddition(Map<byte[], NavigableSet<byte[]>> familiesAndQualifiers, QEngineIntegration qEngine) {
 		for(byte[] temp_family : familiesAndQualifiers.keySet()) {
 			String family = new String(temp_family, Charset.forName("UTF-8"));
 			NavigableSet<byte[]> q = familiesAndQualifiers.get(temp_family);
@@ -565,15 +564,11 @@ public class CryptoProperties {
 						replaceQualifierCryptoHandler(family, qualifier, CryptoTechnique.CryptoType.OPE, qEngine.getFamilyFormatSize());
 					}
 				}
-				result.put(temp_family, qualifierList);
 			}
 		}
-
-		return result;
 	}
 
-	public Map<byte[], List<byte[]>> getFamiliesAndQualifiers(NavigableMap<byte[], List<Cell>> familiesAndQualifiers, QEngineIntegration qEngine) {
-		Map<byte[], List<byte[]>> result = new HashMap<>();
+	public void dynamicHColumnDescriptorsAddition(NavigableMap<byte[], List<Cell>> familiesAndQualifiers, QEngineIntegration qEngine) {
 		if(!familiesAndQualifiers.isEmpty()) {
 			NavigableSet<byte[]> temp_navigable_set = familiesAndQualifiers.navigableKeySet();
 			Iterator i = temp_navigable_set.iterator();
@@ -592,10 +587,8 @@ public class CryptoProperties {
 						replaceQualifierCryptoHandler(family, qualifier, CryptoTechnique.CryptoType.OPE, qEngine.getFamilyFormatSize());
 					}
 				}
-				result.put(temp_family, qualifiers);
 			}
 		}
-		return result;
 	}
 
 	public static CryptoTechnique.FFX whichFpeInstance(String instance) {

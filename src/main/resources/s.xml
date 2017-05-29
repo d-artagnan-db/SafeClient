@@ -4,20 +4,21 @@
     <default>
       <key>OPE</key>
       <columns>OPE</columns>
-      <formatsize>23</formatsize>
+      <formatsize>10</formatsize>
     </default>
     <key>
-      <formatsize>10</formatsize>
-      <cryptotechnique>OPE</cryptotechnique>
+      <!--<formatsize>10</formatsize>-->
+      <!--<cryptotechnique>PLT</cryptotechnique>-->
     </key>
     <columns>
       <family>
         <name>Physician</name>
-        <cryptotechnique>OPE</cryptotechnique>
+        <!--<cryptotechnique>OPE</cryptotechnique>-->
+        <!--<formatsize>10</formatsize>-->
         <qualifier>
           <name>Physician ID</name>
-          <cryptotechnique>OPE</cryptotechnique>
-          <formatsize>10</formatsize>
+          <!--<cryptotechnique>OPE</cryptotechnique>-->
+          <!--<formatsize>10</formatsize>-->
           <misc>
             <property>GENERATOR</property>
             <type>String</type>
@@ -28,8 +29,8 @@
         <name>Patient</name>
         <qualifier>
           <name>Patient ID</name>
-          <cryptotechnique>OPE</cryptotechnique>
-          <formatsize>16</formatsize>
+          <!--<cryptotechnique>OPE</cryptotechnique>-->
+          <!--<formatsize>16</formatsize>-->
           <misc>
             <property>GENERATOR</property>
             <type>String</type>
@@ -40,8 +41,8 @@
         <name>Appointment</name>
         <qualifier>
           <name>Date</name>
-          <cryptotechnique>OPE</cryptotechnique>
-          <formatsize>14</formatsize>
+          <!--<cryptotechnique>OPE</cryptotechnique>-->
+          <!--<formatsize>14</formatsize>-->
           <misc>
             <property>GENERATOR</property>
             <type>Date</type>
@@ -49,8 +50,8 @@
         </qualifier>
         <qualifier>
           <name>Type</name>
-          <cryptotechnique>OPE</cryptotechnique>
-          <formatsize>64</formatsize>
+          <!--<cryptotechnique>OPE</cryptotechnique>-->
+          <!--<formatsize>64</formatsize>-->
           <misc>
             <property>GENERATOR</property>
             <type>String</type>
@@ -58,8 +59,8 @@
         </qualifier>
         <qualifier>
           <name>Obs</name>
-          <cryptotechnique>OPE</cryptotechnique>
-          <formatsize>1024</formatsize>
+          <!--<cryptotechnique>OPE</cryptotechnique>-->
+          <!--<formatsize>1024</formatsize>-->
           <misc>
             <property>GENERATOR</property>
             <type>String</type>
@@ -70,8 +71,8 @@
         <name>Institution</name>
         <qualifier>
           <name>Name</name>
-          <cryptotechnique>OPE</cryptotechnique>
-          <formatsize>128</formatsize>
+          <!--<cryptotechnique>OPE</cryptotechnique>-->
+          <!--<formatsize>128</formatsize>-->
           <misc>
             <property>GENERATOR</property>
             <type>String</type>
@@ -79,8 +80,8 @@
         </qualifier>
         <qualifier>
           <name>Address</name>
-          <cryptotechnique>OPE</cryptotechnique>
-          <formatsize>256</formatsize>
+          <!--<cryptotechnique>OPE</cryptotechnique>-->
+          <!--<formatsize>256</formatsize>-->
           <misc>
             <property>GENERATOR</property>
             <type>String</type>

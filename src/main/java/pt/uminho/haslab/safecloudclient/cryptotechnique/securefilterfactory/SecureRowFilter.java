@@ -21,12 +21,11 @@ public class SecureRowFilter implements SecureFilterProperties {
         RowFilter plainRowFilter = (RowFilter) plaintextFilter;
 //      In the RowFilter case, the CryptoType is protecting the row key
         switch (cryptoType) {
-            case PLT:
-                return plainRowFilter;
             case STD:
             case DET:
             case FPE:
                 return null;
+            case PLT:
             case OPE:
                 byte[] encryptedRowKey = this.cryptoProperties.encodeRow(plainRowFilter.getComparator().getValue());
                 BinaryComparator bc = new BinaryComparator(encryptedRowKey);
@@ -41,8 +40,6 @@ public class SecureRowFilter implements SecureFilterProperties {
         RowFilter plainRowFilter = (RowFilter) plaintextFilter;
 
         switch (cryptoType) {
-            case PLT :
-                return plainRowFilter;
             case STD :
             case DET :
             case FPE :
@@ -52,6 +49,7 @@ public class SecureRowFilter implements SecureFilterProperties {
                 parserResult[1] = plainRowFilter.getComparator().getValue();
 
                 return parserResult;
+            case PLT :
             case OPE :
 //				Generate a Binary Comparator to perform the comparison with the respective encrypted value
                 return buildEncryptedFilter(plaintextFilter, cryptoType);

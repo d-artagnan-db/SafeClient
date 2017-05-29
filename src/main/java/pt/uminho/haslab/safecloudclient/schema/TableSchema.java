@@ -192,6 +192,17 @@ public class TableSchema {
 		return wantedFamily;
 	}
 
+	public boolean containsFamily(String family) {
+		boolean contains = false;
+		for(Family f : this.columnFamilies) {
+			if(f.getFamilyName().equals(family)) {
+				contains = true;
+				break;
+			}
+		}
+		return contains;
+	}
+
 	/**
 	 * addQualifier(familyName : String, qualifier : Qualifier) method : add a new column qualifier to the respective family collection
 	 * @param familyName column family name
@@ -212,6 +223,17 @@ public class TableSchema {
 			f.addQualifier(qualifier);
 			this.columnFamilies.set(index, f);
 		}
+	}
+
+	public boolean containsQualifier(String family, String qualifier) {
+		boolean contains = false;
+		if (containsFamily(family)) {
+			if(getFamily(family).containsQualifier(qualifier)) {
+				contains = true;
+			}
+		}
+
+		return contains;
 	}
 
 	/**

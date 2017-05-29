@@ -25,6 +25,7 @@ public class OrderPreservingResultScanner implements ResultScanner {
 	 * @return the original Result
 	 * @throws IOException
 	 */
+	@Override
 	public Result next() throws IOException {
 		Result encryptedResult = this.encryptedScanner.next();
 		if (encryptedResult != null) {
@@ -36,14 +37,17 @@ public class OrderPreservingResultScanner implements ResultScanner {
 		}
 	}
 
+	@Override
 	public Result[] next(int i) throws IOException {
 		return encryptedScanner.next(i);
 	}
 
+	@Override
 	public void close() {
 		this.encryptedScanner.close();
 	}
 
+	@Override
 	public Iterator<Result> iterator() {
 		return this.encryptedScanner.iterator();
 	}

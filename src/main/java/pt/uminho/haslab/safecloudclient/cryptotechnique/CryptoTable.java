@@ -11,6 +11,7 @@ import pt.uminho.haslab.cryptoenv.Utils;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.resultscanner.ResultScannerFactory;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.securefilterfactory.SecureFilterConverter;
 import pt.uminho.haslab.safecloudclient.queryengine.QEngineIntegration;
+import pt.uminho.haslab.safecloudclient.schema.Family;
 import pt.uminho.haslab.safecloudclient.schema.SchemaParser;
 import pt.uminho.haslab.safecloudclient.schema.TableSchema;
 
@@ -144,7 +145,7 @@ public class CryptoTable extends HTable {
 
 //			Acknowledge the existing qualifiers
 			if(!SCHEMA_FILE) {
-				this.cryptoProperties.getFamiliesAndQualifiers(put.getFamilyCellMap(), this.qEngine);
+				this.cryptoProperties.dynamicHColumnDescriptorsAddition(put.getFamilyCellMap(), this.qEngine);
 			}
 
 //			Encode the row key
@@ -172,7 +173,7 @@ public class CryptoTable extends HTable {
 				}
 //				Acknowledge the existing qualifiers
 				if(!SCHEMA_FILE) {
-					this.cryptoProperties.getFamiliesAndQualifiers(p.getFamilyCellMap(), this.qEngine);
+					this.cryptoProperties.dynamicHColumnDescriptorsAddition(p.getFamilyCellMap(), this.qEngine);
 				}
 //				Encode the row key
 				Put encPut = new Put(this.cryptoProperties.encodeRow(row));
@@ -210,10 +211,10 @@ public class CryptoTable extends HTable {
 
 //			Acknowledge the existing qualifiers
 			if(!SCHEMA_FILE) {
-				this.cryptoProperties.getFamiliesAndQualifiers(get.getFamilyMap(), this.qEngine);
+				this.cryptoProperties.dynamicHColumnDescriptorsAddition(get.getFamilyMap(), this.qEngine);
 			}
 
-			Map<byte[],List<byte[]>> columns = this.cryptoProperties.getFamiliesAndQualifiers(get.getFamilyMap());
+			Map<byte[],List<byte[]>> columns = this.cryptoProperties.getHColumnDescriptors(get.getFamilyMap());
 
 //			Verify the row key CryptoBox
 			switch (this.cryptoProperties.tableSchema.getKey().getCryptoType()) {
@@ -271,7 +272,6 @@ public class CryptoTable extends HTable {
 		Result[] results = new Result[gets.size()];
 		List<Get> encryptedGets = new ArrayList<>(gets.size());
 
-
 		for(Get g : gets) {
 			byte[] row = g.getRow();
 			if(row.length == 0) {
@@ -280,10 +280,10 @@ public class CryptoTable extends HTable {
 
 //			Acknowledge the existing qualifiers
 			if(!SCHEMA_FILE) {
-				this.cryptoProperties.getFamiliesAndQualifiers(g.getFamilyMap(), this.qEngine);
+				this.cryptoProperties.dynamicHColumnDescriptorsAddition(g.getFamilyMap(), this.qEngine);
 			}
 
-			Map<byte[],List<byte[]>> columns = this.cryptoProperties.getFamiliesAndQualifiers(g.getFamilyMap());
+			Map<byte[],List<byte[]>> columns = this.cryptoProperties.getHColumnDescriptors(g.getFamilyMap());
 
 
 //			First phase: Encrypt all get objects
@@ -376,7 +376,7 @@ public class CryptoTable extends HTable {
 
 //			Acknowledge the existing qualifiers
 			if(!SCHEMA_FILE) {
-				this.cryptoProperties.getFamiliesAndQualifiers(delete.getFamilyCellMap(), this.qEngine);
+				this.cryptoProperties.dynamicHColumnDescriptorsAddition(delete.getFamilyCellMap(), this.qEngine);
 			}
 
 			List<String> cellsToDelete = this.htableUtils.deleteCells(delete.cellScanner());
@@ -427,7 +427,7 @@ public class CryptoTable extends HTable {
 
 //				Acknowledge the existing qualifiers
 				if(!SCHEMA_FILE) {
-					this.cryptoProperties.getFamiliesAndQualifiers(del.getFamilyCellMap(), this.qEngine);
+					this.cryptoProperties.dynamicHColumnDescriptorsAddition(del.getFamilyCellMap(), this.qEngine);
 				}
 
 				List<String> cellsToDelete = this.htableUtils.deleteCells(del.cellScanner());
@@ -486,11 +486,11 @@ public class CryptoTable extends HTable {
 
 //			Acknowledge the existing qualifiers
 			if(!SCHEMA_FILE) {
-				this.cryptoProperties.getFamiliesAndQualifiers(scan.getFamilyMap(), this.qEngine);
+				this.cryptoProperties.dynamicHColumnDescriptorsAddition(scan.getFamilyMap(), this.qEngine);
 			}
 
 //			Transform the original object in an encrypted scan.
-			Scan encScan = this.htableUtils.encryptedScan(scan);
+			Scan encScan = this.htableUtils.buildEncryptedScan(scan);
 			ResultScanner encryptedResultScanner = super.getScanner(encScan);
 
 //			Return the corresponding result scanner to decrypt the resulting set of values
@@ -611,7 +611,6 @@ public class CryptoTable extends HTable {
 		return operationPerformed;
 	}
 
-//	TODO/Warning o que fazer se o qualifier não existi?
 	@Override
 	public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount) {
 		long operationValue = 0;
@@ -631,6 +630,11 @@ public class CryptoTable extends HTable {
 //			In case of default schema, verify and/or create both family and qualifier instances in TableSchema
 			if(!SCHEMA_FILE) {
 				this.htableUtils.createDynamicColumnsForAtomicOperations(this.qEngine, this.tableSchema, temp_family, temp_qualifier);
+			}
+			else {
+				if(!this.tableSchema.containsQualifier(temp_family, temp_qualifier)) {
+					throw new NullPointerException("Column qualifier "+temp_family+":"+temp_qualifier+" not defined in schema file.");
+				}
 			}
 
 			switch (this.tableSchema.getCryptoTypeFromQualifier(temp_family, temp_qualifier)) {
@@ -729,6 +733,11 @@ public class CryptoTable extends HTable {
 //			In case of default schema, verify and/or create both family and qualifier instances in TableSchema
 			if(!SCHEMA_FILE) {
 				this.htableUtils.createDynamicColumnsForAtomicOperations(this.qEngine, this.tableSchema, new String(family), null);
+			}
+			else {
+				if(!this.tableSchema.containsFamily(new String(family))) {
+					throw new NullPointerException("Column family "+new String(family)+" not defined in schema file.");
+				}
 			}
 
 			switch(this.tableSchema.getKey().getCryptoType()) {
