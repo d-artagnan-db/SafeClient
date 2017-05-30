@@ -1,9 +1,11 @@
-package pt.uminho.haslab.safecloudclient.cryptotechnique;
+package pt.uminho.haslab.safecloudclient.cryptotechnique.resultscanner;
 
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.util.Bytes;
+import pt.uminho.haslab.cryptoenv.Utils;
+import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -41,14 +43,14 @@ public class FormatPreservingResultScanner implements ResultScanner {
      * @param filter filter propeties. In case of RowFilter(CompareOperation,CompareValue). In case of SingleColumnValueFilter(Family,Qualififer,CompareOperation,CompareValue).
      */
     public void setFilters(byte[] startRow, byte[] endRow, Object filter) {
-        if (startRow.length != 0) {
+        if (startRow != null && startRow.length != 0) {
             this.hasStartRow = true;
             this.startRow = startRow;
         } else {
             this.hasStartRow = false;
         }
 
-        if (endRow.length != 0) {
+        if (endRow != null && endRow.length != 0) {
             this.hasEndRow = true;
             this.endRow = endRow;
         } else {
@@ -108,19 +110,19 @@ public class FormatPreservingResultScanner implements ResultScanner {
         Bytes.ByteArrayComparator byteArrayComparator = new Bytes.ByteArrayComparator();
 
         if (hasStartRow && hasEndRow) {
-            // row = Utils.addPadding(row, paddingSize);
-            // startRow = Utils.addPadding(startRow, paddingSize);
-            // endRow = Utils.addPadding(endRow, paddingSize);
+             row = Utils.addPadding(row, paddingSize);
+             startRow = Utils.addPadding(startRow, paddingSize);
+             endRow = Utils.addPadding(endRow, paddingSize);
 
             digest = (byteArrayComparator.compare(row, startRow) >= 0 && byteArrayComparator.compare(row, endRow) < 0);
         } else if (hasStartRow && !hasEndRow) {
-            // row = Utils.addPadding(row, paddingSize);
-            // startRow = Utils.addPadding(startRow, paddingSize);
+             row = Utils.addPadding(row, paddingSize);
+             startRow = Utils.addPadding(startRow, paddingSize);
 
             digest = (byteArrayComparator.compare(row, startRow) >= 0);
         } else if (hasEndRow) {
-            // row = Utils.addPadding(row, paddingSize);
-            // endRow = Utils.addPadding(endRow, paddingSize);
+             row = Utils.addPadding(row, paddingSize);
+             endRow = Utils.addPadding(endRow, paddingSize);
 
             digest = (byteArrayComparator.compare(row, endRow) < 0);
         } else {
@@ -140,8 +142,8 @@ public class FormatPreservingResultScanner implements ResultScanner {
     public boolean digestFilter(int paddingSize, byte[] main, byte[] value) {
         boolean digest = true;
         Bytes.ByteArrayComparator byteArrayComparator = new Bytes.ByteArrayComparator();
-        // row = Utils.addPadding(row, paddingSize);
-        // value = Utils.addPadding(value, paddingSize);
+         main = Utils.addPadding(main, paddingSize);
+         value = Utils.addPadding(value, paddingSize);
 
         switch (this.compareOp) {
             case EQUAL :
@@ -176,13 +178,13 @@ public class FormatPreservingResultScanner implements ResultScanner {
         boolean digest;
         if (res != null) {
             byte[] row = this.cProperties.decodeRow(res.getRow());
-            // int paddingSize = getPaddingSize(row);
+            int paddingSize = this.cProperties.tableSchema.getKey().getFormatSize();
 
-            digest = digestStartEndRow(0, row);
+            digest = digestStartEndRow(paddingSize, row);
 
             if (hasFilter && digest) {
                 if(this.filterType.equals("RowFilter")) {
-                    digest = digestFilter(0, row, this.compareValue);
+                    digest = digestFilter(paddingSize, row, this.compareValue);
                 }
 //				else if(this.filterType.equals("SingleColumnValueFilter")) {
 //					byte[] qualifierValue = this.cProperties.decodeValue(

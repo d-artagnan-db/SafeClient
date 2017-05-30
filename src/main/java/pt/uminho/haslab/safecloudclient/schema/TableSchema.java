@@ -177,6 +177,32 @@ public class TableSchema {
 		this.columnFamilies.add(fam);
 	}
 
+	public Family getFamily(String familyName) {
+		Family wantedFamily = null;
+		boolean hasFamily = false;
+		Iterator<Family> family_iterator = this.columnFamilies.iterator();
+		while(family_iterator.hasNext() && !hasFamily) {
+			Family temp_family = family_iterator.next();
+			if(temp_family.getFamilyName().equals(familyName)) {
+				wantedFamily = temp_family;
+				hasFamily = true;
+			}
+		}
+
+		return wantedFamily;
+	}
+
+	public boolean containsFamily(String family) {
+		boolean contains = false;
+		for(Family f : this.columnFamilies) {
+			if(f.getFamilyName().equals(family)) {
+				contains = true;
+				break;
+			}
+		}
+		return contains;
+	}
+
 	/**
 	 * addQualifier(familyName : String, qualifier : Qualifier) method : add a new column qualifier to the respective family collection
 	 * @param familyName column family name
@@ -199,6 +225,17 @@ public class TableSchema {
 		}
 	}
 
+	public boolean containsQualifier(String family, String qualifier) {
+		boolean contains = false;
+		if (containsFamily(family)) {
+			if(getFamily(family).containsQualifier(qualifier)) {
+				contains = true;
+			}
+		}
+
+		return contains;
+	}
+
 	/**
 	 * getCryptoTypeFromQualifier(family : String, qualifier : String)  method : get the CryptoType of a given family:qualifier
 	 * @param family column family
@@ -218,7 +255,11 @@ public class TableSchema {
 				break;
 			}
 		}
-		return cType;
+		if (cType == null) {
+			throw new NullPointerException("The specified qualifier does not exists.");
+		} else {
+			return cType;
+		}
 	}
 
 //	public CryptoTechnique.CryptoType getCryptoTypeFromQualifier(String family, String qualifier) {

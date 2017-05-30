@@ -23,6 +23,8 @@ import pt.uminho.haslab.safecloudclient.schema.SchemaParser;
 import pt.uminho.haslab.safecloudclient.schema.TableSchema;
 import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
 import pt.uminho.haslab.testingutils.ValuesGenerator;
+
+import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Collection;
@@ -75,8 +77,11 @@ public abstract class SimpleHBaseTest {
 			throws ZooKeeperConnectionException, IOException, Exception {
 
 		if (!client.checkTableExists(tableName)) {
+			ClassLoader cl = getClass().getClassLoader();
+			File schemaFile = new File("src/main/resources/schema.xml");
+
 			SchemaParser schema = new SchemaParser();
-			schema.parse("schema.xml");
+			schema.parse(schemaFile.getPath());
 			System.out.println("DATABASE SCHEMA: \n"+schema.printDatabaseSchemas());
 
 			TableSchema ts = schema.getTableSchema("usertable");

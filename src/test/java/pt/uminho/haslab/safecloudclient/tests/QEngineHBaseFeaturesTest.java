@@ -23,6 +23,21 @@ public class QEngineHBaseFeaturesTest extends QEngineTest {
     public Random random;
     HBaseAdmin admin;
 
+//    TODO put - all fields
+//    TODO put - just some fields
+//    TODO get - all fields
+//    TODO get - just some fields
+//    TODO delete - all fields
+//    TODO delete - just some fields
+//    TODO scan - all fields
+//    TODO scan - just some fields
+//    TODO scan - with/without start row
+//    TODO scan - with/without stop row
+//    TODO filter - with filters (single column value filter)
+//    TODO Other constructors
+//    TODO Scan setCaching()
+
+
     public QEngineHBaseFeaturesTest(int maxBits, List<BigInteger> values) throws Exception {
         super(maxBits, values);
         this.utils = new Utils();
@@ -44,8 +59,9 @@ public class QEngineHBaseFeaturesTest extends QEngineTest {
 
         getColumnFamilies(tableName);
 
-        testPut(table, 10);
-        testGet(table, 10);
+//        testPut(table, 10);
+//        testGet(table, 10);
+        testScan(table);
     }
 
     public void testPut(HTableInterface table, int totalOperations) {
@@ -89,6 +105,24 @@ public class QEngineHBaseFeaturesTest extends QEngineTest {
             }
         }
     }
+
+    public void testScan(HTableInterface table) {
+        Scan s = new Scan();
+        for(String family : this.families) {
+            for (String qualifier : this.qualifiers) {
+                s.addColumn(family.getBytes(), qualifier.getBytes());
+            }
+        }
+
+        try {
+            ResultScanner resultScanner = table.getScanner(s);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
 
     public void getColumnFamilies(String tableName) throws IOException {
         HTableDescriptor tableDescriptor = admin.getTableDescriptor(TableName.valueOf(tableName));

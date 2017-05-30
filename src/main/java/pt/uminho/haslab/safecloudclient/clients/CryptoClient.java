@@ -35,13 +35,13 @@ public class CryptoClient implements TestClient {
 		Configuration conf = new Configuration();
 		conf.addResource("conf.xml");
 
-		CryptoTable ct = new CryptoTable(conf, tableName, this.schemaFile);
+		CryptoTable ct = new CryptoTable(conf, tableName);
 		byte[] key = Utils.readKeyFromFile("key.txt");
 
 		ct.cryptoProperties.setKey(CryptoType.STD, key);
 		ct.cryptoProperties.setKey(CryptoType.DET, key);
 		ct.cryptoProperties.setKey(CryptoType.OPE, key);
-		ct.cryptoProperties.setKey(CryptoType.FPE, key);
+//		ct.cryptoProperties.setKey(CryptoType.FPE, key);
 
 		System.out.println("Table created Successfully");
 		return ct;
