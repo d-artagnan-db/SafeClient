@@ -519,24 +519,21 @@ public class CryptoProperties {
 	public Map<byte[], List<byte[]>> getHColumnDescriptors(Map<byte[], NavigableSet<byte[]>> familiesAndQualifiers) {
 		String opeValue = "_STD";
 		Map<byte[],List<byte[]>> result = new HashMap<>();
-		for(byte[] family : familiesAndQualifiers.keySet()) {
-			NavigableSet<byte[]> q = familiesAndQualifiers.get(family);
-			if(q==null) {
-				System.out.println(familiesAndQualifiers.toString());
-			} else
-			if (!q.isEmpty()) {
-				Iterator i = q.iterator();
+
+		for(Map.Entry<byte[], NavigableSet<byte[]>> entry : familiesAndQualifiers.entrySet()) {
+			if(!entry.getValue().isEmpty()) {
+				Iterator i = entry.getValue().iterator();
 				List<byte[]> qualifierList = new ArrayList<>();
 				while (i.hasNext()) {
 					byte[] qualifier = (byte[]) i.next();
 					qualifierList.add(qualifier);
-					if (tableSchema.getCryptoTypeFromQualifier(new String(family, Charset.forName("UTF-8")), new String(qualifier, Charset.forName("UTF-8"))) == CryptoTechnique.CryptoType.OPE) {
+					if (tableSchema.getCryptoTypeFromQualifier(new String(entry.getKey(), Charset.forName("UTF-8")), new String(qualifier, Charset.forName("UTF-8"))) == CryptoTechnique.CryptoType.OPE) {
 						String q_std = new String(qualifier, Charset.forName("UTF-8"));
 						qualifierList.add((q_std + opeValue).getBytes(Charset.forName("UTF-8")));
 					}
 
 				}
-				result.put(family, qualifierList);
+				result.put(entry.getKey(), qualifierList);
 			}
 		}
 
@@ -544,24 +541,20 @@ public class CryptoProperties {
 	}
 
 	public void dynamicHColumnDescriptorsAddition(Map<byte[], NavigableSet<byte[]>> familiesAndQualifiers, QEngineIntegration qEngine) {
-		for(byte[] temp_family : familiesAndQualifiers.keySet()) {
-			String family = new String(temp_family, Charset.forName("UTF-8"));
-			NavigableSet<byte[]> q = familiesAndQualifiers.get(temp_family);
-			if(q == null) {
-				System.out.println(familiesAndQualifiers.toString());
-//				throw new NullPointerException("No qualifiers for "+family+" family.");
-			}else
-			if (!q.isEmpty()) {
-				Iterator i = q.iterator();
-				List<byte[]> qualifierList = new ArrayList<>();
-				while (i.hasNext()) {
-					byte[] temp_qualifier = (byte[]) i.next();
-					String qualifier = new String(temp_qualifier, Charset.forName("UTF-8"));
-					qualifierList.add(temp_qualifier);
-					if(!qEngine.doesFamilyContainsQualifier(this.tableSchema, family, qualifier)) {
-						this.tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier, CryptoTechnique.CryptoType.OPE));
-						this.tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier+"_STD", CryptoTechnique.CryptoType.STD));
-						replaceQualifierCryptoHandler(family, qualifier, CryptoTechnique.CryptoType.OPE, qEngine.getFamilyFormatSize());
+		if(!familiesAndQualifiers.isEmpty()) {
+			for (Map.Entry<byte[], NavigableSet<byte[]>> entry : familiesAndQualifiers.entrySet()) {
+				if (!entry.getValue().isEmpty()) {
+					String family = new String(entry.getKey(), Charset.forName("UTF-8"));
+					Iterator i = entry.getValue().iterator();
+
+					while (i.hasNext()) {
+						byte[] temp_qualifier = (byte[]) i.next();
+						String qualifier = new String(temp_qualifier, Charset.forName("UTF-8"));
+						if (!qEngine.doesFamilyContainsQualifier(this.tableSchema, family, qualifier)) {
+							this.tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier, CryptoTechnique.CryptoType.OPE));
+							this.tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier + "_STD", CryptoTechnique.CryptoType.STD));
+							replaceQualifierCryptoHandler(family, qualifier, CryptoTechnique.CryptoType.OPE, qEngine.getFamilyFormatSize());
+						}
 					}
 				}
 			}

@@ -81,11 +81,9 @@ public class CryptoTable extends HTable {
 		File cryptographicKey = new File("src/main/resources/key.txt");
 		byte[] key;
 		if(cryptographicKey.isFile() && cryptographicKey.getName().equals("key.txt")) {
-			System.out.println("File key available.");
 			key = Utils.readKeyFromFile(cryptographicKey.getPath());
 		}
 		else {
-			System.out.println("No key available. Default key used.");
 			key = new byte[]{(byte) 0x2B, (byte) 0x7E, (byte) 0x15, (byte) 0x16, (byte) 0x28, (byte) 0xAE, (byte) 0xD2,
 					(byte) 0xA6, (byte) 0xAB, (byte) 0xF7, (byte) 0x15, (byte) 0x88, (byte) 0x09, (byte) 0xCF,
 					(byte) 0x4F, (byte) 0x3C};
@@ -119,10 +117,8 @@ public class CryptoTable extends HTable {
 		if (filename == null) {
 			throw new NullPointerException("Schema file name cannot be null.");
 		}
-		System.out.println("Fiz init table schema: ");
 		SchemaParser schemaParser = new SchemaParser();
 		schemaParser.parse(filename);
-		System.out.println(schemaParser.getSchemas().get("usertable").toString());
 		return schemaParser.getTableSchema(tablename);
 	}
 
@@ -150,11 +146,7 @@ public class CryptoTable extends HTable {
 
 //			Encode the row key
 			Put encPut = new Put(this.cryptoProperties.encodeRow(row));
-			System.out.println("Put(before): "+encPut.toString());
-//			System.out.println("Going to put (plaintext): "+Arrays.toString(row));
 			this.htableUtils.encryptCells(put.cellScanner(), this.tableSchema, encPut, this.cryptoProperties);
-			System.out.println("Put(after): "+encPut.toString());
-
 			super.put(encPut);
 
 		} catch (IOException e) {
@@ -177,9 +169,7 @@ public class CryptoTable extends HTable {
 				}
 //				Encode the row key
 				Put encPut = new Put(this.cryptoProperties.encodeRow(row));
-//				System.out.println("Going to put (plaintext): "+Arrays.toString(row));
 				this.htableUtils.encryptCells(p.cellScanner(), this.tableSchema, encPut, this.cryptoProperties);
-
 				encryptedPuts.add(encPut);
 			}
 
@@ -402,9 +392,7 @@ public class CryptoTable extends HTable {
 				case OPE :
 				case FPE :
 					Delete encDelete = new Delete(this.cryptoProperties.encodeRow(row));
-					System.out.println("Delete (before wrapping): "+encDelete.toString());
 					this.htableUtils.wrapDeletedCells(cellsToDelete, encDelete);
-					System.out.println("Delete (after wrapping): "+encDelete.toString());
 					super.delete(encDelete);
 					break;
 				default :
@@ -453,9 +441,7 @@ public class CryptoTable extends HTable {
 					case OPE:
 					case FPE:
 						Delete encryptedDelete = new Delete(this.cryptoProperties.encodeRow(row));
-						System.out.println("Delete (before wrapping): " + encryptedDelete.toString());
 						this.htableUtils.wrapDeletedCells(cellsToDelete, encryptedDelete);
-						System.out.println("Delete (after wrapping): " + encryptedDelete.toString());
 						encryptedDeletes.add(encryptedDelete);
 						break;
 					default:
@@ -492,11 +478,8 @@ public class CryptoTable extends HTable {
 //			Transform the original object in an encrypted scan.
 			Scan encScan = this.htableUtils.buildEncryptedScan(scan);
 			encScan.setCaching(scan.getCaching());
-			encScan.setBatch(scan.getBatch());
-			encScan.setCacheBlocks(scan.getCacheBlocks());
 
 			ResultScanner encryptedResultScanner = super.getScanner(encScan);
-
 //			Return the corresponding result scanner to decrypt the resulting set of values
 			return this.resultScannerFactory.getResultScanner(
 					this.htableUtils.verifyFilterCryptoType(scan),
@@ -516,7 +499,7 @@ public class CryptoTable extends HTable {
 	@Override
 	public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier, byte[] value, Put put) {
 		boolean operationPerformed = false;
-		System.out.println("Secure Check and Put");
+
 		try {
 			if(row.length == 0) {
 				throw new NullPointerException("Row Key cannot be null.");
@@ -576,7 +559,6 @@ public class CryptoTable extends HTable {
 //						step 1 : encrypt row and value
 					byte[] encryptedRow = this.cryptoProperties.encodeRow(row);
 					byte[] encryptedValue;
-//					TODO testar isto a fundo
 					if(cryptoProperties.tableSchema.getCryptoTypeFromQualifier(new String(family), new String(qualifier)) == CryptoTechnique.CryptoType.STD) {
 						Result encryptedResult = super.get(new Get(encryptedRow));
 						Result temp_result = this.cryptoProperties.decodeResult(row, encryptedResult);
@@ -643,7 +625,6 @@ public class CryptoTable extends HTable {
 
 			switch (this.tableSchema.getCryptoTypeFromQualifier(temp_family, temp_qualifier)) {
 				case PLT:
-//					TODO testar isto a fundo
 					if(this.cryptoProperties.tableSchema.getKey().getCryptoType() != CryptoTechnique.CryptoType.STD) {
 						operationValue = super.incrementColumnValue(this.cryptoProperties.encodeRow(row), family, qualifier, amount);
 					}
@@ -723,7 +704,6 @@ public class CryptoTable extends HTable {
 		}
 	}
 
-//	TODO testar isto a fundo
 	@Override
 	public Result getRowOrBefore(byte[] row, byte[] family) {
 		try {
