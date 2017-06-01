@@ -109,10 +109,8 @@ public class HTableFeaturesUtils {
             for(String c : cellsToDelete) {
                 String[] familiesAndQualifiers = c.split("#");
                 if(familiesAndQualifiers.length == 1) {
-                    System.out.println("Só tem family");
                     delete.deleteFamily(familiesAndQualifiers[0].getBytes());
                 } else if(familiesAndQualifiers.length == 2) {
-                    System.out.println("Tem family e qualifier");
                     delete.deleteColumns(familiesAndQualifiers[0].getBytes(), familiesAndQualifiers[1].getBytes());
                 } else {
                     throw new IllegalArgumentException("Family or qualifier cannot contains # character.");
@@ -144,12 +142,12 @@ public class HTableFeaturesUtils {
      * @return an encrypted scan with the respective start and stop row, both encrypted with the row key CryptoBox
      */
     public Scan encodeDelimitingRows(Scan encScan, byte[] startRow, byte[] stopRow) {
-        if (startRow != null && stopRow != null) {
+        if (startRow != null && startRow.length != 0 && stopRow != null && stopRow.length != 0) {
             encScan.setStartRow(cp.encodeRow(startRow));
             encScan.setStopRow(cp.encodeRow(stopRow));
-        } else if (startRow != null && stopRow == null) {
+        } else if (startRow != null && startRow.length != 0 && stopRow == null) {
             encScan.setStartRow(cp.encodeRow(startRow));
-        } else if (startRow == null && stopRow != null) {
+        } else if (startRow == null && stopRow != null && stopRow.length != 0) {
             encScan.setStopRow(cp.encodeRow(stopRow));
         }
         return encScan;
@@ -170,10 +168,9 @@ public class HTableFeaturesUtils {
             Filter encryptedFilter = secureFilterConverter.buildEncryptedFilter(s.getFilter(), this.cp.tableSchema.getKey().getCryptoType());
             encScan = new Scan();
             Map<byte[], List<byte[]>> cols = cp.getHColumnDescriptors(s.getFamilyMap());
-            for (byte[] f : cols.keySet()) {
-                List<byte[]> qualifiersTemp = cols.get(f);
-                for (byte[] q : qualifiersTemp) {
-                    encScan.addColumn(f, q);
+            for(Map.Entry<byte[], List<byte[]>> entry : cols.entrySet()) {
+                for(byte[] qualifier : entry.getValue()) {
+                    encScan.addColumn(entry.getKey(), qualifier);
                 }
             }
 
@@ -197,7 +194,7 @@ public class HTableFeaturesUtils {
 //		get the CryptoType of the Scan/Filter operation
             CryptoTechnique.CryptoType scanCryptoType = isScanOrFilter(s);
 //		Map the database column families and qualifiers into a collection
-            Map<byte[], List<byte[]>> columns = cp.getHColumnDescriptors(s.getFamilyMap());
+            Map<byte[], List<byte[]>> hColumnDescriptors = cp.getHColumnDescriptors(s.getFamilyMap());
 
             switch (scanCryptoType) {
 //			In case of standard or deterministic encryption, since no order is preserved a full table scan must be performed.
@@ -207,10 +204,9 @@ public class HTableFeaturesUtils {
                 case FPE:
                     encScan = new Scan();
 //				Add only the specified qualifiers in the original scan (s), instead of retrieve all (unnecessary) values).
-                    for (byte[] f : columns.keySet()) {
-                        List<byte[]> qualifiersTemp = columns.get(f);
-                        for (byte[] q : qualifiersTemp) {
-                            encScan.addColumn(f, q);
+                    for (Map.Entry<byte[], List<byte[]>> cols : hColumnDescriptors.entrySet()) {
+                        for(byte[] qualifier : cols.getValue()) {
+                            encScan.addColumn(cols.getKey(), qualifier);
                         }
                     }
 //				Since the scanCryptoType defines the CryptoType of the scan or filter operaion, in case of SingleColumnValueFilter,
@@ -234,16 +230,16 @@ public class HTableFeaturesUtils {
                 case OPE:
                     encScan = new Scan();
 //				Add only the specified qualifiers in the original scan (s), instead of retrieve all (unnecessary) values).
-                    for (byte[] f : columns.keySet()) {
-                        List<byte[]> qualifiersTemp = columns.get(f);
-                        for (byte[] q : qualifiersTemp) {
-                            encScan.addColumn(f, q);
+                    for (Map.Entry<byte[], List<byte[]>> cols : hColumnDescriptors.entrySet()) {
+                        for(byte[] qualifier : cols.getValue()) {
+                            encScan.addColumn(cols.getKey(), qualifier);
                         }
                     }
 //				Since the scanCryptoType defines the CryptoType of the scan or filter operaion, in case of SingleColumnValueFilter,
 // 				the start and stop row must be encoded with the respective row key CryptoBox
                     if ((cp.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.PLT) ||
                             (cp.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.OPE)) {
+                        System.out.println("Vou fazer uma delimiting rows.");
                         encScan = encodeDelimitingRows(encScan, startRow, stopRow);
                     }
                     if (s.hasFilter()) {

@@ -31,7 +31,6 @@ public class SecureFilterConverter implements SecureFilterProperties{
 
     @Override
     public Filter buildEncryptedFilter(Filter plaintextFilter, CryptoTechnique.CryptoType cType) {
-        System.out.println("Filter Type: "+this.getFilterType(plaintextFilter));
         FilterType fType = getFilterType(plaintextFilter);
         if(fType != null) {
             switch (fType) {
