@@ -1,9 +1,6 @@
 package pt.uminho.haslab.safecloudclient.cryptotechnique.securefilterfactory;
 
-import org.apache.hadoop.hbase.filter.Filter;
-import org.apache.hadoop.hbase.filter.FilterList;
-import org.apache.hadoop.hbase.filter.RowFilter;
-import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
+import org.apache.hadoop.hbase.filter.*;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties;
 
@@ -19,7 +16,8 @@ public class SecureFilterConverter implements SecureFilterProperties{
     public enum FilterType {
         RowFilter,
         SingleColumnValueFilter,
-        FilterList
+        FilterList,
+        WhileMatchFilter
     }
 
     public SecureFilterConverter(CryptoProperties cryptoProperties) {
@@ -31,7 +29,6 @@ public class SecureFilterConverter implements SecureFilterProperties{
 
     @Override
     public Filter buildEncryptedFilter(Filter plaintextFilter, CryptoTechnique.CryptoType cType) {
-        System.out.println("Filter Type: "+this.getFilterType(plaintextFilter));
         FilterType fType = getFilterType(plaintextFilter);
         if(fType != null) {
             switch (fType) {
@@ -41,8 +38,10 @@ public class SecureFilterConverter implements SecureFilterProperties{
                     return new SecureSingleColumnValueFilter(this.cryptoProperties).buildEncryptedFilter(plaintextFilter, cType);
                 case FilterList:
                     return new SecureFilterList(this.cryptoProperties).buildEncryptedFilter(plaintextFilter, cType);
+                case WhileMatchFilter:
+                    return new SecureWhileMatchFilter(this.cryptoProperties).buildEncryptedFilter(plaintextFilter, cType);
                 default:
-                    return null;
+                    throw new UnsupportedOperationException("Secure object not supported for the specified filter.");
             }
         }
         else {
@@ -61,12 +60,14 @@ public class SecureFilterConverter implements SecureFilterProperties{
                     return new SecureSingleColumnValueFilter(this.cryptoProperties).parseFilter(plaintextFilter, cryptoType);
                 case FilterList:
                     return new SecureFilterList(this.cryptoProperties).parseFilter(plaintextFilter, cryptoType);
+                case WhileMatchFilter:
+                    return new SecureWhileMatchFilter(this.cryptoProperties).parseFilter(plaintextFilter, cryptoType);
                 default:
-                    return null;
+                    throw new UnsupportedOperationException("Secure object not supported for the specified filter.");
             }
         }
         else {
-            throw new UnsupportedOperationException("Secure operation not supported for the specified filter.");
+            throw new NullPointerException("FilterType cannot be null.");
         }
     }
 
@@ -81,26 +82,31 @@ public class SecureFilterConverter implements SecureFilterProperties{
                     return new SecureSingleColumnValueFilter(this.cryptoProperties).getFilterCryptoType(plaintextFilter);
                 case FilterList:
                     return new SecureFilterList(this.cryptoProperties).getFilterCryptoType(plaintextFilter);
+                case WhileMatchFilter:
+                    return new SecureWhileMatchFilter(this.cryptoProperties).getFilterCryptoType(plaintextFilter);
                 default:
-                   return null;
+                    throw new UnsupportedOperationException("Secure object not supported for the specified filter.");
             }
         }
         else {
-            throw new UnsupportedOperationException("Secure operation not supported for the specified filter.");
+            throw new NullPointerException("FilterType cannot be null.");
         }
     }
 
     static FilterType getFilterType(Filter filter) {
         if(filter != null) {
-            switch (filter.getClass().getSimpleName()) {
+            String filterClass = filter.getClass().getSimpleName();
+            switch (filterClass) {
                 case "RowFilter":
                     return FilterType.RowFilter;
                 case "SingleColumnValueFilter":
                     return FilterType.SingleColumnValueFilter;
                 case "FilterList":
                     return FilterType.FilterList;
+                case "WhileMatchFilter":
+                    return FilterType.WhileMatchFilter;
                 default:
-                    return null;
+                    throw new UnsupportedOperationException("Filter class not supported.");
             }
         }
         else {

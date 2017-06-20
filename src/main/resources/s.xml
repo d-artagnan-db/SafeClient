@@ -2,9 +2,9 @@
   <table>
     <name>usertable</name>
     <default>
-      <key>OPE</key>
-      <columns>DET</columns>
-      <formatsize>10</formatsize>
+      <key>PLT</key>
+      <columns>PLT</columns>
+      <formatsize>100</formatsize>
     </default>
     <key>
       <!--<formatsize>10</formatsize>-->

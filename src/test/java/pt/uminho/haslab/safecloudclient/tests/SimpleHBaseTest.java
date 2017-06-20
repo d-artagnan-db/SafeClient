@@ -4,7 +4,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
 
 import pt.uminho.haslab.safecloudclient.clients.TestClient;
 
@@ -31,13 +30,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import static pt.uminho.haslab.cryptoenv.CryptoTechnique.CryptoType.DET;
-import static pt.uminho.haslab.cryptoenv.CryptoTechnique.CryptoType.OPE;
-import static pt.uminho.haslab.cryptoenv.CryptoTechnique.CryptoType.STD;
+
 import pt.uminho.haslab.cryptoenv.Utils;
 import pt.uminho.haslab.safecloudclient.clients.CryptoClient;
-import pt.uminho.haslab.safecloudclient.clients.PlaintextClient;
-import pt.uminho.haslab.safecloudclient.clients.ShareClient;
 
 @RunWith(Parameterized.class)
 public abstract class SimpleHBaseTest {
@@ -66,7 +61,7 @@ public abstract class SimpleHBaseTest {
 
 		LOG.debug("Creating clients");
 
-		theClients.put(new CryptoClient("schema.xml"), "usertable");
+		theClients.put(new CryptoClient("s.xml"), "usertable");
 
 		System.out.println("Client created");
 
@@ -78,7 +73,7 @@ public abstract class SimpleHBaseTest {
 
 		if (!client.checkTableExists(tableName)) {
 			ClassLoader cl = getClass().getClassLoader();
-			File schemaFile = new File("src/main/resources/schema.xml");
+			File schemaFile = new File("src/main/resources/s.xml");
 
 			SchemaParser schema = new SchemaParser();
 			schema.parse(schemaFile.getPath());
@@ -142,11 +137,11 @@ public abstract class SimpleHBaseTest {
 				Configuration conf = new Configuration();
 				conf.addResource("conf.xml");
 
-				 HBaseAdmin admin = new HBaseAdmin(conf);
-				 admin.disableTable(tableName);
-				 LOG.debug("Table disabled.");
-				 admin.deleteTable(tableName);
-				 LOG.debug("Table dropped.");
+//				 HBaseAdmin admin = new HBaseAdmin(conf);
+//				 admin.disableTable(tableName);
+//				 LOG.debug("Table disabled.");
+//				 admin.deleteTable(tableName);
+//				 LOG.debug("Table dropped.");
 			}
 
 			client.stopCluster();

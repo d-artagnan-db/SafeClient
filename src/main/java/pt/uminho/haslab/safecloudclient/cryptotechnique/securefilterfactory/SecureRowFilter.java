@@ -1,15 +1,20 @@
 package pt.uminho.haslab.safecloudclient.cryptotechnique.securefilterfactory;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.filter.BinaryComparator;
+import org.apache.hadoop.hbase.filter.ByteArrayComparable;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.RowFilter;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties;
+import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoTable;
 
 /**
  * Created by rgmacedo on 5/23/17.
  */
 public class SecureRowFilter implements SecureFilterProperties {
+    static final Log LOG = LogFactory.getLog(CryptoTable.class.getName());
     public CryptoProperties cryptoProperties;
 
     public SecureRowFilter(CryptoProperties cryptoProperties) {
@@ -24,11 +29,12 @@ public class SecureRowFilter implements SecureFilterProperties {
             case STD:
             case DET:
             case FPE:
-                return null;
+                LOG.error("SecureRowFilter.class:buildEncryptedFilter:UnsupportedOperationException: RowFilter operation not supported for non-order-preserving CryptoBoxes.");
+                throw new UnsupportedOperationException("RowFilter operation not supported for non-order-preserving CryptoBoxes.");
             case PLT:
             case OPE:
                 byte[] encryptedRowKey = this.cryptoProperties.encodeRow(plainRowFilter.getComparator().getValue());
-                BinaryComparator bc = new BinaryComparator(encryptedRowKey);
+                ByteArrayComparable bc = this.cryptoProperties.checkComparatorType(plainRowFilter.getComparator(), encryptedRowKey, cryptoType);
                 return new RowFilter(plainRowFilter.getOperator(), bc);
             default:
                 return null;

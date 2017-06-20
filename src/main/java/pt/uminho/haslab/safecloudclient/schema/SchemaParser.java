@@ -1,8 +1,11 @@
 package pt.uminho.haslab.safecloudclient.schema;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dom4j.*;
 import org.dom4j.io.SAXReader;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
+import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoTable;
 
 import javax.naming.directory.SchemaViolationException;
 import java.io.File;
@@ -16,6 +19,7 @@ import java.util.NoSuchElementException;
  * Used to parse the database schema file.
  */
 public class SchemaParser {
+	static final Log LOG = LogFactory.getLog(CryptoTable.class.getName());
 	public Map<String,TableSchema> tableSchemas;
 
 	public SchemaParser() {
@@ -47,7 +51,6 @@ public class SchemaParser {
 			SAXReader reader = new SAXReader();
 			Document document = reader.read(inputFile);
 
-//			System.out.println("Root Element: " + document.getRootElement().getName());
 //			Map the schema file into an Element object
 			Element rootElement = document.getRootElement();
 
@@ -59,9 +62,8 @@ public class SchemaParser {
 
 
 			long stopttime = System.currentTimeMillis();
-//			System.out.println("Parsing Time: " + (stopttime - starttime));
 		} catch (DocumentException e) {
-			System.out.println("DocumentException - "+e.getMessage());
+			LOG.error("DocumentException - "+e.getMessage());
 		}
 	}
 

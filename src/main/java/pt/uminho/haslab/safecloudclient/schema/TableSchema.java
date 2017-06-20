@@ -273,7 +273,6 @@ public class TableSchema {
 //				while(qualifier_iterator.hasNext() && !catched) {
 //					Qualifier temp_qualifier = qualifier_iterator.next();
 //					if(temp_qualifier.getName().equals(qualifier)) {
-//						System.out.println(">>>>>>>>>>>>>>>>>>>>Encontrou<<<<<<<<<<<<<<<<<<<<<");
 //						catched = true;
 //						cType = temp_qualifier.getCryptoType();
 //					}

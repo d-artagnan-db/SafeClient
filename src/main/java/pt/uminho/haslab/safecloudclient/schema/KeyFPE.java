@@ -74,7 +74,6 @@ public class KeyFPE extends Key {
         byte[] security_parameters = new byte[key.length+temp_tweak.length];
         System.arraycopy(key, 0, security_parameters, 0, key.length);
         System.arraycopy(temp_tweak, 0, security_parameters, key.length, temp_tweak.length);
-        System.out.println("Key+Tweak["+ Arrays.toString(security_parameters)+"]");
         return security_parameters;
     }
 

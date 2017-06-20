@@ -10,17 +10,25 @@ import pt.uminho.haslab.safecloudclient.schema.TableSchema;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by rgmacedo on 5/11/17.
  */
 public class QEngineIntegration {
-    private final int keyFormatSize = 10;
-    private final int familyFormatSize = 32;
-    private final CryptoTechnique.CryptoType cType = CryptoTechnique.CryptoType.OPE;
+    private final int keyFormatSize = 100;
+    private final int familyFormatSize = 100;
+//    WARNING: changed from OPE to PLT
+    private final CryptoTechnique.CryptoType cType = CryptoTechnique.CryptoType.PLT;
+
+    private String[] protectedTables;
 
     public QEngineIntegration() {
-
+        this.protectedTables = new String[]{
+                "R-maxdata-CLINIDATA_NEW-DTW_PATIENT",
+                "R-maxdata-CLINIDATA_NEW-DTW_PATIENT_ID_BY_PATIENT",
+                "R-maxdata-CLINIDATA_NEW-DTW_TEST_RESULT"
+        };
     }
 
     public TableSchema buildQEngineTableSchema(String tablename, HColumnDescriptor[] descriptors) {
@@ -69,8 +77,16 @@ public class QEngineIntegration {
         return new Family(familyName, this.cType, this.familyFormatSize);
     }
 
+    public Family createPersonalizedFamily(String familyName, CryptoTechnique.CryptoType cType, int formatSize) {
+        return new Family(familyName, cType, formatSize);
+    }
+
     public Qualifier createDefaultQualifier(String qualifierName, CryptoTechnique.CryptoType cType) {
         return new Qualifier(qualifierName, cType, this.familyFormatSize, new HashMap<String, String>());
+    }
+
+    public Qualifier createPersonalizedQualifier(String qualifierName, CryptoTechnique.CryptoType cType, int formatSize) {
+        return new Qualifier(qualifierName, cType, formatSize, new HashMap<String, String>());
     }
 
     public int getKeyFormatSize() {
@@ -83,6 +99,34 @@ public class QEngineIntegration {
 
     public CryptoTechnique.CryptoType getCryptographicTechnique() {
         return this.cType;
+    }
+
+
+    public Family isAProtectedTable(String tableName) {
+        Family f = new Family("DQE", CryptoTechnique.CryptoType.PLT, familyFormatSize);
+        switch(tableName) {
+            case "R-maxdata-CLINIDATA_NEW-DTW_PATIENT":
+//                R-maxdata-CLINIDATA_NEW-DTW_PATIENT:<family>:NAME
+                f.addQualifier(createPersonalizedQualifier("1", CryptoTechnique.CryptoType.DET, 100));
+//                R-maxdata-CLINIDATA_NEW-DTW_PATIENT:<family>:BIRTHDAY_STAMP
+                f.addQualifier(createPersonalizedQualifier("2", CryptoTechnique.CryptoType.OPE, 16));
+//                  R-maxdata-CLINIDATA_NEW-DTW_PATIENT:<family>:CALCULATE_BIRTHDAY_STAMP
+                f.addQualifier(createPersonalizedQualifier("3", CryptoTechnique.CryptoType.OPE, 16));
+
+                return f;
+            case "R-maxdata-CLINIDATA_NEW-DTW_PATIENT_ID_BY_PATIENT":
+//                  R-maxdata-CLINIDATA_NEW-DTW_PATIENT_ID_BY_PATIENT:<family>:SUBJECT_ID
+                f.addQualifier(createPersonalizedQualifier("2", CryptoTechnique.CryptoType.DET, 5));
+
+                return f;
+            case "R-maxdata-CLINIDATA_NEW-DTW_TEST_RESULT":
+//                R-maxdata-CLINIDATA_NEW-DTW_TEST_RESULT:<family>:NORMAL_VALUE
+                f.addQualifier(createPersonalizedQualifier("3", CryptoTechnique.CryptoType.STD, 4000));
+
+                return f;
+            default:
+                return null;
+        }
     }
 
 }

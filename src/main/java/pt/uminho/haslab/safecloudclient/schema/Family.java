@@ -98,12 +98,8 @@ public class Family {
 
 		if (formatSize > 0) {
 			fSize = formatSize;
-//			System.out.println("Entrou na primeira condição - " + fSize + " - "
-//					+ formatSize);
 		} else {
 			fSize = this.formatSize;
-//			System.out.println("Entrou na segunda condição - " + fSize + " - "
-//					+ this.formatSize);
 		}
 
 		this.qualifiers.add(new Qualifier(qualifierName, cType, fSize, properties));
@@ -143,10 +139,7 @@ public class Family {
 			if(qTemp.getTweak() != null)
 				q.setTweak(qTemp.getTweak());
 
-			System.out.println("QualSize: "+this.qualifiers.size());
-			System.out.println("Q.toString: "+q.toString());
 			this.qualifiers.add(q);
-			System.out.println("QualSize: "+this.qualifiers.size());
 		}
 		else {
 			if (qualifier.getCryptoType() == null)
