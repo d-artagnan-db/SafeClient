@@ -17,6 +17,7 @@ import pt.uminho.haslab.safecloudclient.schema.TableSchema;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -60,7 +61,12 @@ public class HTableFeaturesUtils {
                                     qualifier,
                                     value));
 
-                    LOG.debug("<TableName:Family:Qualifier:Row:Value>=<"+tableSchema.getTablename()+","+new String(family)+","+new String(qualifier)+","+new String(CellUtil.cloneRow(cell))+","+new String(value)+">\n");
+                    LOG.debug("<TableName:Family:Qualifier:Row:Value>=<"+
+                            tableSchema.getTablename()+","+
+                            new String(family)+","+
+                            new String(qualifier)+"\n");
+//                            new String(CellUtil.cloneRow(cell))+","+
+//                            Arrays.toString(value)+">\n");
 
     //					If the actual qualifier CryptoType is equal to OPE, encode the same value with STD CryptoBox
                     if (tableSchema.getCryptoTypeFromQualifier(new String(family, Charset.forName("UTF-8")), qualifierString) == CryptoTechnique.CryptoType.OPE) {
