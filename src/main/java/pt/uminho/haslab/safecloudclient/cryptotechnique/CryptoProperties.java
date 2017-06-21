@@ -285,13 +285,15 @@ public class CryptoProperties {
 				return row;
 //				return content;
 			case STD :
+				LOG.debug("STD row encryption <"+this.tableSchema.getTablename()+">\n");
 				return this.stdHandler.encrypt(this.stdKey, row);
 //				return this.stdHandler.encrypt(this.stdKey, content);
 			case DET :
+				LOG.debug("DET row encryption <"+this.tableSchema.getTablename()+">\n");
 				return this.detHandler.encrypt(this.detKey, row);
 //				return this.detHandler.encrypt(this.detKey, content);
 			case OPE :
-				LOG.debug("OPE row-key encryption with padding");
+				LOG.debug("OPE row encryption <"+this.tableSchema.getTablename()+">\n");
 				return this.opeHandler.encrypt(this.opeKey, Utils.addPadding(content, tableSchema.getKey().getFormatSize()));
 //				return this.opeHandler.encrypt(this.opeKey, content);
 			case FPE :
@@ -318,14 +320,16 @@ public class CryptoProperties {
 				return row;
 //				return content;
 			case STD :
+				LOG.debug("STD values encryption <"+this.tableSchema.getTablename()+","+family+","+qualifier+">\n");
 				return this.stdHandler.encrypt(this.stdKey, row);
 //				return this.stdHandler.encrypt(this.stdKey, content);
 			case DET :
+				LOG.debug("DET values encryption <"+this.tableSchema.getTablename()+","+family+","+qualifier+">\n");
 				return this.detHandler.encrypt(this.detKey, row);
 //				return this.detHandler.encrypt(this.detKey, content);
 			case OPE :
 				CryptoHandler opeCh = getCryptoHandler(CryptoTechnique.CryptoType.OPE, family, qualifier);
-				LOG.debug("OPE values encryption with padding for <"+family+","+qualifier+">.");
+				LOG.debug("OPE values encryption <"+this.tableSchema.getTablename()+","+family+","+qualifier+">\n");
 				return opeCh.encrypt(this.opeKey, Utils.addPadding(content, tableSchema.getFormatSizeFromQualifier(family, qualifier)));
 //				return opeCh.encrypt(this.opeKey, content);
 			case FPE :
@@ -351,12 +355,14 @@ public class CryptoProperties {
 				return ciphertext;
 			case STD :
 //				return Utils.removePadding(this.stdHandler.decrypt(this.stdKey, ciphertext));
+				LOG.debug("STD row decryption <"+this.tableSchema.getTablename()+">\n");
 				return this.stdHandler.decrypt(this.stdKey, ciphertext);
 			case DET :
 //				return Utils.removePadding(this.detHandler.decrypt(this.detKey, ciphertext));
+				LOG.debug("DET row decryption <"+this.tableSchema.getTablename()+">\n");
 				return this.detHandler.decrypt(this.detKey, ciphertext);
 			case OPE :
-				LOG.debug("OPE row-key decryption with padding.");
+				LOG.debug("OPE row decryption <"+this.tableSchema.getTablename()+">\n");
 				return Utils.removePadding(this.opeHandler.decrypt(this.opeKey, ciphertext));
 //				return this.opeHandler.decrypt(this.opeKey, ciphertext);
 			case FPE :
@@ -383,13 +389,15 @@ public class CryptoProperties {
 				return ciphertext;
 			case STD :
 //				return  Utils.removePadding(this.stdHandler.decrypt(this.stdKey, ciphertext));
+				LOG.debug("STD values decryption <"+this.tableSchema.getTablename()+","+family+","+qualifier+">\n");
 				return this.stdHandler.decrypt(this.stdKey, ciphertext);
 			case DET :
 //				return  Utils.removePadding(this.detHandler.decrypt(this.detKey, ciphertext));
+				LOG.debug("DET values decryption <"+this.tableSchema.getTablename()+","+family+","+qualifier+">\n");
 				return this.detHandler.decrypt(this.detKey, ciphertext);
 			case OPE :
 				CryptoHandler opeCh = getCryptoHandler(CryptoTechnique.CryptoType.OPE, family, qualifier);
-				LOG.debug("OPE values decryption with padding for <"+family+","+qualifier+">.");
+				LOG.debug("OPE values decryption <"+this.tableSchema.getTablename()+","+family+","+qualifier+">\n");
 //				return  Utils.removePadding(opeCh.decrypt(this.opeKey, ciphertext));
 				return opeCh.decrypt(this.opeKey, ciphertext);
 			case FPE :
