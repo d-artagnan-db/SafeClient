@@ -310,9 +310,11 @@ public class HTableFeaturesUtils {
 
         if(qualifier != null) {
             if (!qEngine.doesFamilyContainsQualifier(tableSchema, family, qualifier)) {
-                tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier, CryptoTechnique.CryptoType.OPE));
-                tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier + "_STD", CryptoTechnique.CryptoType.STD));
-                cp.replaceQualifierCryptoHandler(family, qualifier, qEngine.getCryptographicTechnique(), qEngine.getFamilyFormatSize());
+//                WARNING: this is just for CLINIDATA USE CASE
+                tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier, CryptoTechnique.CryptoType.PLT));
+//                tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier, CryptoTechnique.CryptoType.OPE));
+//                tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier + "_STD", CryptoTechnique.CryptoType.STD));
+//                cp.replaceQualifierCryptoHandler(family, qualifier, qEngine.getCryptographicTechnique(), qEngine.getFamilyFormatSize());
             }
         }
 
