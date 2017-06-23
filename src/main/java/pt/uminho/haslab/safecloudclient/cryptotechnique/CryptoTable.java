@@ -159,6 +159,7 @@ public class CryptoTable extends HTable {
 //			Encode the row key
 			Put encPut = new Put(this.cryptoProperties.encodeRow(row));
 			this.htableUtils.encryptCells(put.cellScanner(), this.tableSchema, encPut, this.cryptoProperties);
+			LOG.debug("Put:TranslatedPut:"+encPut.toString());
 			super.put(encPut);
 
 		} catch (Exception e) {
@@ -270,6 +271,10 @@ public class CryptoTable extends HTable {
 
 					if (!res.isEmpty()) {
 						getResult = this.cryptoProperties.decodeResult(row, res);
+						LOG.debug("Get:Result:"+getResult.toString());
+					}
+					else {
+						LOG.debug("Get:EmptyResult");
 					}
 
 					return getResult;
@@ -507,7 +512,9 @@ public class CryptoTable extends HTable {
 			}
 
 //			Transform the original object in an encrypted scan.
+			LOG.debug("SCAN:Vanilla:"+scan.toString());
 			Scan encScan = this.htableUtils.buildEncryptedScan(scan);
+			LOG.debug("SCAN:Translated:"+scan.toString());
 			encScan.setCaching(scan.getCaching());
 //			encScan.setBatch(scan.getBatch());
 //			encScan.setCacheBlocks(scan.getCacheBlocks());
@@ -526,10 +533,21 @@ public class CryptoTable extends HTable {
 //			}
 ////			Warning: test end here
 
+			ResultScanner temp = super.getScanner(encScan);
+			LOG.debug("SCAN:ResultScanner");
+			for(Result r = temp.next(); r != null; r = temp.next()) {
+				LOG.debug(r.toString());
+				List<Cell> cells = r.listCells();
+				for(Cell c : cells) {
+					LOG.debug("Cell: "+c.toString());
+				}
+
+			}
+
 			ResultScanner encryptedResultScanner = super.getScanner(encScan);
 
 //			Return the corresponding result scanner to decrypt the resulting set of values
-			return this.resultScannerFactory.getResultScanner(
+			ResultScanner rs = this.resultScannerFactory.getResultScanner(
 					this.htableUtils.verifyFilterCryptoType(scan),
 					this.cryptoProperties,
 					startRow,
@@ -537,6 +555,9 @@ public class CryptoTable extends HTable {
 					encryptedResultScanner,
 					this.htableUtils.parseFilter(scan.getFilter()));
 
+			LOG.debug("SCAN:ResultScanner:"+rs.getClass().getSimpleName());
+
+			return rs;
 		} catch (Exception e) {
 			LOG.error("Exception in scan method. " + e.getMessage());
 		}

@@ -1,11 +1,14 @@
 package pt.uminho.haslab.safecloudclient.cryptotechnique.resultscanner;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import pt.uminho.haslab.cryptoenv.Utils;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties;
+import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoTable;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -16,6 +19,8 @@ import java.util.Iterator;
  * ResultScanner instance, providing a secure ResultScanner with the DET CryptoBox.
  */
 public class DeterministicResultScanner implements ResultScanner {
+	static final Log LOG = LogFactory.getLog(CryptoTable.class.getName());
+
 	public ResultScanner scanner;
 	public CryptoProperties cProperties;
 	public byte[] startRow;
@@ -44,22 +49,27 @@ public class DeterministicResultScanner implements ResultScanner {
 	 * @param filter filter propeties. In case of RowFilter(CompareOperation,CompareValue). In case of SingleColumnValueFilter(Family,Qualififer,CompareOperation,CompareValue).
 	 */
 	public void setFilters(byte[] startRow, byte[] endRow, Object filter) {
-		if (startRow != null && startRow.length != 0) {
+		LOG.debug("DeterministicResultScanner:SetFilters");
+		if (startRow != null && startRow.length > 0) {
 			this.hasStartRow = true;
 			this.startRow = startRow;
 		} else {
 			this.hasStartRow = false;
 		}
 
-		if (endRow != null && endRow.length != 0) {
+		LOG.debug("DeterministicResultScanner:SetFilters:startRow:"+hasStartRow);
+
+		if (endRow != null && endRow.length > 0) {
 			this.hasEndRow = true;
 			this.endRow = endRow;
 		} else {
 			this.hasEndRow = false;
 		}
 
+		LOG.debug("DeterministicResultScanner:SetFilters:StopRow:"+hasEndRow);
 
 		if (filter != null) {
+			LOG.debug("Filter Class: "+filter.getClass().getSimpleName());
 			this.hasFilter = true;
 			Object[] filterProperties = (Object[]) filter;
 			if(filterProperties.length == 2) {
@@ -77,6 +87,8 @@ public class DeterministicResultScanner implements ResultScanner {
 		} else {
 			this.hasFilter = false;
 		}
+
+		LOG.debug("DeterministicResultScanner:SetFilters:hasFilter:"+hasFilter);
 	}
 
 	// public int getPaddingSize(byte[] row) {
@@ -112,19 +124,19 @@ public class DeterministicResultScanner implements ResultScanner {
 		Bytes.ByteArrayComparator byteArrayComparator = new Bytes.ByteArrayComparator();
 
 		if (hasStartRow && hasEndRow) {
-			 row = Utils.addPadding(row, paddingSize);
-			 startRow = Utils.addPadding(startRow, paddingSize);
-			 endRow = Utils.addPadding(endRow, paddingSize);
+//			 row = Utils.addPadding(row, paddingSize);
+//			 startRow = Utils.addPadding(startRow, paddingSize);
+//			 endRow = Utils.addPadding(endRow, paddingSize);
 
 			digest = (byteArrayComparator.compare(row, startRow) >= 0 && byteArrayComparator.compare(row, endRow) < 0);
 		} else if (hasStartRow && !hasEndRow) {
-			 row = Utils.addPadding(row, paddingSize);
-			 startRow = Utils.addPadding(startRow, paddingSize);
+//			 row = Utils.addPadding(row, paddingSize);
+//			 startRow = Utils.addPadding(startRow, paddingSize);
 
 			digest = (byteArrayComparator.compare(row, startRow) >= 0);
 		} else if (hasEndRow) {
-			 row = Utils.addPadding(row, paddingSize);
-			 endRow = Utils.addPadding(endRow, paddingSize);
+//			 row = Utils.addPadding(row, paddingSize);
+//			 endRow = Utils.addPadding(endRow, paddingSize);
 
 			digest = (byteArrayComparator.compare(row, endRow) < 0);
 		} else {
@@ -144,8 +156,8 @@ public class DeterministicResultScanner implements ResultScanner {
 	public boolean digestFilter(int paddingSize, byte[] main, byte[] value) {
 		boolean digest = true;
 		Bytes.ByteArrayComparator byteArrayComparator = new Bytes.ByteArrayComparator();
-		 main = Utils.addPadding(main, paddingSize);
-		 value = Utils.addPadding(value, paddingSize);
+//		 main = Utils.addPadding(main, paddingSize);
+//		 value = Utils.addPadding(value, paddingSize);
 
 		switch (this.compareOp) {
 			case EQUAL :
@@ -176,14 +188,19 @@ public class DeterministicResultScanner implements ResultScanner {
 	 * @throws IOException
 	 */
 	public Result next() throws IOException {
+		LOG.debug("DeterministicResultScanner:Next()");
 		Result res = this.scanner.next();
+		LOG.debug("DeterministicResultScanner:Next():scannerNext:"+res.toString());
 		boolean digest;
 		if (res != null) {
 			byte[] row = this.cProperties.decodeRow(res.getRow());
-			int paddingSize = this.cProperties.tableSchema.getKey().getFormatSize();
+			LOG.debug("DeterministicResultScanner:Next():Row:Decoded:"+new String(row));
+//			int paddingSize = this.cProperties.tableSchema.getKey().getFormatSize();
+			int paddingSize = 0;
 
 			digest = digestStartEndRow(paddingSize, row);
-
+			LOG.debug("DeterministicResultScanner:Next():Digest:"+digest);
+			LOG.debug("DeterministicResultScanner:Next():hasFilter:"+hasFilter);
 			if (hasFilter && digest) {
 				if(this.filterType.equals("RowFilter")) {
 					digest = digestFilter(paddingSize, row, this.compareValue);
@@ -198,16 +215,22 @@ public class DeterministicResultScanner implements ResultScanner {
 //				}
 			}
 
-			if (digest)
-				return this.cProperties.decodeResult(row, res);
-			else
+			if (digest) {
+				Result r = this.cProperties.decodeResult(row, res);
+				LOG.debug("DeterministicResultScanner:Next():Result:"+r.toString());
+				return r;
+			}
+			else {
+				LOG.debug("DeterministicResultScanner:Next():EmptyResult");
 				return Result.EMPTY_RESULT;
+			}
 
 		} else
 			return null;
 	}
 
 	public Result[] next(int i) throws IOException {
+		LOG.debug("next(i)");
 		return this.scanner.next(i);
 	}
 

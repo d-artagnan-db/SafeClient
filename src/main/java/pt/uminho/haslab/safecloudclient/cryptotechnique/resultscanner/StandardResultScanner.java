@@ -43,14 +43,14 @@ public class StandardResultScanner implements ResultScanner {
 	 * @param filter filter propeties. In case of RowFilter(CompareOperation,CompareValue). In case of SingleColumnValueFilter(Family,Qualififer,CompareOperation,CompareValue).
 	 */
 	public void setFilters(byte[] startRow, byte[] endRow, Object filter) {
-		if (startRow != null && startRow.length != 0) {
+		if (startRow != null && startRow.length > 0) {
 			this.hasStartRow = true;
 			this.startRow = startRow;
 		} else {
 			this.hasStartRow = false;
 		}
 
-		if (endRow != null && endRow.length != 0) {
+		if (endRow != null && endRow.length > 0) {
 			this.hasEndRow = true;
 			this.endRow = endRow;
 		} else {
@@ -110,19 +110,19 @@ public class StandardResultScanner implements ResultScanner {
 		Bytes.ByteArrayComparator byteArrayComparator = new Bytes.ByteArrayComparator();
 
 		if (hasStartRow && hasEndRow) {
-			 row = Utils.addPadding(row, paddingSize);
-			 startRow = Utils.addPadding(startRow, paddingSize);
-			 endRow = Utils.addPadding(endRow, paddingSize);
+//			 row = Utils.addPadding(row, paddingSize);
+//			 startRow = Utils.addPadding(startRow, paddingSize);
+//			 endRow = Utils.addPadding(endRow, paddingSize);
 
 			digest = (byteArrayComparator.compare(row, startRow) >= 0 && byteArrayComparator.compare(row, endRow) < 0);
 		} else if (hasStartRow && !hasEndRow) {
-			 row = Utils.addPadding(row, paddingSize);
-			 startRow = Utils.addPadding(startRow, paddingSize);
+//			 row = Utils.addPadding(row, paddingSize);
+//			 startRow = Utils.addPadding(startRow, paddingSize);
 
 			digest = (byteArrayComparator.compare(row, startRow) >= 0);
 		} else if (hasEndRow) {
-			 row = Utils.addPadding(row, paddingSize);
-			 endRow = Utils.addPadding(endRow, paddingSize);
+//			 row = Utils.addPadding(row, paddingSize);
+//			 endRow = Utils.addPadding(endRow, paddingSize);
 
 			digest = (byteArrayComparator.compare(row, endRow) < 0);
 		} else {
@@ -142,8 +142,8 @@ public class StandardResultScanner implements ResultScanner {
 	public boolean digestFilter(int paddingSize, byte[] main, byte[] value) {
 		boolean digest = true;
 		Bytes.ByteArrayComparator byteArrayComparator = new Bytes.ByteArrayComparator();
-		 main = Utils.addPadding(main, paddingSize);
-		 value = Utils.addPadding(value, paddingSize);
+//		 main = Utils.addPadding(main, paddingSize);
+//		 value = Utils.addPadding(value, paddingSize);
 
 		switch (this.compareOp) {
 			case EQUAL :
@@ -178,8 +178,8 @@ public class StandardResultScanner implements ResultScanner {
 		boolean digest;
 		if (res != null) {
 			byte[] row = this.cProperties.decodeRow(res.getRow());
-			int paddingSize = this.cProperties.tableSchema.getKey().getFormatSize();
-
+//			int paddingSize = this.cProperties.tableSchema.getKey().getFormatSize();
+			int paddingSize = 0;
 
 			digest = digestStartEndRow(paddingSize, row);
 

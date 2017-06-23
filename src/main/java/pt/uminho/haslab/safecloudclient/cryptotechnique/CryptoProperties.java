@@ -317,6 +317,7 @@ public class CryptoProperties {
 		byte[] row = content;
 		switch (cType) {
 			case PLT :
+				LOG.debug("PLT values encryption <"+this.tableSchema.getTablename()+","+family+","+qualifier+">\n");
 				return row;
 //				return content;
 			case STD :
@@ -386,6 +387,7 @@ public class CryptoProperties {
 			case PLT :
 //				byte[] unpadded = Utils.removePadding(ciphertext);
 //				return unpadded;
+				LOG.debug("PLT values decryption <"+this.tableSchema.getTablename()+","+family+","+qualifier+">\n");
 				return ciphertext;
 			case STD :
 //				return  Utils.removePadding(this.stdHandler.decrypt(this.stdKey, ciphertext));
@@ -525,6 +527,10 @@ public class CryptoProperties {
 							type,
 							this.decodeValue(cf, cq, value));
 				}
+				LOG.debug("Get:Result:decodeResult:Cell: "
+						+new String(CellUtil.cloneFamily(decCell))
+						+":"+new String(CellUtil.cloneQualifier(decCell))
+						+":"+new String(CellUtil.cloneValue(decCell)));
 				cellList.add(decCell);
 			}
 		}
@@ -580,6 +586,7 @@ public class CryptoProperties {
 					String qualifier = new String(temp_qualifier, Charset.forName("UTF-8"));
 					qualifierList.add(temp_qualifier);
 					if(!qEngine.doesFamilyContainsQualifier(this.tableSchema, family, qualifier)) {
+						LOG.debug("dynamicHColumnDescriptorsAddition0:"+family+":"+qualifier);
 						this.tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier, CryptoTechnique.CryptoType.PLT));
 
 //						this.tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier, CryptoTechnique.CryptoType.OPE));
@@ -605,6 +612,7 @@ public class CryptoProperties {
 					String qualifier = new String(temp_qualifier, Charset.forName("UTF-8"));
 					qualifiers.add(temp_qualifier);
 					if(!qEngine.doesFamilyContainsQualifier(this.tableSchema, family, qualifier)) {
+						LOG.debug("dynamicHColumnDescriptorsAddition1:"+family+":"+qualifier);
 						this.tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier, CryptoTechnique.CryptoType.PLT));
 
 //						this.tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier, CryptoTechnique.CryptoType.OPE));

@@ -150,4 +150,26 @@ public class QEngineIntegration {
         }
     }
 
+//    public Family isAProtectedTable(String tableName) {
+//        Family f = new Family("DQE", this.cType, this.familyFormatSize);
+//        switch(tableName) {
+//            case "R-maxdata-CLINIDATA_NEW-DTW_PATIENT":
+//                f.addQualifier(createPersonalizedQualifier("1", CryptoTechnique.CryptoType.PLT, 100));
+//                f.addQualifier(createPersonalizedQualifier("2", CryptoTechnique.CryptoType.PLT, 16));
+//                f.addQualifier(createPersonalizedQualifier("3", CryptoTechnique.CryptoType.PLT, 16));
+//
+//                return f;
+//            case "R-maxdata-CLINIDATA_NEW-DTW_PATIENT_ID_BY_PATIENT":
+//                f.addQualifier(createPersonalizedQualifier("2", CryptoTechnique.CryptoType.PLT, 5));
+//
+//                return f;
+//            case "R-maxdata-CLINIDATA_NEW-DTW_TEST_RESULT":
+//                f.addQualifier(createPersonalizedQualifier("3", CryptoTechnique.CryptoType.PLT, 4000));
+//
+//                return f;
+//            default:
+//                return null;
+//        }
+//    }
+
 }
