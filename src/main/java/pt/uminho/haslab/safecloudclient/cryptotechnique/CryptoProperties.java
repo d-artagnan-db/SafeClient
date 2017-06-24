@@ -487,8 +487,23 @@ public class CryptoProperties {
 		while (res.advance()) {
 			Cell cell = res.current();
 			byte[] cf = CellUtil.cloneFamily(cell);
+
+			if(cf.length > 0) {
+				LOG.debug("CF ("+new String(cf)+")");
+			}
+
 			byte[] cq = CellUtil.cloneQualifier(cell);
+
+			if(cq.length > 0) {
+				LOG.debug("CQ ("+new String(cq)+")");
+			}
+
 			byte[] value = CellUtil.cloneValue(cell);
+
+			if(value.length > 0) {
+				LOG.debug("Value ("+new String(value)+")");
+			}
+
 			long timestamp = cell.getTimestamp();
 			byte type = cell.getTypeByte();
 
@@ -501,7 +516,7 @@ public class CryptoProperties {
 				verifyProperty = qualifier.substring(qualifier.length()-opeValues.length(), qualifier.length()).equals(opeValues);
 			}
 
-			if(!verifyProperty) {
+			if(!verifyProperty && cf.length > 0) {
 //				If the qualifier's CryptoType equal to OPE, decrypt the auxiliary qualifier (<qualifier_STD>)
 				if (tableSchema.getCryptoTypeFromQualifier(new String(cf, Charset.forName("UTF-8")), qualifier) == CryptoTechnique.CryptoType.OPE) {
 					Cell stdCell = res.getColumnLatestCell(cf, (qualifier + opeValues).getBytes(Charset.forName("UTF-8")));
@@ -531,6 +546,18 @@ public class CryptoProperties {
 						+new String(CellUtil.cloneFamily(decCell))
 						+":"+new String(CellUtil.cloneQualifier(decCell))
 						+":"+new String(CellUtil.cloneValue(decCell)));
+				cellList.add(decCell);
+			}
+			else if(cf.length == 0) {
+				decCell = CellUtil.createCell(
+						row,
+						cf,
+						cq,
+						timestamp,
+						type,
+						value);
+
+				LOG.debug("Get:Result:decodeResult:Cell: Just Row: "+decCell.toString());
 				cellList.add(decCell);
 			}
 		}

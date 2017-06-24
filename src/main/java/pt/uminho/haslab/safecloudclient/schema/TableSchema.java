@@ -1,7 +1,10 @@
 package pt.uminho.haslab.safecloudclient.schema;
 
 import com.sun.tools.javac.util.Name;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
+import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoTable;
 
 import java.util.*;
 
@@ -12,6 +15,7 @@ import static pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties.
  * Mapper of the database schema provided by the user.
  */
 public class TableSchema {
+	static final Log LOG = LogFactory.getLog(CryptoTable.class.getName());
 	private String tablename;
 //	Default Row Key CryptoBox
 	private CryptoTechnique.CryptoType defaultKeyCryptoType;
@@ -255,11 +259,14 @@ public class TableSchema {
 				break;
 			}
 		}
+
 		if (cType == null) {
-			throw new NullPointerException("The specified qualifier does not exists.");
-		} else {
-			return cType;
+			LOG.debug("Exception:TableSchema:getCryptoTypeFromQualifier:The specified qualifier ("+family+","+qualifier+") does not exists.");
+			cType = CryptoTechnique.CryptoType.PLT;
 		}
+		
+		return cType;
+
 	}
 
 //	public CryptoTechnique.CryptoType getCryptoTypeFromQualifier(String family, String qualifier) {
