@@ -264,7 +264,7 @@ public class TableSchema {
 			LOG.debug("Exception:TableSchema:getCryptoTypeFromQualifier:The specified qualifier ("+family+","+qualifier+") does not exists.");
 			cType = CryptoTechnique.CryptoType.PLT;
 		}
-		
+
 		return cType;
 
 	}

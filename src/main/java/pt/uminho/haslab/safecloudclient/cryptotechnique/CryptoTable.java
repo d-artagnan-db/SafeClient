@@ -514,35 +514,30 @@ public class CryptoTable extends HTable {
 //			Transform the original object in an encrypted scan.
 			LOG.debug("SCAN:Vanilla:"+scan.toString());
 			Scan encScan = this.htableUtils.buildEncryptedScan(scan);
-			LOG.debug("SCAN:Translated:"+scan.toString());
 			encScan.setCaching(scan.getCaching());
-//			encScan.setBatch(scan.getBatch());
-//			encScan.setCacheBlocks(scan.getCacheBlocks());
+			LOG.debug("SCAN:Translated:"+scan.toString());
 
-//			LOG.debug("SECURE:SCAN:Encrypted: "+encScan.toString());
 
-////			Warning: just for test
-//			ResultScanner rs = super.getScanner(encScan);
+//			ResultScanner temp = super.getScanner(encScan);
+//			LOG.debug("SCAN:ResultScanner");
 //			int counter = 0;
-//			for(Result r = rs.next(); r != null; r = rs.next(), counter++) {
-//				LOG.debug("getScanner:next():"+counter+":"+r.toString());
+//			int isEmpty = 0;
+//			for(Result r = temp.next(); r != null; r = temp.next()) {
+//				if(r.isEmpty()) {
+//					isEmpty++;
+//					LOG.debug("SCAN:ResultScanner:Result:EmptyResult");
+//				}
+//				else {
+//					counter++;
+//					LOG.debug("SCAN:ResultScanner:Result:" + r.toString());
+//				}
+//				List<Cell> cells = r.listCells();
+//				for(Cell c : cells) {
+//					LOG.debug("Cell: "+c.toString());
+//				}
 //			}
-//
-//			if(counter == 0) {
-//				LOG.debug("getScanner == EmptyResult");
-//			}
-////			Warning: test end here
 
-			ResultScanner temp = super.getScanner(encScan);
-			LOG.debug("SCAN:ResultScanner");
-			for(Result r = temp.next(); r != null; r = temp.next()) {
-				LOG.debug(r.toString());
-				List<Cell> cells = r.listCells();
-				for(Cell c : cells) {
-					LOG.debug("Cell: "+c.toString());
-				}
-
-			}
+//			LOG.debug("SCAN:ResultScanner:Counter:"+counter+":isEmpty:"+isEmpty);
 
 			ResultScanner encryptedResultScanner = super.getScanner(encScan);
 
@@ -555,7 +550,7 @@ public class CryptoTable extends HTable {
 					encryptedResultScanner,
 					this.htableUtils.parseFilter(scan.getFilter()));
 
-			LOG.debug("SCAN:ResultScanner:"+rs.getClass().getSimpleName());
+			LOG.debug("SCAN:ResultScanner:ClassType:"+rs.getClass().getSimpleName());
 
 			return rs;
 		} catch (Exception e) {

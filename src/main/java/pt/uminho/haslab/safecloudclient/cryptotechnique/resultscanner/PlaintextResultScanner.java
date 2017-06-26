@@ -35,12 +35,11 @@ public class PlaintextResultScanner implements ResultScanner {
 	public Result next() throws IOException {
 		LOG.debug("PlaintextResultScanner:Next():");
 		Result encryptedResult = this.encryptedScanner.next();
-		LOG.debug("PlaintextResultScanner:Next():Result:"+encryptedResult.toString());
 		if (encryptedResult != null) {
 			byte[] row = this.cProperties.decodeRow(encryptedResult.getRow());
-			LOG.debug("PlaintextResultScanner:Next():Row:"+new String(row));
+//			LOG.debug("PlaintextResultScanner:Next():Row:"+new String(row));
 			Result r = this.cProperties.decodeResult(row, encryptedResult);
-			LOG.debug("PlaintextResultScanner:Next():EncryptedResult:"+r.toString());
+//			LOG.debug("PlaintextResultScanner:Next():EncryptedResult:"+r.toString());
 			return r;
 		}
 		else {
@@ -75,9 +74,7 @@ public class PlaintextResultScanner implements ResultScanner {
 
             LOG.debug("PlaintextResultScanner:Next():Iterator:Size:"+rs.size());
 
-			Iterator<Result> i = rs.iterator();
-
-			return i;
+			return rs.iterator();
 
 		} catch (Exception e) {
 			LOG.error("PlaintextResultScanner Iterator Exception: "+e.getMessage());
