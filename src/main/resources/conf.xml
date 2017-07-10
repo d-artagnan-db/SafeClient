@@ -3,4 +3,8 @@
     <name>hbase.zookeeper.quorum</name>
     <value>192.168.112.18</value>
   </property>
+  <property>
+    <name>schema</name>
+    <value>src/main/resources/schema.xml</value>
+  </property>
 </configuration>

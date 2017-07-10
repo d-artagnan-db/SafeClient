@@ -56,11 +56,11 @@ public class CryptoTable extends HTable {
 
 	public CryptoTable(Configuration conf, String tableName) throws IOException {
 		super(conf, TableName.valueOf(tableName));
-//		Too much hardcoded
-		File file = new File("src/main/resources/schema.xml");
+		String property = conf.get("schema");
+		System.out.println("Property - "+property);
 
-//		Too much hardcoded
-		if(file.isFile() && file.getName().equals("schema.xml")) {
+		if(property != null && !property.isEmpty()) {
+			File file = new File(property);
 			SCHEMA_FILE = true;
 			this.tableSchema = this.init(file.getPath(), tableName);
 		} else {
@@ -72,6 +72,24 @@ public class CryptoTable extends HTable {
 			this.qEngine = new QEngineIntegration();
 			this.tableSchema = this.qEngine.buildQEngineTableSchema(tableName, columnDescriptors);
 		}
+
+//		//		Too much hardcoded
+//		File file = new File("src/main/resources/schema.xml");
+//
+//
+////		Too much hardcoded
+//		if(file.isFile() && file.getName().equals("schema.xml")) {
+//			SCHEMA_FILE = true;
+//			this.tableSchema = this.init(file.getPath(), tableName);
+//		} else {
+//			SCHEMA_FILE = false;
+//			HBaseAdmin ha = new HBaseAdmin(conf);
+//			HTableDescriptor descriptor = ha.getTableDescriptor(TableName.valueOf(tableName));
+//			HColumnDescriptor[] columnDescriptors = descriptor.getColumnFamilies();
+//
+//			this.qEngine = new QEngineIntegration();
+//			this.tableSchema = this.qEngine.buildQEngineTableSchema(tableName, columnDescriptors);
+//		}
 
 		this.cryptoProperties = new CryptoProperties(this.tableSchema);
 
