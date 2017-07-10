@@ -57,12 +57,13 @@ public class CryptoTable extends HTable {
 	public CryptoTable(Configuration conf, String tableName) throws IOException {
 		super(conf, TableName.valueOf(tableName));
 		String property = conf.get("schema");
-		System.out.println("Property - "+property);
+		System.out.println("CryptoTable:Property - "+property);
 
 		if(property != null && !property.isEmpty()) {
 			File file = new File(property);
 			SCHEMA_FILE = true;
 			this.tableSchema = this.init(file.getPath(), tableName);
+
 		} else {
 			SCHEMA_FILE = false;
 			HBaseAdmin ha = new HBaseAdmin(conf);

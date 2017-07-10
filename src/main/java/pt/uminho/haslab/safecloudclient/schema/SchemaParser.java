@@ -42,16 +42,23 @@ public class SchemaParser {
 		try {
 			long starttime = System.currentTimeMillis();
 
+			System.out.println("Tou a chegar aqui");
 //			Read schema file
 			File inputFile = new File(filename);
 			SAXReader reader = new SAXReader();
 			Document document = reader.read(inputFile);
 
+			System.out.println("Tou a chegar aqui");
 //			System.out.println("Root Element: " + document.getRootElement().getName());
 //			Map the schema file into an Element object
 			Element rootElement = document.getRootElement();
 
+			System.out.println("Tou a chegar aqui");
+
 			List<Element> tables = rootElement.elements("table");
+			System.out.println("Tou a chegar aqui");
+			System.out.println("tables.size() - "+tables.size());
+
 			for(Element table_element : tables) {
 				TableSchema temp_schema = parseSchema(table_element);
 				this.tableSchemas.put(temp_schema.getTablename(), temp_schema);
