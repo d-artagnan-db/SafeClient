@@ -61,14 +61,14 @@ public class CryptoProperties {
 		this.opeValueHandler = defineFamilyCryptoHandler(CryptoTechnique.CryptoType.OPE);
 //		this.verifyOpeValueHandler();
 
-		if(this.tableSchema.getKey() instanceof KeyFPE) {
-			KeyFPE temp_key_fpe = (KeyFPE) this.tableSchema.getKey();
-			this.fpeHandler = new CryptoHandler(CryptoTechnique.CryptoType.FPE, this.fpeArguments(temp_key_fpe));
-			byte[] temp_key = temp_key_fpe.getSecurityParameters(this.fpeHandler.gen());
-			this.fpeKey = new HashMap<>();
-			this.fpeKey.put("KEY",temp_key);
-		}
-		this.fpeValueHandler = defineFamilyCryptoHandler(CryptoTechnique.CryptoType.FPE);
+//		if(this.tableSchema.getKey() instanceof KeyFPE) {
+//			KeyFPE temp_key_fpe = (KeyFPE) this.tableSchema.getKey();
+//			this.fpeHandler = new CryptoHandler(CryptoTechnique.CryptoType.FPE, this.fpeArguments(temp_key_fpe));
+//			byte[] temp_key = temp_key_fpe.getSecurityParameters(this.fpeHandler.gen());
+//			this.fpeKey = new HashMap<>();
+//			this.fpeKey.put("KEY",temp_key);
+//		}
+//		this.fpeValueHandler = defineFamilyCryptoHandler(CryptoTechnique.CryptoType.FPE);
 
 	}
 
