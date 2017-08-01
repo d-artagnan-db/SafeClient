@@ -37,7 +37,7 @@ public class SecureSingleColumnValueFilter implements SecureFilterProperties {
                             singleFilter.getFamily(),
                             singleFilter.getQualifier(),
                             singleFilter.getOperator(),
-                            new BinaryComparator(encryptedValue));
+                            this.cryptoProperties.checkComparatorType(singleFilter.getComparator(), encryptedValue, cryptoType));
                 }
                 else {
                     throw new UnsupportedOperationException("SingleColumnValueFilter: Only equality comparison is supported for values protected with Deterministic-based encryption schemes.");
@@ -54,7 +54,7 @@ public class SecureSingleColumnValueFilter implements SecureFilterProperties {
                         singleFilter.getFamily(),
                         singleFilter.getQualifier(),
                         singleFilter.getOperator(),
-                        new BinaryComparator(encryptedValue));
+                        this.cryptoProperties.checkComparatorType(singleFilter.getComparator(), encryptedValue, cryptoType));
             default:
                 return null;
         }

@@ -41,6 +41,7 @@ public class Family {
 		this.qualifiers = quals;
 	}
 
+
 	public String getFamilyName() {
 		return this.familyName;
 	}
@@ -59,6 +60,7 @@ public class Family {
 			qualifiersTemp.add(q);
 		return qualifiersTemp;
 	}
+
 
 	public void setFamilyName(String familyName) {
 		this.familyName = familyName;
@@ -79,6 +81,7 @@ public class Family {
 		}
 	}
 
+
 	/**
 	 * addQualifier(qualifierName : String, cryptoType : CryptoType, formatSize : int, properties : Map<String,String>) method :
 	 * add a new qualifier to the Qualifiers list. If both format size and CryptoType are undefined, the qualifier assume
@@ -98,12 +101,8 @@ public class Family {
 
 		if (formatSize > 0) {
 			fSize = formatSize;
-//			System.out.println("Entrou na primeira condição - " + fSize + " - "
-//					+ formatSize);
 		} else {
 			fSize = this.formatSize;
-//			System.out.println("Entrou na segunda condição - " + fSize + " - "
-//					+ this.formatSize);
 		}
 
 		this.qualifiers.add(new Qualifier(qualifierName, cType, fSize, properties));
@@ -143,10 +142,7 @@ public class Family {
 			if(qTemp.getTweak() != null)
 				q.setTweak(qTemp.getTweak());
 
-			System.out.println("QualSize: "+this.qualifiers.size());
-			System.out.println("Q.toString: "+q.toString());
 			this.qualifiers.add(q);
-			System.out.println("QualSize: "+this.qualifiers.size());
 		}
 		else {
 			if (qualifier.getCryptoType() == null)
@@ -158,6 +154,7 @@ public class Family {
 			this.qualifiers.add(qualifier);
 		}
 	}
+
 
 	/**
 	 * containsQualifier(qualifier :String) method : verify if qualifier List contains a given qualifier

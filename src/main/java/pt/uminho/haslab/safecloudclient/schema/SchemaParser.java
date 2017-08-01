@@ -1,25 +1,38 @@
 package pt.uminho.haslab.safecloudclient.schema;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.dom4j.*;
 import org.dom4j.io.SAXReader;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
+import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoTable;
 
-import javax.naming.directory.SchemaViolationException;
 import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * SchemaParser class.
  * Used to parse the database schema file.
  */
 public class SchemaParser {
+	static final Log LOG = LogFactory.getLog(CryptoTable.class.getName());
 	public Map<String,TableSchema> tableSchemas;
+	private HBaseAdmin admin;
 
-	public SchemaParser() {
+
+	public SchemaParser(Configuration conf) {
 		this.tableSchemas = new HashMap<>();
+		try {
+			this.admin = new HBaseAdmin(conf);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public Map<String, TableSchema> getSchemas() {
@@ -40,35 +53,24 @@ public class SchemaParser {
 	 */
 	public void parse(String filename) {
 		try {
-			long starttime = System.currentTimeMillis();
-
-			System.out.println("Tou a chegar aqui");
 //			Read schema file
 			File inputFile = new File(filename);
 			SAXReader reader = new SAXReader();
 			Document document = reader.read(inputFile);
 
-			System.out.println("Tou a chegar aqui");
-//			System.out.println("Root Element: " + document.getRootElement().getName());
+
 //			Map the schema file into an Element object
 			Element rootElement = document.getRootElement();
 
-			System.out.println("Tou a chegar aqui");
-
 			List<Element> tables = rootElement.elements("table");
-			System.out.println("Tou a chegar aqui");
-			System.out.println("tables.size() - "+tables.size());
-
 			for(Element table_element : tables) {
 				TableSchema temp_schema = parseSchema(table_element);
 				this.tableSchemas.put(temp_schema.getTablename(), temp_schema);
 			}
 
 
-			long stopttime = System.currentTimeMillis();
-//			System.out.println("Parsing Time: " + (stopttime - starttime));
 		} catch (DocumentException e) {
-			System.out.println("DocumentException - "+e.getMessage());
+			LOG.error("CryptoWorker:SchemaParser:parse:DocumentException:"+e.getMessage());
 		}
 	}
 
@@ -76,10 +78,10 @@ public class SchemaParser {
 	public TableSchema parseSchema(Element rootElement) {
 		TableSchema ts = new TableSchema();
 
-		parseTablename(rootElement, ts);
+		HColumnDescriptor[] hColumnDescriptors = parseTablename(rootElement, ts);
 		parseDefault(rootElement, ts);
 		parseKey(rootElement, ts);
-		parseColumns(rootElement, ts);
+		parseColumns(rootElement, ts, hColumnDescriptors);
 
 		return ts;
 	}
@@ -88,14 +90,21 @@ public class SchemaParser {
 	 * parseTablename(rootElement : Element) method : parse the table name
 	 * @param rootElement main Element node
 	 */
-	public void parseTablename(Element rootElement, TableSchema tableSchema) {
+	public HColumnDescriptor[] parseTablename(Element rootElement, TableSchema tableSchema) {
 		Element nameElement = rootElement.element("name");
 		String name = nameElement.getText();
 		if(name == null || name.isEmpty()) {
-			throw new NullPointerException("Table name cannot be null nor empty.");
+			throw new NullPointerException("CryptoWorker:SchemaParser:parseTablename:Table name cannot be null nor empty.");
 		}
 
 		tableSchema.setTablename(name);
+		HTableDescriptor descriptor = getHColumnDescriptors(TableName.valueOf(name));
+		if(descriptor != null) {
+			return descriptor.getColumnFamilies();
+		}
+		else {
+			return null;
+		}
 	}
 
 	/**
@@ -110,13 +119,13 @@ public class SchemaParser {
 			String formatsize = defaultElement.elementText("formatsize");
 
 			if (key == null || key.isEmpty()) {
-				throw new NullPointerException("Default row key Cryptographic Type cannot be null nor empty.");
+				throw new NullPointerException("CryptoWorker:SchemaParser:parseDefault:Default row key Cryptographic Type cannot be null nor empty.");
 			}
 			if (columns == null || columns.isEmpty()) {
-				throw new NullPointerException("Default columns Cryptographic Type cannot be null nor empty.");
+				throw new NullPointerException("CryptoWorker:SchemaParser:parseDefault:Default columns Cryptographic Type cannot be null nor empty.");
 			}
 			if (formatsize == null || formatsize.isEmpty()) {
-				throw new NullPointerException("Default format size cannot be null nor empty.");
+				throw new NullPointerException("CryptoWorker:SchemaParser:parseDefault:Default format size cannot be null nor empty.");
 			}
 
 			tableSchema.setDefaultKeyCryptoType(switchCryptoType(key));
@@ -124,7 +133,7 @@ public class SchemaParser {
 			tableSchema.setDefaultFormatSize(formatSizeIntegerValue(formatsize));
 		}
 		else {
-			throw new NullPointerException("Default arguments specification cannot be null nor empty.");
+			throw new NullPointerException("CryptoWorker:SchemaParser:parseDefault:Default arguments specification cannot be null nor empty.");
 		}
 	}
 
@@ -177,7 +186,8 @@ public class SchemaParser {
 	 * parseColumns(rootElement : Element) method : parse the column families and qualifiers properties from the database schema
 	 * @param rootElement main Element node
 	 */
-	public void parseColumns(Element rootElement, TableSchema tableSchema) {
+	public void parseColumns(Element rootElement, TableSchema tableSchema, HColumnDescriptor[] hColumnDescriptors) {
+		boolean hasDescriptor = false;
 		Element columnsElement = rootElement.element("columns");
 		if(columnsElement == null) {
 			throw new NoSuchElementException("Columns arguments cannot be null.");
@@ -202,85 +212,99 @@ public class SchemaParser {
 					formatsize = String.valueOf(tableSchema.getDefaultFormatSize());
 				}
 
-				Family f = new Family(
-						familyName,
-						switchCryptoType(cryptotechnique),
-						formatSizeIntegerValue(formatsize));
+//				if(hColumnDescriptors != null && hColumnDescriptors.length > 0) {
+//					hasDescriptor = true;
+//				}
+//
+//				if(hasDescriptor && hasHColumnDescriptor(hColumnDescriptors, familyName)) {
+//					System.out.println("HasDescriptor: " + Arrays.toString(hColumnDescriptors));
+//				}
+//				else if(!hasDescriptor) {
+//					System.out.println("HasDescriptor = false");
+					Family f = new Family(
+							familyName,
+							switchCryptoType(cryptotechnique),
+							formatSizeIntegerValue(formatsize));
 
-				tableSchema.addFamily(f);
+					tableSchema.addFamily(f);
 
-				List<Element> qualifiersElement = family.elements("qualifier");
-				for (Element qualifier : qualifiersElement) {
-					String qualifierName = qualifier.elementText("name");
-					String cryptotechniqueQualifier = qualifier.elementText("cryptotechnique");
-					String qualifierFormatsize = qualifier.elementText("formatsize");
-					String instance = qualifier.elementText("instance");
-					String radix = qualifier.elementText("radix");
-					String tweak = qualifier.elementText("tweak");
+					List<Element> qualifiersElement = family.elements("qualifier");
+					for (Element qualifier : qualifiersElement) {
+						String qualifierName = qualifier.elementText("name");
+						String cryptotechniqueQualifier = qualifier.elementText("cryptotechnique");
+						String qualifierFormatsize = qualifier.elementText("formatsize");
+						String instance = qualifier.elementText("instance");
+						String radix = qualifier.elementText("radix");
+						String tweak = qualifier.elementText("tweak");
 
-					List<Element> misc = qualifier.elements("misc");
-					Map<String,String> properties = parseMiscellaneous(misc);
+						List<Element> misc = qualifier.elements("misc");
+						Map<String, String> properties = parseMiscellaneous(misc);
 
-					if(qualifierName == null || qualifierName.isEmpty()) {
-						throw new NullPointerException("Column qualifier name cannot be null nor empty.");
+						if (qualifierName == null || qualifierName.isEmpty()) {
+							throw new NullPointerException("Column qualifier name cannot be null nor empty.");
+						}
+
+						if (cryptotechniqueQualifier == null || cryptotechniqueQualifier.isEmpty()) {
+							cryptotechniqueQualifier = cryptotechnique;
+						}
+
+						if (qualifierFormatsize == null || qualifierFormatsize.isEmpty()) {
+							qualifierFormatsize = formatsize;
+						}
+
+						if (cryptotechniqueQualifier.equals("FPE")) {
+							validateFPEArguments(instance, radix, tweak);
+						}
+
+						Qualifier q;
+						if (!cryptotechniqueQualifier.equals("FPE")) {
+							q = new Qualifier(
+									qualifierName,
+									switchCryptoType(cryptotechniqueQualifier),
+									formatSizeIntegerValue(qualifierFormatsize),
+									properties);
+
+						} else {
+							q = new QualifierFPE(
+									qualifierName,
+									switchCryptoType(cryptotechniqueQualifier),
+									formatSizeIntegerValue(qualifierFormatsize),
+									properties,
+									instance,
+									radixIntegerValue(radix),
+									tweak
+							);
+						}
+
+						tableSchema.addQualifier(familyName, q);
+
+						if (cryptotechniqueQualifier.equals("OPE")) {
+							String stdQualifierName = qualifierName + "_STD";
+							String stdCType = "STD";
+
+							Qualifier std = new Qualifier(
+									stdQualifierName,
+									switchCryptoType(stdCType),
+									formatSizeIntegerValue(qualifierFormatsize),
+									properties
+							);
+
+							tableSchema.addQualifier(familyName, std);
+						}
+
 					}
-
-					if(cryptotechniqueQualifier == null || cryptotechniqueQualifier.isEmpty()) {
-						cryptotechniqueQualifier = cryptotechnique;
-					}
-
-					if(qualifierFormatsize == null || qualifierFormatsize.isEmpty()) {
-						qualifierFormatsize = formatsize;
-					}
-
-					if(cryptotechniqueQualifier.equals("FPE")) {
-						validateFPEArguments(instance, radix, tweak);
-					}
-
-					Qualifier q;
-					if (!cryptotechniqueQualifier.equals("FPE")) {
-						q = new Qualifier(
-								qualifierName,
-								switchCryptoType(cryptotechniqueQualifier),
-								formatSizeIntegerValue(qualifierFormatsize),
-								properties);
-
-					}
-					else {
-						q = new QualifierFPE(
-								qualifierName,
-								switchCryptoType(cryptotechniqueQualifier),
-								formatSizeIntegerValue(qualifierFormatsize),
-								properties,
-								instance,
-								radixIntegerValue(radix),
-								tweak
-						);
-					}
-
-					tableSchema.addQualifier(familyName, q);
-
-					if(cryptotechniqueQualifier.equals("OPE")) {
-						String stdQualifierName = qualifierName+"_STD";
-						String stdCType = "STD";
-
-						Qualifier std = new Qualifier(
-								stdQualifierName,
-								switchCryptoType(stdCType),
-								formatSizeIntegerValue(qualifierFormatsize),
-								properties
-						);
-
-						tableSchema.addQualifier(familyName, std);
-					}
-
 				}
-			}
-			else {
-				throw new NoSuchElementException("Column family element cannot be null nor empty.");
-			}
+//				else {
+//					throw new NullPointerException("The column family "+familyName+", specified in the schema file does not match with the HColumnDescriptors:");
+//
+//				}
+//			}
+//			else {
+//				throw new NoSuchElementException("Column family element cannot be null nor empty.");
+//			}
 		}
 	}
+
 
 	/**
 	 * parseMiscellaneous(properties : List<Element>) method : parse random properties from the database schema
@@ -349,5 +373,31 @@ public class SchemaParser {
 			sb.append(tableSchemas.get(schema).toString());
 		}
 		return sb.toString();
+	}
+
+	public boolean hasHColumnDescriptor(HColumnDescriptor[] hColumnDescriptors, String descriptor) {
+		boolean col = false;
+		System.out.println("Size: "+hColumnDescriptors.length);
+		for(int i = 0; i < hColumnDescriptors.length && !col; i++) {
+			if(hColumnDescriptors[i].getNameAsString().equals(descriptor)) {
+				col = true;
+			}
+			else {
+				i++;
+			}
+		}
+		return col;
+	}
+
+	public HTableDescriptor getHColumnDescriptors(TableName tablename) {
+		HTableDescriptor descriptor = null;
+		try {
+			if(this.admin.tableExists(tablename)) {
+				descriptor = this.admin.getTableDescriptor(tablename);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return descriptor;
 	}
 }

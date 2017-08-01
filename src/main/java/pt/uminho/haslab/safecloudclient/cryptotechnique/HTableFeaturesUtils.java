@@ -1,5 +1,7 @@
 package pt.uminho.haslab.safecloudclient.cryptotechnique;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellScanner;
 import org.apache.hadoop.hbase.CellUtil;
@@ -15,6 +17,7 @@ import pt.uminho.haslab.safecloudclient.schema.TableSchema;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -22,6 +25,8 @@ import java.util.Map;
  * Created by rgmacedo on 5/17/17.
  */
 public class HTableFeaturesUtils {
+    static final Log LOG = LogFactory.getLog(CryptoTable.class.getName());
+
     public CryptoProperties cp;
     public SecureFilterConverter secureFilterConverter;
 
@@ -56,6 +61,13 @@ public class HTableFeaturesUtils {
                                     qualifier,
                                     value));
 
+                    LOG.debug("<TableName:Family:Qualifier:Row:Value>=<"+
+                            tableSchema.getTablename()+","+
+                            new String(family)+","+
+                            new String(qualifier)+"\n");
+//                            new String(CellUtil.cloneRow(cell))+","+
+//                            Arrays.toString(value)+">\n");
+
     //					If the actual qualifier CryptoType is equal to OPE, encode the same value with STD CryptoBox
                     if (tableSchema.getCryptoTypeFromQualifier(new String(family, Charset.forName("UTF-8")), qualifierString) == CryptoTechnique.CryptoType.OPE) {
                         destination.add(
@@ -71,8 +83,7 @@ public class HTableFeaturesUtils {
                 }
             }
         } catch (IOException e) {
-//            TODO falta mandar para o LOG
-            System.out.println("Exception in cell scanner. " + e.getMessage());
+            LOG.error("Exception in cell scanner. " + e.getMessage());
         }
     }
 
@@ -98,8 +109,7 @@ public class HTableFeaturesUtils {
                 }
             }
         } catch (IOException e) {
-//            TODO falta por o LOG
-            System.out.println("Exception in deleteCells CellScanner: "+e.getMessage());
+            LOG.error("Exception in deleteCells CellScanner: "+e.getMessage());
         }
         return cellsToDelete;
     }
@@ -142,12 +152,12 @@ public class HTableFeaturesUtils {
      * @return an encrypted scan with the respective start and stop row, both encrypted with the row key CryptoBox
      */
     public Scan encodeDelimitingRows(Scan encScan, byte[] startRow, byte[] stopRow) {
-        if (startRow != null && startRow.length != 0 && stopRow != null && stopRow.length != 0) {
+        if (startRow != null && startRow.length > 0 && stopRow != null && stopRow.length > 0 ) {
             encScan.setStartRow(cp.encodeRow(startRow));
             encScan.setStopRow(cp.encodeRow(stopRow));
-        } else if (startRow != null && startRow.length != 0 && stopRow == null) {
+        } else if (startRow != null && startRow.length > 0 ) {
             encScan.setStartRow(cp.encodeRow(startRow));
-        } else if (startRow == null && stopRow != null && stopRow.length != 0) {
+        } else if (stopRow != null && stopRow.length > 0) {
             encScan.setStopRow(cp.encodeRow(stopRow));
         }
         return encScan;
@@ -298,9 +308,11 @@ public class HTableFeaturesUtils {
 
         if(qualifier != null) {
             if (!qEngine.doesFamilyContainsQualifier(tableSchema, family, qualifier)) {
-                tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier, CryptoTechnique.CryptoType.OPE));
-                tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier + "_STD", CryptoTechnique.CryptoType.STD));
-                cp.replaceQualifierCryptoHandler(family, qualifier, qEngine.getCryptographicTechnique(), qEngine.getFamilyFormatSize());
+//                WARNING: this is just for CLINIDATA USE CASE
+                tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier, CryptoTechnique.CryptoType.PLT));
+//                tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier, CryptoTechnique.CryptoType.OPE));
+//                tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier + "_STD", CryptoTechnique.CryptoType.STD));
+//                cp.replaceQualifierCryptoHandler(family, qualifier, qEngine.getCryptographicTechnique(), qEngine.getFamilyFormatSize());
             }
         }
 

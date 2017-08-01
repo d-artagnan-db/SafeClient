@@ -69,6 +69,17 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
 //            testFilter(table, FilterType.SingleColumnValueFilter, CompareFilter.CompareOp.GREATER_OR_EQUAL, "5:Hello:5");
 //            testFilter(table, FilterType.SingleColumnValueFilter, CompareFilter.CompareOp.LESS, "5:Hello:5");
 
+//
+//            testFilter(table, FilterType.FilterList, CompareFilter.CompareOp.EQUAL, "5:Hello:5");
+
+            testFilter(table, FilterType.WhileMatchFilter, CompareFilter.CompareOp.LESS, "5");
+//            byte[] startRow = "4".getBytes();
+//            byte[] stopRow = "15".getBytes();
+//            testScan(table, null, null);
+//            testScan(table, startRow, null);
+//            testScan(table, null, stopRow);
+//            testScan(table, startRow, stopRow);
+
 //            testFilter(table, FilterType.FilterList, CompareFilter.CompareOp.EQUAL, "5:Hello:5");
 //            byte[] startRow = "4".getBytes();
 //            byte[] stopRow = "15".getBytes();
@@ -300,6 +311,10 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
                         fList.add(buildSingleColumnValueFilter("Physician".getBytes(), "Physician ID".getBytes(), CompareFilter.CompareOp.GREATER_OR_EQUAL, value.getBytes()));
                         fList.add(buildSingleColumnValueFilter("Physician".getBytes(), "Physician ID".getBytes(), CompareFilter.CompareOp.EQUAL, value.getBytes()));
                         f = buildFilterList(fList, FilterList.Operator.MUST_PASS_ALL);
+                        break;
+                    case WhileMatchFilter:
+                        RowFilter rf = buildRowFilter(operation, value.getBytes());
+                        f = new WhileMatchFilter(rf);
                         break;
                     default:
                         f = null;

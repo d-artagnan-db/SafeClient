@@ -11,14 +11,17 @@ import pt.uminho.haslab.cryptoenv.Utils;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.resultscanner.ResultScannerFactory;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.securefilterfactory.SecureFilterConverter;
 import pt.uminho.haslab.safecloudclient.queryengine.QEngineIntegration;
-import pt.uminho.haslab.safecloudclient.schema.Family;
 import pt.uminho.haslab.safecloudclient.schema.SchemaParser;
 import pt.uminho.haslab.safecloudclient.schema.TableSchema;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.util.*;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * CryptoTable class.
@@ -26,83 +29,61 @@ import java.util.*;
  */
 public class CryptoTable extends HTable {
 	static final Log LOG = LogFactory.getLog(CryptoTable.class.getName());
-	static boolean SCHEMA_FILE = false;
 
 	public CryptoProperties cryptoProperties;
 	public ResultScannerFactory resultScannerFactory;
-	public TableSchema tableSchema;
-	public QEngineIntegration qEngine;
 	public HTableFeaturesUtils htableUtils;
 	public SecureFilterConverter secureFilterConverter;
+	private static Map<String,TableSchema> databaseSchema;
+	private static final Lock lock = new ReentrantLock();
+	private static boolean parsingComplete = false;
+	public TableSchema tableSchema;
 
-
-	public CryptoTable(Configuration conf, String tableName, String schemaFilename) throws IOException {
-		super(conf, TableName.valueOf(tableName));
-		this.tableSchema = this.init(schemaFilename, tableName);
-		this.cryptoProperties = new CryptoProperties(this.tableSchema);
-		this.resultScannerFactory = new ResultScannerFactory();
-		this.secureFilterConverter = new SecureFilterConverter(this.cryptoProperties);
-		this.htableUtils = new HTableFeaturesUtils(this.cryptoProperties, this.secureFilterConverter);
-	}
-
-	public CryptoTable(Configuration conf, String tableName, TableSchema schema) throws IOException {
-		super(conf, TableName.valueOf(tableName));
-		this.tableSchema = schema;
-		this.cryptoProperties = new CryptoProperties(this.tableSchema);
-		this.resultScannerFactory = new ResultScannerFactory();
-		this.secureFilterConverter = new SecureFilterConverter(this.cryptoProperties);
-		this.htableUtils = new HTableFeaturesUtils(this.cryptoProperties, this.secureFilterConverter);
-	}
 
 	public CryptoTable(Configuration conf, String tableName) throws IOException {
 		super(conf, TableName.valueOf(tableName));
 		String property = conf.get("schema");
-		System.out.println("CryptoTable:Property - "+property);
+		LOG.debug("CryptoTable:TableName:"+tableName);
 
 		if(property != null && !property.isEmpty()) {
 			File file = new File(property);
-			SCHEMA_FILE = true;
-			this.tableSchema = this.init(file.getPath(), tableName);
+
+			while(!parsingComplete) {
+				try {
+					lock.lock();
+					System.out.println("Thread-"+Thread.currentThread().getId() + ":Lock achieved.");
+					if (!parsingComplete) {
+						System.out.println("Thread-"+Thread.currentThread().getId() + ":build database schema.");
+						databaseSchema = new HashMap<>();
+						databaseSchema = this.buildDatabaseSchema(file.getPath(), conf);
+						parsingComplete = true;
+					}
+
+				} finally {
+					lock.unlock();
+					System.out.println("Thread-"+Thread.currentThread().getId() + ":Lock released.");
+					System.out.println("Thread-"+Thread.currentThread().getId() + ":Shared ObjectId (database schema):" + System.identityHashCode(databaseSchema));
+				}
+			}
+
+			this.tableSchema = getTableSchema(tableName);
+			this.cryptoProperties = new CryptoProperties(this.tableSchema);
 
 		} else {
-			SCHEMA_FILE = false;
-			HBaseAdmin ha = new HBaseAdmin(conf);
-			HTableDescriptor descriptor = ha.getTableDescriptor(TableName.valueOf(tableName));
-			HColumnDescriptor[] columnDescriptors = descriptor.getColumnFamilies();
-
-			this.qEngine = new QEngineIntegration();
-			this.tableSchema = this.qEngine.buildQEngineTableSchema(tableName, columnDescriptors);
+			throw new FileNotFoundException("Schema file not found.");
 		}
 
-//		//		Too much hardcoded
-//		File file = new File("src/main/resources/schema.xml");
-//
-//
-////		Too much hardcoded
-//		if(file.isFile() && file.getName().equals("schema.xml")) {
-//			SCHEMA_FILE = true;
-//			this.tableSchema = this.init(file.getPath(), tableName);
-//		} else {
-//			SCHEMA_FILE = false;
-//			HBaseAdmin ha = new HBaseAdmin(conf);
-//			HTableDescriptor descriptor = ha.getTableDescriptor(TableName.valueOf(tableName));
-//			HColumnDescriptor[] columnDescriptors = descriptor.getColumnFamilies();
-//
-//			this.qEngine = new QEngineIntegration();
-//			this.tableSchema = this.qEngine.buildQEngineTableSchema(tableName, columnDescriptors);
-//		}
 
-		this.cryptoProperties = new CryptoProperties(this.tableSchema);
-
-//		Too much hardcoded
 //		While the cryptographic keys management is not defined, read keys from specific files
 //		arrange cryptographic keys properties
 		File cryptographicKey = new File("src/main/resources/key.txt");
 		byte[] key;
 		if(cryptographicKey.isFile() && cryptographicKey.getName().equals("key.txt")) {
+			LOG.debug("File key available.");
 			key = Utils.readKeyFromFile(cryptographicKey.getPath());
 		}
 		else {
+			LOG.debug("No key available. Default key used.");
 			key = new byte[]{(byte) 0x2B, (byte) 0x7E, (byte) 0x15, (byte) 0x16, (byte) 0x28, (byte) 0xAE, (byte) 0xD2,
 					(byte) 0xA6, (byte) 0xAB, (byte) 0xF7, (byte) 0x15, (byte) 0x88, (byte) 0x09, (byte) 0xCF,
 					(byte) 0x4F, (byte) 0x3C};
@@ -111,15 +92,22 @@ public class CryptoTable extends HTable {
 //		Since the schema can be dynamically generated or build by a schema file, the Cryptographic Keys must be set
 //		in different ways. In case of schema file, all cryptographic keys are set. In case of default usage, only the OPE
 //		Key is set.
-		if(SCHEMA_FILE) {
-//			WARNING: missing FPE instantiation
-			this.cryptoProperties.setKey(CryptoTechnique.CryptoType.STD, key);
-			this.cryptoProperties.setKey(CryptoTechnique.CryptoType.DET, key);
-			this.cryptoProperties.setKey(CryptoTechnique.CryptoType.OPE, key);
-		}
-		else {
-			this.cryptoProperties.setKey(CryptoTechnique.CryptoType.OPE, key);
-		}
+//		if(SCHEMA_FILE) {
+////			WARNING: missing FPE instantiation
+//			this.cryptoProperties.setKey(CryptoTechnique.CryptoType.STD, key);
+//			this.cryptoProperties.setKey(CryptoTechnique.CryptoType.DET, key);
+//			this.cryptoProperties.setKey(CryptoTechnique.CryptoType.OPE, key);
+//		}
+//		else {
+//			this.cryptoProperties.setKey(CryptoTechnique.CryptoType.OPE, key);
+//		}
+
+
+//			TEMPORARY
+		this.cryptoProperties.setKey(CryptoTechnique.CryptoType.STD, key);
+		this.cryptoProperties.setKey(CryptoTechnique.CryptoType.DET, key);
+		this.cryptoProperties.setKey(CryptoTechnique.CryptoType.OPE, key);
+
 
 //		this is common for both cases
 		this.resultScannerFactory = new ResultScannerFactory();
@@ -132,15 +120,20 @@ public class CryptoTable extends HTable {
 	 * @param filename path to the database schema
 	 * @return TableSchema object
 	 */
-	public TableSchema init(String filename, String tablename) {
+	public Map<String,TableSchema> buildDatabaseSchema(String filename, Configuration conf) {
 		if (filename == null) {
 			throw new NullPointerException("Schema file name cannot be null.");
 		}
-		SchemaParser schemaParser = new SchemaParser();
+
+		SchemaParser schemaParser = new SchemaParser(conf);
 		schemaParser.parse(filename);
-		return schemaParser.getTableSchema(tablename);
+
+		return schemaParser.getSchemas();
 	}
 
+	public TableSchema getTableSchema(String tablename) {
+		return databaseSchema.get(tablename);
+	}
 
 
 	/**
@@ -149,32 +142,46 @@ public class CryptoTable extends HTable {
 	 * Before the insertion both key and values are encrypted, following the database schema specifications.
 	 * In case of OPE CryptoBox, an additional qualifier is created and stores the respective value encrypted with the STD CryptoBox
 	 * @param put original put object that contains the key, values, qualifiers, ...
-	 */
+//	 */
 	@Override
 	public void put(Put put) {
+		LOG.debug("Put operation started.");
 		try {
 			byte[] row = put.getRow();
 			if(row.length == 0) {
 				throw new NullPointerException("Row Key cannot be null.");
 			}
 
-//			Acknowledge the existing qualifiers
-			if(!SCHEMA_FILE) {
-				this.cryptoProperties.dynamicHColumnDescriptorsAddition(put.getFamilyCellMap(), this.qEngine);
-			}
+////			Acknowledge the existing qualifiers
+//			if(!SCHEMA_FILE) {
+//				this.cryptoProperties.dynamicHColumnDescriptorsAddition(put.getFamilyCellMap(), this.qEngine);
+//			}
 
 //			Encode the row key
 			Put encPut = new Put(this.cryptoProperties.encodeRow(row));
 			this.htableUtils.encryptCells(put.cellScanner(), this.tableSchema, encPut, this.cryptoProperties);
 			super.put(encPut);
 
-		} catch (IOException e) {
+		} catch (Exception e) {
 			LOG.error("Exception in put method. " + e.getMessage());
 		}
 	}
 
+//	@Override
+//	public void put(Put put) {
+//		try {
+//			LOG.debug("SUPER:PUT: "+put.toString());
+//			super.put(put);
+//		} catch (InterruptedIOException e) {
+//			e.printStackTrace();
+//		} catch (RetriesExhaustedWithDetailsException e) {
+//			e.printStackTrace();
+//		}
+//	}
+
 	@Override
 	public void put(List<Put> puts) {
+		LOG.debug("Batch Put operation started.");
 		try {
 			List<Put> encryptedPuts = new ArrayList<>(puts.size());
 			for(Put p : puts) {
@@ -182,10 +189,10 @@ public class CryptoTable extends HTable {
 				if(row.length == 0) {
 					throw new NullPointerException("Row Key cannot be null.");
 				}
-//				Acknowledge the existing qualifiers
-				if(!SCHEMA_FILE) {
-					this.cryptoProperties.dynamicHColumnDescriptorsAddition(p.getFamilyCellMap(), this.qEngine);
-				}
+////				Acknowledge the existing qualifiers
+//				if(!SCHEMA_FILE) {
+//					this.cryptoProperties.dynamicHColumnDescriptorsAddition(p.getFamilyCellMap(), this.qEngine);
+//				}
 //				Encode the row key
 				Put encPut = new Put(this.cryptoProperties.encodeRow(row));
 				this.htableUtils.encryptCells(p.cellScanner(), this.tableSchema, encPut, this.cryptoProperties);
@@ -196,7 +203,6 @@ public class CryptoTable extends HTable {
 
 		} catch (InterruptedIOException | RetriesExhaustedWithDetailsException e) {
 			LOG.error("Exception in put (list<Put> puts) method. " + e.getMessage());
-			System.out.println("Exception in put (list<Put> puts) method. " + e.getMessage());
 		}
 	}
 
@@ -210,6 +216,8 @@ public class CryptoTable extends HTable {
 	 */
 	@Override
 	public Result get(Get get) {
+		LOG.debug("Get operation started.");
+
 		Result getResult = Result.EMPTY_RESULT;
 
 		try {
@@ -217,11 +225,11 @@ public class CryptoTable extends HTable {
 			if(row.length == 0) {
 				throw new NullPointerException("Row Key cannot be null.");
 			}
-
-//			Acknowledge the existing qualifiers
-			if(!SCHEMA_FILE) {
-				this.cryptoProperties.dynamicHColumnDescriptorsAddition(get.getFamilyMap(), this.qEngine);
-			}
+//
+////			Acknowledge the existing qualifiers
+//			if(!SCHEMA_FILE) {
+//				this.cryptoProperties.dynamicHColumnDescriptorsAddition(get.getFamilyMap(), this.qEngine);
+//			}
 
 			Map<byte[],List<byte[]>> columns = this.cryptoProperties.getHColumnDescriptors(get.getFamilyMap());
 
@@ -262,6 +270,10 @@ public class CryptoTable extends HTable {
 
 					if (!res.isEmpty()) {
 						getResult = this.cryptoProperties.decodeResult(row, res);
+						LOG.debug("Get:Result:"+getResult.toString());
+					}
+					else {
+						LOG.debug("Get:EmptyResult");
 					}
 
 					return getResult;
@@ -270,14 +282,16 @@ public class CryptoTable extends HTable {
 			}
 
 		} catch (IOException e) {
-			System.out.println("Exception in get method. " + e.getMessage());
 			LOG.error("Exception in get method. " + e.getMessage());
 		}
 		return getResult;
 	}
 
+
+
 	@Override
 	public Result[] get(List<Get> gets) {
+		LOG.debug("Batch Get operation started.");
 		Result[] results = new Result[gets.size()];
 		List<Get> encryptedGets = new ArrayList<>(gets.size());
 
@@ -287,10 +301,10 @@ public class CryptoTable extends HTable {
 				throw new NullPointerException("Row Key cannot be null.");
 			}
 
-//			Acknowledge the existing qualifiers
-			if(!SCHEMA_FILE) {
-				this.cryptoProperties.dynamicHColumnDescriptorsAddition(g.getFamilyMap(), this.qEngine);
-			}
+////			Acknowledge the existing qualifiers
+//			if(!SCHEMA_FILE) {
+//				this.cryptoProperties.dynamicHColumnDescriptorsAddition(g.getFamilyMap(), this.qEngine);
+//			}
 
 			Map<byte[],List<byte[]>> columns = this.cryptoProperties.getHColumnDescriptors(g.getFamilyMap());
 
@@ -377,16 +391,17 @@ public class CryptoTable extends HTable {
 	 */
 	@Override
 	public void delete(Delete delete) {
+		LOG.debug("Delete operation started.");
 		try {
 			byte[] row = delete.getRow();
 			if(row.length == 0) {
 				throw new NullPointerException("Row Key cannot be null.");
 			}
 
-//			Acknowledge the existing qualifiers
-			if(!SCHEMA_FILE) {
-				this.cryptoProperties.dynamicHColumnDescriptorsAddition(delete.getFamilyCellMap(), this.qEngine);
-			}
+////			Acknowledge the existing qualifiers
+//			if(!SCHEMA_FILE) {
+//				this.cryptoProperties.dynamicHColumnDescriptorsAddition(delete.getFamilyCellMap(), this.qEngine);
+//			}
 
 			List<String> cellsToDelete = this.htableUtils.deleteCells(delete.cellScanner());
 
@@ -424,6 +439,7 @@ public class CryptoTable extends HTable {
 
 	@Override
 	public void delete(List<Delete> deletes) {
+		LOG.debug("Batch Delete operation started.");
 		try {
 			List<Delete> encryptedDeletes = new ArrayList<>(deletes.size());
 			for (Delete del : deletes) {
@@ -432,10 +448,10 @@ public class CryptoTable extends HTable {
 					throw new NullPointerException("Row Key cannot be null.");
 				}
 
-//				Acknowledge the existing qualifiers
-				if(!SCHEMA_FILE) {
-					this.cryptoProperties.dynamicHColumnDescriptorsAddition(del.getFamilyCellMap(), this.qEngine);
-				}
+////				Acknowledge the existing qualifiers
+//				if(!SCHEMA_FILE) {
+//					this.cryptoProperties.dynamicHColumnDescriptorsAddition(del.getFamilyCellMap(), this.qEngine);
+//				}
 
 				List<String> cellsToDelete = this.htableUtils.deleteCells(del.cellScanner());
 
@@ -472,7 +488,6 @@ public class CryptoTable extends HTable {
 
 		} catch(IOException e) {
 			LOG.error("Exception in delete (list<Delete> deletes) method. " + e.getMessage());
-			System.out.println("Exception in delete (list<Delete> deletes) method. " + e.getMessage());
 		}
 	}
 
@@ -482,25 +497,27 @@ public class CryptoTable extends HTable {
 	 * and compare value.
 	 * @param scan scan object that provides the necessary filter and scan parameters.
 	 * @return resulting values that pass the filter parameters. The values are still encrypted.
-	 */
+//	 */
 	@Override
 	public ResultScanner getScanner(Scan scan) {
+		LOG.debug("GetScanner operation started.");
 		try {
 			byte[] startRow = scan.getStartRow();
 			byte[] endRow = scan.getStopRow();
 
-//			Acknowledge the existing qualifiers
-			if(!SCHEMA_FILE) {
-				this.cryptoProperties.dynamicHColumnDescriptorsAddition(scan.getFamilyMap(), this.qEngine);
-			}
+////			Acknowledge the existing qualifiers
+//			if(!SCHEMA_FILE) {
+//				this.cryptoProperties.dynamicHColumnDescriptorsAddition(scan.getFamilyMap(), this.qEngine);
+//			}
 
 //			Transform the original object in an encrypted scan.
+			LOG.debug("SCAN:Vanilla:"+scan.toString());
 			Scan encScan = this.htableUtils.buildEncryptedScan(scan);
 			encScan.setCaching(scan.getCaching());
 
 			ResultScanner encryptedResultScanner = super.getScanner(encScan);
 //			Return the corresponding result scanner to decrypt the resulting set of values
-			return this.resultScannerFactory.getResultScanner(
+			ResultScanner rs = this.resultScannerFactory.getResultScanner(
 					this.htableUtils.verifyFilterCryptoType(scan),
 					this.cryptoProperties,
 					startRow,
@@ -508,15 +525,19 @@ public class CryptoTable extends HTable {
 					encryptedResultScanner,
 					this.htableUtils.parseFilter(scan.getFilter()));
 
+			LOG.debug("SCAN:ResultScanner:ClassType:"+rs.getClass().getSimpleName());
+
+			return rs;
 		} catch (Exception e) {
-			System.out.println("Exception in scan method. "+e.getMessage());
 			LOG.error("Exception in scan method. " + e.getMessage());
 		}
 		return null;
 	}
 
+
 	@Override
 	public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier, byte[] value, Put put) {
+		LOG.debug("CheckAndPut operation started.");
 		boolean operationPerformed = false;
 
 		try {
@@ -533,10 +554,10 @@ public class CryptoTable extends HTable {
 				throw new NullPointerException("Value cannot be null.");
 			}
 
-//			In case of default schema, verify and/or create both family and qualifier instances in TableSchema
-			if(!SCHEMA_FILE) {
-				this.htableUtils.createDynamicColumnsForAtomicOperations(this.qEngine, this.tableSchema, new String(family), new String(qualifier));
-			}
+////			In case of default schema, verify and/or create both family and qualifier instances in TableSchema
+//			if(!SCHEMA_FILE) {
+//				this.htableUtils.createDynamicColumnsForAtomicOperations(this.qEngine, this.tableSchema, new String(family), new String(qualifier));
+//			}
 
 			switch (this.tableSchema.getKey().getCryptoType()) {
 				case STD:
@@ -610,7 +631,6 @@ public class CryptoTable extends HTable {
 					break;
 			}
 		} catch (IOException e) {
-			System.out.println("Exception in checkAndPut method. "+e.getMessage());
 			LOG.error("Exception in checkAndPut method. "+e.getMessage());
 		}
 		return operationPerformed;
@@ -618,6 +638,7 @@ public class CryptoTable extends HTable {
 
 	@Override
 	public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount) {
+		LOG.debug("IncrementColumnValue operation started.");
 		long operationValue = 0;
 		try {
 			if(row.length == 0) {
@@ -632,15 +653,15 @@ public class CryptoTable extends HTable {
 			String temp_family = new String(family);
 			String temp_qualifier = new String(qualifier);
 
-//			In case of default schema, verify and/or create both family and qualifier instances in TableSchema
-			if(!SCHEMA_FILE) {
-				this.htableUtils.createDynamicColumnsForAtomicOperations(this.qEngine, this.tableSchema, temp_family, temp_qualifier);
-			}
-			else {
-				if(!this.tableSchema.containsQualifier(temp_family, temp_qualifier)) {
-					throw new NullPointerException("Column qualifier "+temp_family+":"+temp_qualifier+" not defined in schema file.");
-				}
-			}
+////			In case of default schema, verify and/or create both family and qualifier instances in TableSchema
+//			if(!SCHEMA_FILE) {
+//				this.htableUtils.createDynamicColumnsForAtomicOperations(this.qEngine, this.tableSchema, temp_family, temp_qualifier);
+//			}
+//			else {
+//				if(!this.tableSchema.containsQualifier(temp_family, temp_qualifier)) {
+//					throw new NullPointerException("Column qualifier "+temp_family+":"+temp_qualifier+" not defined in schema file.");
+//				}
+//			}
 
 			switch (this.tableSchema.getCryptoTypeFromQualifier(temp_family, temp_qualifier)) {
 				case PLT:
@@ -669,7 +690,6 @@ public class CryptoTable extends HTable {
 					break;
 				}
 		} catch (IOException e) {
-			System.out.println("Exception in incrementColumnValue method. "+e.getMessage());
 			LOG.error("Exception in incrementColumnValue method. "+e.getMessage());
 		}
 		return operationValue;
@@ -680,7 +700,6 @@ public class CryptoTable extends HTable {
 		try {
 			return super.getRegionLocations();
 		} catch (IOException e) {
-			System.out.println("Exception in getRegionLocations method. "+e.getMessage());
 			LOG.error("Exception in getRegionLocations method. "+e.getMessage());
 			return null;
 		}
@@ -688,6 +707,7 @@ public class CryptoTable extends HTable {
 
 	@Override
 	public HRegionLocation getRegionLocation(byte[] row) {
+		LOG.debug("GetRegionLocation operation started.");
 		try {
 			if(row.length == 0) {
 				throw new NullPointerException("Row Key cannot be null.");
@@ -717,7 +737,6 @@ public class CryptoTable extends HTable {
 					return null;
 			}
 		} catch (IOException e) {
-			System.out.println("Exception in getRegionLocation method. "+e.getMessage());
 			LOG.error("Exception in getRegionLocation method. "+e.getMessage());
 			return null;
 		}
@@ -725,6 +744,7 @@ public class CryptoTable extends HTable {
 
 	@Override
 	public Result getRowOrBefore(byte[] row, byte[] family) {
+		LOG.debug("GetRowOrBefore operation started.");
 		try {
 			if (row.length == 0) {
 				throw new NullPointerException("Row Key cannot be null.");
@@ -733,15 +753,15 @@ public class CryptoTable extends HTable {
 				throw new NullPointerException("Column family cannot be null.");
 			}
 
-//			In case of default schema, verify and/or create both family and qualifier instances in TableSchema
-			if(!SCHEMA_FILE) {
-				this.htableUtils.createDynamicColumnsForAtomicOperations(this.qEngine, this.tableSchema, new String(family), null);
-			}
-			else {
-				if(!this.tableSchema.containsFamily(new String(family))) {
-					throw new NullPointerException("Column family "+new String(family)+" not defined in schema file.");
-				}
-			}
+////			In case of default schema, verify and/or create both family and qualifier instances in TableSchema
+//			if(!SCHEMA_FILE) {
+//				this.htableUtils.createDynamicColumnsForAtomicOperations(this.qEngine, this.tableSchema, new String(family), null);
+//			}
+//			else {
+//				if(!this.tableSchema.containsFamily(new String(family))) {
+//					throw new NullPointerException("Column family "+new String(family)+" not defined in schema file.");
+//				}
+//			}
 
 			switch(this.tableSchema.getKey().getCryptoType()) {
 

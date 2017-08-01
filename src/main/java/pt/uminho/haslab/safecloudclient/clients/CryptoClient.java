@@ -35,6 +35,11 @@ public class CryptoClient implements TestClient {
 		Configuration conf = new Configuration();
 		conf.addResource("conf.xml");
 
+
+		new Thread(new CreateTable("temp_table1")).start();
+		new Thread(new CreateTable("temp_table2")).start();
+		new Thread(new CreateTable("temp_table3")).start();
+
 		CryptoTable ct = new CryptoTable(conf, tableName);
 		byte[] key = Utils.readKeyFromFile("key.txt");
 
@@ -58,4 +63,40 @@ public class CryptoClient implements TestClient {
 	public void stopCluster() throws IOException {
 		System.out.println("Stoped Cluster");
 	}
+
+
+	class CreateTable implements Runnable {
+		String tableName;
+
+		public CreateTable(String tableName) {
+			this.tableName = tableName;
+		}
+
+		@Override
+		public void run() {
+			Configuration conf = new Configuration();
+			conf.addResource("conf.xml");
+
+
+			CryptoTable ct = null;
+			try {
+				ct = new CryptoTable(conf, tableName);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			byte[] key = new byte[0];
+			try {
+				key = Utils.readKeyFromFile("key.txt");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+			ct.cryptoProperties.setKey(CryptoType.STD, key);
+			ct.cryptoProperties.setKey(CryptoType.DET, key);
+			ct.cryptoProperties.setKey(CryptoType.OPE, key);
+//		ct.cryptoProperties.setKey(CryptoType.FPE, key);
+
+		}
+	}
+
 }

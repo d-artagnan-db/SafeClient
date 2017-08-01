@@ -4,7 +4,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
 
 import pt.uminho.haslab.safecloudclient.clients.TestClient;
 
@@ -31,13 +30,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import static pt.uminho.haslab.cryptoenv.CryptoTechnique.CryptoType.DET;
-import static pt.uminho.haslab.cryptoenv.CryptoTechnique.CryptoType.OPE;
-import static pt.uminho.haslab.cryptoenv.CryptoTechnique.CryptoType.STD;
+
 import pt.uminho.haslab.cryptoenv.Utils;
 import pt.uminho.haslab.safecloudclient.clients.CryptoClient;
-import pt.uminho.haslab.safecloudclient.clients.PlaintextClient;
-import pt.uminho.haslab.safecloudclient.clients.ShareClient;
 
 @RunWith(Parameterized.class)
 public abstract class SimpleHBaseTest {
@@ -80,7 +75,10 @@ public abstract class SimpleHBaseTest {
 			ClassLoader cl = getClass().getClassLoader();
 			File schemaFile = new File("src/main/resources/schema.xml");
 
-			SchemaParser schema = new SchemaParser();
+			Configuration conf = new Configuration();
+			conf.addResource("conf.xml");
+
+			SchemaParser schema = new SchemaParser(conf);
 			schema.parse(schemaFile.getPath());
 			System.out.println("DATABASE SCHEMA: \n"+schema.printDatabaseSchemas());
 
@@ -90,8 +88,7 @@ public abstract class SimpleHBaseTest {
 			TableName tbname = TableName.valueOf(ts.getTablename());
 			HTableDescriptor table = new HTableDescriptor(tbname);
 			for (Family f : ts.getColumnFamilies()) {
-				HColumnDescriptor family = new HColumnDescriptor(
-						f.getFamilyName());
+				HColumnDescriptor family = new HColumnDescriptor(f.getFamilyName());
 				table.addFamily(family);
 			}
 			client.createTestTable(table);
@@ -142,11 +139,11 @@ public abstract class SimpleHBaseTest {
 				Configuration conf = new Configuration();
 				conf.addResource("conf.xml");
 
-				 HBaseAdmin admin = new HBaseAdmin(conf);
-				 admin.disableTable(tableName);
-				 LOG.debug("Table disabled.");
-				 admin.deleteTable(tableName);
-				 LOG.debug("Table dropped.");
+//				 HBaseAdmin admin = new HBaseAdmin(conf);
+//				 admin.disableTable(tableName);
+//				 LOG.debug("Table disabled.");
+//				 admin.deleteTable(tableName);
+//				 LOG.debug("Table dropped.");
 			}
 
 			client.stopCluster();

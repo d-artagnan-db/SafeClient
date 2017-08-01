@@ -1,5 +1,7 @@
 package pt.uminho.haslab.safecloudclient.cryptotechnique;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Result;
@@ -20,8 +22,9 @@ import java.util.*;
  * Supports the CryptoTable class with the secondary methods such as encode, decode, ...
  */
 public class CryptoProperties {
+	static final Log LOG = LogFactory.getLog(CryptoTable.class.getName());
 
-//	TableSchema object, used to trace the database composition
+	//	TableSchema object, used to trace the database composition
 	public TableSchema tableSchema;
 
 //	For each CryptoBox a new CryptoHandler object must be instantiated
@@ -159,9 +162,9 @@ public class CryptoProperties {
 	 */
 	public void verifyOpeValueHandler() {
 		for(String family : this.opeValueHandler.keySet()) {
-			System.out.println("Family Size: "+this.opeValueHandler.get(family).size());
+			LOG.debug("Family Size: "+this.opeValueHandler.get(family).size());
 			for(String qualifier : this.opeValueHandler.get(family).keySet()) {
-				System.out.println("Qualifier Properties: "+qualifier+" - "+this.opeValueHandler.get(family).get(qualifier).toString());
+				LOG.debug("Qualifier Properties: "+qualifier+" - "+this.opeValueHandler.get(family).get(qualifier).toString());
 			}
 		}
 	}
@@ -237,7 +240,6 @@ public class CryptoProperties {
 			default :
 				break;
 		}
-//		System.out.println("The key was setted. Key - " + Arrays.toString(key));
 	}
 
 	public byte[] generateCryptographicKey(CryptoTechnique.CryptoType cType) {
@@ -276,19 +278,23 @@ public class CryptoProperties {
 	 * @return the resulting ciphertext
 	 */
 	public byte[] encodeRowCryptoType(CryptoTechnique.CryptoType cType, byte[] content) {
-		byte[] row = Utils.addPadding(content, tableSchema.getKey().getFormatSize());
+//		byte[] row = Utils.addPadding(content, tableSchema.getKey().getFormatSize());
+		byte[] row = content;
 		switch (cType) {
 			case PLT :
 				return row;
 //				return content;
 			case STD :
+//				LOG.debug("STD row encryption <"+this.tableSchema.getTablename()+">\n");
 				return this.stdHandler.encrypt(this.stdKey, row);
 //				return this.stdHandler.encrypt(this.stdKey, content);
 			case DET :
+//				LOG.debug("DET row encryption <"+this.tableSchema.getTablename()+">\n");
 				return this.detHandler.encrypt(this.detKey, row);
 //				return this.detHandler.encrypt(this.detKey, content);
 			case OPE :
-				return this.opeHandler.encrypt(this.opeKey, row);
+//				LOG.debug("OPE row encryption <"+this.tableSchema.getTablename()+">\n");
+				return this.opeHandler.encrypt(this.opeKey, Utils.addPadding(content, tableSchema.getKey().getFormatSize()));
 //				return this.opeHandler.encrypt(this.opeKey, content);
 			case FPE :
 				return this.fpeHandler.encrypt(this.fpeKey.get("KEY"), row);
@@ -307,20 +313,25 @@ public class CryptoProperties {
 	 * @return the resulting ciphertext
 	 */
 	public byte[] encodeValueCryptoType(CryptoTechnique.CryptoType cType, byte[] content, String family, String qualifier) {
-		byte[] row = Utils.addPadding(content, tableSchema.getFormatSizeFromQualifier(family, qualifier));
+//		byte[] row = Utils.addPadding(content, tableSchema.getFormatSizeFromQualifier(family, qualifier));
+		byte[] row = content;
 		switch (cType) {
 			case PLT :
+//				LOG.debug("PLT values encryption <"+this.tableSchema.getTablename()+","+family+","+qualifier+">\n");
 				return row;
 //				return content;
 			case STD :
+//				LOG.debug("STD values encryption <"+this.tableSchema.getTablename()+","+family+","+qualifier+">\n");
 				return this.stdHandler.encrypt(this.stdKey, row);
 //				return this.stdHandler.encrypt(this.stdKey, content);
 			case DET :
+//				LOG.debug("DET values encryption <"+this.tableSchema.getTablename()+","+family+","+qualifier+">\n");
 				return this.detHandler.encrypt(this.detKey, row);
 //				return this.detHandler.encrypt(this.detKey, content);
 			case OPE :
 				CryptoHandler opeCh = getCryptoHandler(CryptoTechnique.CryptoType.OPE, family, qualifier);
-				return opeCh.encrypt(this.opeKey, row);
+//				LOG.debug("OPE values encryption <"+this.tableSchema.getTablename()+","+family+","+qualifier+">\n");
+				return opeCh.encrypt(this.opeKey, Utils.addPadding(content, tableSchema.getFormatSizeFromQualifier(family, qualifier)));
 //				return opeCh.encrypt(this.opeKey, content);
 			case FPE :
 				CryptoHandler fpeCH = getCryptoHandler(CryptoTechnique.CryptoType.FPE, family, qualifier);
@@ -340,20 +351,24 @@ public class CryptoProperties {
 	private byte[] decodeRowCryptoType(CryptoTechnique.CryptoType cType, byte[] ciphertext) {
 		switch (cType) {
 			case PLT :
-				return Utils.removePadding(ciphertext);
-//				return ciphertext;
+//				byte[] unpadded = Utils.removePadding(ciphertext);
+//				return unpadded;
+				return ciphertext;
 			case STD :
-				return Utils.removePadding(this.stdHandler.decrypt(this.stdKey, ciphertext));
-//				return this.stdHandler.decrypt(this.stdKey, ciphertext);
+//				return Utils.removePadding(this.stdHandler.decrypt(this.stdKey, ciphertext));
+//				LOG.debug("STD row decryption <"+this.tableSchema.getTablename()+">\n");
+				return this.stdHandler.decrypt(this.stdKey, ciphertext);
 			case DET :
-				return Utils.removePadding(this.detHandler.decrypt(this.detKey, ciphertext));
-//				return this.detHandler.decrypt(this.detKey, ciphertext);
+//				return Utils.removePadding(this.detHandler.decrypt(this.detKey, ciphertext));
+//				LOG.debug("DET row decryption <"+this.tableSchema.getTablename()+">\n");
+				return this.detHandler.decrypt(this.detKey, ciphertext);
 			case OPE :
+//				LOG.debug("OPE row decryption <"+this.tableSchema.getTablename()+">\n");
 				return Utils.removePadding(this.opeHandler.decrypt(this.opeKey, ciphertext));
 //				return this.opeHandler.decrypt(this.opeKey, ciphertext);
 			case FPE :
-				return Utils.removePadding(this.fpeHandler.decrypt(this.fpeKey.get("KEY"), ciphertext));
-//				return this.fpeHandler.decrypt(this.fpeKey.get("KEY"), ciphertext);
+//				return Utils.removePadding(this.fpeHandler.decrypt(this.fpeKey.get("KEY"), ciphertext));
+				return this.fpeHandler.decrypt(this.fpeKey.get("KEY"), ciphertext);
 			default :
 				return null;
 		}
@@ -370,22 +385,33 @@ public class CryptoProperties {
 	private byte[] decodeValueCryptoType(CryptoTechnique.CryptoType cType, byte[] ciphertext, String family, String qualifier) {
 		switch (cType) {
 			case PLT :
-				return Utils.removePadding(ciphertext);
-//				return ciphertext;
+//				byte[] unpadded = Utils.removePadding(ciphertext);
+//				return unpadded;
+//				LOG.debug("PLT values decryption <"+this.tableSchema.getTablename()+","+family+","+qualifier+">\n");
+				return ciphertext;
 			case STD :
-				return  Utils.removePadding(this.stdHandler.decrypt(this.stdKey, ciphertext));
-//				return this.stdHandler.decrypt(this.stdKey, ciphertext);
+//				return  Utils.removePadding(this.stdHandler.decrypt(this.stdKey, ciphertext));
+//				LOG.debug("STD values decryption <"+this.tableSchema.getTablename()+","+family+","+qualifier+">\n");
+				byte[] std_value = this.stdHandler.decrypt(this.stdKey, ciphertext);
+//				LOG.debug("STD value: "+new String(std_value));
+				return std_value;
 			case DET :
-				return  Utils.removePadding(this.detHandler.decrypt(this.detKey, ciphertext));
-//				return this.detHandler.decrypt(this.detKey, ciphertext);
+//				return  Utils.removePadding(this.detHandler.decrypt(this.detKey, ciphertext));
+//				LOG.debug("DET values decryption <"+this.tableSchema.getTablename()+","+family+","+qualifier+">\n");
+				byte[] det_value = this.detHandler.decrypt(this.detKey, ciphertext);
+//				LOG.debug("DET value: "+ new String(det_value));
+				return det_value;
 			case OPE :
 				CryptoHandler opeCh = getCryptoHandler(CryptoTechnique.CryptoType.OPE, family, qualifier);
-				return  Utils.removePadding(opeCh.decrypt(this.opeKey, ciphertext));
+//				LOG.debug("OPE values decryption <"+this.tableSchema.getTablename()+","+family+","+qualifier+">\n");
+				byte[] ope_value = Utils.removePadding(opeCh.decrypt(this.opeKey, ciphertext));
+//				LOG.debug("OPE value: "+new String(ope_value));
+				return ope_value;
 //				return opeCh.decrypt(this.opeKey, ciphertext);
 			case FPE :
 				CryptoHandler fpeCH = getCryptoHandler(CryptoTechnique.CryptoType.FPE, family, qualifier);
-				return  Utils.removePadding(fpeCH.decrypt(this.fpeKey.get(family+":"+qualifier), ciphertext));
-//				return fpeCH.decrypt(this.fpeKey.get(family+":"+qualifier), ciphertext);
+//				return  Utils.removePadding(fpeCH.decrypt(this.fpeKey.get(family+":"+qualifier), ciphertext));
+				return fpeCH.decrypt(this.fpeKey.get(family+":"+qualifier), ciphertext);
 			default :
 				return null;
 		}
@@ -398,7 +424,6 @@ public class CryptoProperties {
 	 */
 	public byte[] encodeRow(byte[] content) {
 		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getKey().getCryptoType();
-//		System.out.println("Encode Row: " + cryptoType);
 		return encodeRowCryptoType(cryptoType, content);
 	}
 
@@ -409,7 +434,6 @@ public class CryptoProperties {
 	 */
 	public byte[] decodeRow(byte[] content) {
 		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getKey().getCryptoType();
-//		System.out.println("Decode Row: " + cryptoType);
 		return decodeRowCryptoType(cryptoType, content);
 	}
 
@@ -424,7 +448,6 @@ public class CryptoProperties {
 		String f = new String(family, Charset.forName("UTF-8"));
 		String q = new String(qualifier, Charset.forName("UTF-8"));
 		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getCryptoTypeFromQualifier(f, q);
-//		System.out.println("Encode Value (" + f + "," + q + "): " + cryptoType);
 		return encodeValueCryptoType(cryptoType, value, f, q);
 	}
 
@@ -445,7 +468,7 @@ public class CryptoProperties {
 		if(cryptoType == null) {
 			cryptoType = this.tableSchema.getFamily(new String(family)).getCryptoType();
 		}
-//		System.out.println("Decode Value (" + f + "," + q + "): " + cryptoType);
+
 		return decodeValueCryptoType(cryptoType, value, f, q);
 	}
 
@@ -464,8 +487,23 @@ public class CryptoProperties {
 		while (res.advance()) {
 			Cell cell = res.current();
 			byte[] cf = CellUtil.cloneFamily(cell);
+
+//			if(cf.length > 0) {
+//				LOG.debug("CF ("+new String(cf)+")");
+//			}
+
 			byte[] cq = CellUtil.cloneQualifier(cell);
+
+//			if(cq.length > 0) {
+//				LOG.debug("CQ ("+new String(cq)+")");
+//			}
+
 			byte[] value = CellUtil.cloneValue(cell);
+
+//			if(value.length > 0) {
+//				LOG.debug("Value ("+new String(value)+")");
+//			}
+
 			long timestamp = cell.getTimestamp();
 			byte type = cell.getTypeByte();
 
@@ -478,7 +516,7 @@ public class CryptoProperties {
 				verifyProperty = qualifier.substring(qualifier.length()-opeValues.length(), qualifier.length()).equals(opeValues);
 			}
 
-			if(!verifyProperty) {
+			if(!verifyProperty && cf.length > 0) {
 //				If the qualifier's CryptoType equal to OPE, decrypt the auxiliary qualifier (<qualifier_STD>)
 				if (tableSchema.getCryptoTypeFromQualifier(new String(cf, Charset.forName("UTF-8")), qualifier) == CryptoTechnique.CryptoType.OPE) {
 					Cell stdCell = res.getColumnLatestCell(cf, (qualifier + opeValues).getBytes(Charset.forName("UTF-8")));
@@ -504,6 +542,22 @@ public class CryptoProperties {
 							type,
 							this.decodeValue(cf, cq, value));
 				}
+//				LOG.debug("Get:Result:decodeResult:Cell: "
+//						+new String(CellUtil.cloneFamily(decCell))
+//						+":"+new String(CellUtil.cloneQualifier(decCell))
+//						+":"+new String(CellUtil.cloneValue(decCell)));
+				cellList.add(decCell);
+			}
+			else if(cf.length == 0) {
+				decCell = CellUtil.createCell(
+						row,
+						cf,
+						cq,
+						timestamp,
+						type,
+						value);
+
+//				LOG.debug("Get:Result:decodeResult:Cell: Just Row: "+decCell.toString());
 				cellList.add(decCell);
 			}
 		}
@@ -523,6 +577,15 @@ public class CryptoProperties {
 		for(Map.Entry<byte[], NavigableSet<byte[]>> entry : familiesAndQualifiers.entrySet()) {
 			if(!entry.getValue().isEmpty()) {
 				Iterator i = entry.getValue().iterator();
+//=======
+//		for(byte[] family : familiesAndQualifiers.keySet()) {
+//			NavigableSet<byte[]> q = familiesAndQualifiers.get(family);
+//			if(q==null) {
+//				LOG.debug(familiesAndQualifiers.toString());
+//			} else
+//			if (!q.isEmpty()) {
+//				Iterator i = q.iterator();
+//>>>>>>> lean_xcale
 				List<byte[]> qualifierList = new ArrayList<>();
 				while (i.hasNext()) {
 					byte[] qualifier = (byte[]) i.next();
@@ -575,14 +638,45 @@ public class CryptoProperties {
 					String qualifier = new String(temp_qualifier, Charset.forName("UTF-8"));
 					qualifiers.add(temp_qualifier);
 					if(!qEngine.doesFamilyContainsQualifier(this.tableSchema, family, qualifier)) {
-						this.tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier, CryptoTechnique.CryptoType.OPE));
-						this.tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier+"_STD", CryptoTechnique.CryptoType.STD));
-						replaceQualifierCryptoHandler(family, qualifier, CryptoTechnique.CryptoType.OPE, qEngine.getFamilyFormatSize());
+						LOG.debug("dynamicHColumnDescriptorsAddition1:"+family+":"+qualifier);
+						this.tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier, CryptoTechnique.CryptoType.PLT));
+
+//						this.tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier, CryptoTechnique.CryptoType.OPE));
+//						this.tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier+"_STD", CryptoTechnique.CryptoType.STD));
+//						replaceQualifierCryptoHandler(family, qualifier, CryptoTechnique.CryptoType.OPE, qEngine.getFamilyFormatSize());
 					}
 				}
 			}
 		}
 	}
+
+	public ByteArrayComparable checkComparatorType(ByteArrayComparable comparable, byte[] encoded_content, CryptoTechnique.CryptoType cType) {
+		String comparator_name = comparable.getClass().getSimpleName();
+
+		if(!comparator_name.isEmpty()) {
+			switch (comparator_name) {
+				case "BinaryPrefixComparator":
+					if (cType == CryptoTechnique.CryptoType.PLT) {
+						LOG.debug("New BinaryPrefixComparator created");
+						return new BinaryPrefixComparator(encoded_content);
+					} else {
+						LOG.error("UnsupportedOperationException: BinaryPrefixComparator not supported for the current CryptoBoxes.");
+						throw new UnsupportedOperationException("BinaryPrefixComparator not supported for the current CryptoBoxes.");
+					}
+				case "BinaryComparator":
+					LOG.debug("New BinaryComparator created");
+					return new BinaryComparator(encoded_content);
+				default:
+					LOG.error(comparator_name+" not supported for the current CyrptoBoxes.");
+					throw new UnsupportedOperationException(comparator_name+" not supported for the current CryptoBoxes.");
+			}
+		}
+		else {
+			LOG.debug("NullPointerException: ByteArrayComparable object cannot be empty or null.");
+			throw new NullPointerException("ByteArrayComparable object cannot be empty or null.");
+		}
+	}
+
 
 	public static CryptoTechnique.FFX whichFpeInstance(String instance) {
 		switch (instance) {

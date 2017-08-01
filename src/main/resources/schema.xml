@@ -2,9 +2,9 @@
   <table>
     <name>usertable</name>
     <default>
-      <key>OPE</key>
-      <columns>DET</columns>
-      <formatsize>10</formatsize>
+      <key>PLT</key>
+      <columns>PLT</columns>
+      <formatsize>100</formatsize>
     </default>
     <key>
       <!--<formatsize>10</formatsize>-->
@@ -119,5 +119,95 @@
         <name>NoSQL</name>
       </family>
     </columns>
-</table>
+  </table>
+  <table>
+    <name>temp_table1</name>
+    <default>
+      <key>PLT</key>
+      <columns>PLT</columns>
+      <formatsize>23</formatsize>
+    </default>
+    <key>
+      <formatsize>10</formatsize>
+      <cryptotechnique>FPE</cryptotechnique>
+      <instance>FF3</instance>
+      <radix>10</radix>
+      <tweak>hello world</tweak>
+    </key>
+    <columns>
+      <family>
+        <name>Hello</name>
+        <cryptotechnique>PLT</cryptotechnique>
+      </family>
+      <family>
+        <name>World</name>
+      </family>
+      <family>
+        <name>Safe</name>
+      </family>
+      <family>
+        <name>NoSQL</name>
+      </family>
+    </columns>
+  </table>
+  <table>
+    <name>temp_table2</name>
+    <default>
+      <key>PLT</key>
+      <columns>PLT</columns>
+      <formatsize>23</formatsize>
+    </default>
+    <key>
+      <formatsize>10</formatsize>
+      <cryptotechnique>FPE</cryptotechnique>
+      <instance>FF3</instance>
+      <radix>10</radix>
+      <tweak>hello world</tweak>
+    </key>
+    <columns>
+      <family>
+        <name>Hello</name>
+        <cryptotechnique>PLT</cryptotechnique>
+      </family>
+      <family>
+        <name>World</name>
+      </family>
+      <family>
+        <name>Safe</name>
+      </family>
+      <family>
+        <name>NoSQL</name>
+      </family>
+    </columns>
+  </table>
+  <table>
+    <name>temp_table3</name>
+    <default>
+      <key>PLT</key>
+      <columns>PLT</columns>
+      <formatsize>23</formatsize>
+    </default>
+    <key>
+      <formatsize>10</formatsize>
+      <cryptotechnique>FPE</cryptotechnique>
+      <instance>FF3</instance>
+      <radix>10</radix>
+      <tweak>hello world</tweak>
+    </key>
+    <columns>
+      <family>
+        <name>Hello</name>
+        <cryptotechnique>PLT</cryptotechnique>
+      </family>
+      <family>
+        <name>World</name>
+      </family>
+      <family>
+        <name>Safe</name>
+      </family>
+      <family>
+        <name>NoSQL</name>
+      </family>
+    </columns>
+  </table>
 </schema>

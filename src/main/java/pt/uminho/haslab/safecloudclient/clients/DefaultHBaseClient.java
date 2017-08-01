@@ -42,7 +42,8 @@ public class DefaultHBaseClient implements TestClient {
 			throws IOException, InvalidNumberOfBits {
 		Configuration conf = new Configuration();
 		conf.addResource("def-hbase-client.xml");
-		CryptoTable ct = new CryptoTable(conf, tableName, "schema.txt");
+//		FIXME: estava com o construtor errado
+		CryptoTable ct = new CryptoTable(conf, tableName);
 		return ct;
 	}
 
