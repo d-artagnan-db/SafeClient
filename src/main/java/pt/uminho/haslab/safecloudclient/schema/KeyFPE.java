@@ -18,6 +18,7 @@ public class KeyFPE extends Key {
     private CryptoTechnique.FFX fpe_instance;
     private int radix;
     private String tweak;
+    private Boolean keyPadding;
 
     public KeyFPE() {
         this.cryptoType = CryptoTechnique.CryptoType.FPE;
@@ -26,10 +27,11 @@ public class KeyFPE extends Key {
         this.fpe_instance = CryptoTechnique.FFX.FF1;
         this.radix = 10;
         this.tweak = "";
+        this.keyPadding = null;
     }
 
-    public KeyFPE(CryptoTechnique.CryptoType cType, int formatSize, String instance, int radix, String tweak) {
-        super(cType, formatSize);
+    public KeyFPE(CryptoTechnique.CryptoType cType, int formatSize, Boolean padding, String instance, int radix, String tweak) {
+        super(cType, formatSize, padding);
         this.instance = instance;
         this.fpe_instance = whichFpeInstance(instance);
         this.radix = radix;
@@ -68,6 +70,7 @@ public class KeyFPE extends Key {
     public void setTweak(String tweak) {
         this.tweak = tweak;
     }
+
 
     public byte[] getSecurityParameters(byte[] key) {
         byte[] temp_tweak = getTweakBytes(this.instance, this.tweak);

@@ -19,25 +19,29 @@ public class Family {
 	private CryptoTechnique.CryptoType cryptoType;
 	private int formatSize;
 	private List<Qualifier> qualifiers;
+	private Boolean columnPadding;
 
 	public Family() {
 		this.familyName = "";
 		this.cryptoType = CryptoTechnique.CryptoType.PLT;
 		this.formatSize = 0;
 		this.qualifiers = new ArrayList<>();
+		this.columnPadding = null;
 	}
 
-	public Family(String familyName, CryptoTechnique.CryptoType cType, int formatSize) {
+	public Family(String familyName, CryptoTechnique.CryptoType cType, int formatSize, Boolean columnPadding) {
         this.familyName = familyName;
         this.cryptoType = cType;
         this.formatSize = formatSize;
         this.qualifiers = new ArrayList<>();
+        this.columnPadding = columnPadding;
     }
 
-    public Family(String familyName, CryptoTechnique.CryptoType cType, int formatSize, List<Qualifier> quals) {
+    public Family(String familyName, CryptoTechnique.CryptoType cType, int formatSize, Boolean columnPadding, List<Qualifier> quals) {
 		this.familyName = familyName;
 		this.cryptoType = cType;
 		this.formatSize = formatSize;
+		this.columnPadding = columnPadding;
 		this.qualifiers = quals;
 	}
 
@@ -52,6 +56,10 @@ public class Family {
 
 	public int getFormatSize() {
 		return this.formatSize;
+	}
+
+	public Boolean getColumnPadding() {
+		return this.columnPadding;
 	}
 
 	public List<Qualifier> getQualifiers() {
@@ -74,6 +82,10 @@ public class Family {
 		this.formatSize = formatSize;
 	}
 
+	public void setColumnPadding(Boolean columnPadding) {
+		this.columnPadding = columnPadding;
+	}
+
 	public void setQualifiers(List<Qualifier> qualifiers) {
 		this.qualifiers = new ArrayList<Qualifier>();
 		for (Qualifier q : qualifiers) {
@@ -90,9 +102,10 @@ public class Family {
 	 * @param cryptoType CryptoBox type
 	 * @param formatSize size of qualifier
 	 */
-	public void addQualifier(String qualifierName, CryptoTechnique.CryptoType cryptoType, int formatSize, Map<String,String> properties) {
+	public void addQualifier(String qualifierName, CryptoTechnique.CryptoType cryptoType, int formatSize, Boolean columnPadding, Map<String,String> properties) {
 		CryptoTechnique.CryptoType cType;
 		int fSize = 0;
+		Boolean padding = false;
 
 		if (cryptoType != null)
 			cType = cryptoType;
@@ -105,7 +118,13 @@ public class Family {
 			fSize = this.formatSize;
 		}
 
-		this.qualifiers.add(new Qualifier(qualifierName, cType, fSize, properties));
+		if (columnPadding != null) {
+			padding = columnPadding;
+		} else {
+			padding = this.columnPadding;
+		}
+
+		this.qualifiers.add(new Qualifier(qualifierName, cType, fSize, padding, properties));
 	}
 
 	/**
@@ -131,6 +150,11 @@ public class Family {
 			else
 				q.setFormatSize(qualifier.getFormatSize());
 
+			if (qualifier.getPadding() == null)
+				q.setPadding(this.columnPadding);
+			else
+				q.setPadding(qualifier.getPadding());
+
 			if (qTemp.getInstance() != null) {
 				q.setInstance(qTemp.getInstance());
 				q.setFpeInstance(whichFpeInstance(qTemp.getInstance()));
@@ -150,6 +174,10 @@ public class Family {
 
 			if (qualifier.getFormatSize() == 0)
 				qualifier.setFormatSize(this.formatSize);
+
+			if (qualifier.getPadding() == null) {
+				qualifier.setPadding(this.columnPadding);
+			}
 
 			this.qualifiers.add(qualifier);
 		}
@@ -177,6 +205,7 @@ public class Family {
 		sb.append("Family Name: ").append(familyName).append("\n");
 		sb.append("Family CryptoType: ").append(cryptoType).append("\n");
 		sb.append("Family FormatSize: ").append(formatSize).append("\n");
+		sb.append("Family Padding: ").append(columnPadding).append("\n");
 		sb.append("Column Qualifiers: \n");
 		for (Qualifier q : this.qualifiers) {
 			sb.append(q.toString());

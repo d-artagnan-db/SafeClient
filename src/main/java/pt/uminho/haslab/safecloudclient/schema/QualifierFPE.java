@@ -16,6 +16,7 @@ public class QualifierFPE extends Qualifier {
     private String qualifierName;
     private CryptoTechnique.CryptoType cryptoType;
     private int formatSize;
+    private Boolean padding;
     private Map<String, String> properties;
     private String instance;
     private CryptoTechnique.FFX fpe_instance;
@@ -26,6 +27,7 @@ public class QualifierFPE extends Qualifier {
         this.qualifierName = "";
         this.cryptoType = CryptoTechnique.CryptoType.FPE;
         this.formatSize = 0;
+        this.padding = null;
         this.properties = new HashMap<>();
         this.instance = "FF1";
         this.fpe_instance = CryptoTechnique.FFX.FF1;
@@ -33,8 +35,8 @@ public class QualifierFPE extends Qualifier {
         this.tweak = "";
     }
 
-    public QualifierFPE(String qualifierName, CryptoTechnique.CryptoType cType, int formatSize, Map<String,String> prop, String instance, int radix, String tweak) {
-        super(qualifierName,cType,formatSize,prop);
+    public QualifierFPE(String qualifierName, CryptoTechnique.CryptoType cType, int formatSize, Boolean padding, Map<String,String> prop, String instance, int radix, String tweak) {
+        super(qualifierName,cType,formatSize,padding,prop);
         this.instance = instance;
         this.fpe_instance = whichFpeInstance(instance);
         this.radix = radix;

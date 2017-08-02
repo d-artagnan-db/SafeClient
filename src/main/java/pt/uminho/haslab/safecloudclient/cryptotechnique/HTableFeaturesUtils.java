@@ -8,16 +8,15 @@ import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.filter.*;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.FilterList;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.securefilterfactory.SecureFilterConverter;
-import pt.uminho.haslab.safecloudclient.queryengine.QEngineIntegration;
 import pt.uminho.haslab.safecloudclient.schema.TableSchema;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -299,23 +298,23 @@ public class HTableFeaturesUtils {
     }
 
 
-    public void createDynamicColumnsForAtomicOperations(QEngineIntegration qEngine, TableSchema tableSchema, String family, String qualifier){
-
-//		In case of default schema, verify and/or create both family and qualifier instances in TableSchema
-        if (!qEngine.doesColumnFamilyExist(tableSchema, family)) {
-            tableSchema.addFamily(qEngine.createDefaultFamily(family));
-        }
-
-        if(qualifier != null) {
-            if (!qEngine.doesFamilyContainsQualifier(tableSchema, family, qualifier)) {
-//                WARNING: this is just for CLINIDATA USE CASE
-                tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier, CryptoTechnique.CryptoType.PLT));
-//                tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier, CryptoTechnique.CryptoType.OPE));
-//                tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier + "_STD", CryptoTechnique.CryptoType.STD));
-//                cp.replaceQualifierCryptoHandler(family, qualifier, qEngine.getCryptographicTechnique(), qEngine.getFamilyFormatSize());
-            }
-        }
-
-    }
+//    public void createDynamicColumnsForAtomicOperations(QEngineIntegration qEngine, TableSchema tableSchema, String family, String qualifier){
+//
+////		In case of default schema, verify and/or create both family and qualifier instances in TableSchema
+//        if (!qEngine.doesColumnFamilyExist(tableSchema, family)) {
+//            tableSchema.addFamily(qEngine.createDefaultFamily(family));
+//        }
+//
+//        if(qualifier != null) {
+//            if (!qEngine.doesFamilyContainsQualifier(tableSchema, family, qualifier)) {
+////                WARNING: this is just for CLINIDATA USE CASE
+//                tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier, CryptoTechnique.CryptoType.PLT));
+////                tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier, CryptoTechnique.CryptoType.OPE));
+////                tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier + "_STD", CryptoTechnique.CryptoType.STD));
+////                cp.replaceQualifierCryptoHandler(family, qualifier, qEngine.getCryptographicTechnique(), qEngine.getFamilyFormatSize());
+//            }
+//        }
+//
+//    }
 
 }

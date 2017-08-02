@@ -1,12 +1,15 @@
 package pt.uminho.haslab.safecloudclient.schema;
 
-import com.sun.tools.javac.util.Name;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoTable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties.whichFpeInstance;
 
@@ -21,31 +24,38 @@ public class TableSchema {
 	private CryptoTechnique.CryptoType defaultKeyCryptoType;
 //	Default Qualifiers CryptoBox
 	private CryptoTechnique.CryptoType defaultColumnsCryptoType;
-//	Default format size for both row key and values
-	private int defaultFormatSize;
+	//	Default row key format size
+	private int defaultKeyFormatSize;
+	//	Default values format size
+	private int defaultColumnFormatSize;
+	//	Default row key padding
+	private Boolean defaultKeyPadding;
+	//	Default values padding
+	private Boolean defaultColumnPadding;
+
 
 //	Key object. Contains CryptoBox, formatSize and other information about the Row Key
 	private Key key;
 //  Collection of the database column families (and qualifiers)
 	private List<Family> columnFamilies;
 
+	private Map<CryptoTechnique.CryptoType, Boolean> enabledCryptoTypes;
+
 	public TableSchema() {
 		this.tablename = "";
 		this.defaultKeyCryptoType = CryptoTechnique.CryptoType.PLT;
 		this.defaultColumnsCryptoType = CryptoTechnique.CryptoType.PLT;
-		this.defaultFormatSize = 0;
+		this.defaultKeyFormatSize = 0;
+		this.defaultColumnFormatSize = 0;
+		this.defaultKeyPadding = false;
+		this.defaultColumnPadding = false;
 		this.key = new Key();
 		this.columnFamilies = new ArrayList<>();
+
+		this.enabledCryptoTypes = initializeEnabledCryptoTypes();
 	}
 
-	public TableSchema(String tablename, CryptoTechnique.CryptoType defKey, CryptoTechnique.CryptoType defColumns, int defFormat, Key key, List<Family> families) {
-		this.tablename = tablename;
-		this.defaultKeyCryptoType = defKey;
-		this.defaultColumnsCryptoType = defColumns;
-		this.defaultFormatSize = defFormat;
-		this.key = key;
-		this.columnFamilies = families;
-	}
+
 
 	public String getTablename() {
 		return this.tablename;
@@ -59,8 +69,20 @@ public class TableSchema {
 		return this.defaultColumnsCryptoType;
 	}
 
-	public int getDefaultFormatSize() {
-		return this.defaultFormatSize;
+	public int getDefaultKeyFormatSize() {
+		return this.defaultKeyFormatSize;
+	}
+
+	public int getDefaultColumnFormatSize() {
+		return this.defaultColumnFormatSize;
+	}
+
+	public Boolean getDefaultKeyPadding() {
+		return this.defaultKeyPadding;
+	}
+
+	public Boolean getDefaultColumnPadding() {
+		return this.defaultColumnPadding;
 	}
 
 	public Key getKey() {
@@ -82,60 +104,93 @@ public class TableSchema {
 
 	public void setDefaultKeyCryptoType(CryptoTechnique.CryptoType cType) {
 		this.defaultKeyCryptoType = cType;
+		this.enableCryptoType(cType);
 	}
 
 	public void setDefaultColumnsCryptoType(CryptoTechnique.CryptoType cType) {
 		this.defaultColumnsCryptoType = cType;
+		this.enableCryptoType(cType);
 	}
 
-	public void setDefaultFormatSize(int formatSize) {
-		this.defaultFormatSize = formatSize;
+	public void setDefaultKeyFormatSize(int formatSize) {
+		this.defaultKeyFormatSize = formatSize;
+	}
+
+	public void setDefaultColumnFormatSize(int formatSize) {
+		this.defaultColumnFormatSize = formatSize;
+	}
+
+
+	public void setDefaultKeyPadding(Boolean padding) {
+		this.defaultKeyPadding = padding;
+	}
+
+	public void setDefaultColumnPadding(Boolean padding) {
+		this.defaultColumnPadding = padding;
 	}
 
 	public void setKey(Key key) {
 		if(key instanceof KeyFPE) {
 			KeyFPE temp = new KeyFPE();
-			if (key.getCryptoType() == null)
+			if (key.getCryptoType() == null) {
 				temp.setCryptoType(this.defaultKeyCryptoType);
-			else
+			} else {
 				temp.setCryptoType(key.getCryptoType());
+				this.enableCryptoType(key.getCryptoType());
+			}
 
-			if (key.getFormatSize() <= 0)
-				temp.setFormatSize(this.defaultFormatSize);
-			else
+			if (key.getFormatSize() <= 0) {
+				temp.setFormatSize(this.defaultKeyFormatSize);
+			}else {
 				temp.setFormatSize(key.getFormatSize());
+			}
+
+			if (key.getKeyPadding() == null) {
+				temp.setKeyPadding(this.defaultKeyPadding);
+			} else {
+				temp.setKeyPadding(key.getKeyPadding());
+			}
 
 			if (((KeyFPE) key).getInstance() != null) {
 				temp.setInstance(((KeyFPE) key).getInstance());
 				temp.setFpeInstance(whichFpeInstance(((KeyFPE) key).getInstance()));
 			}
 
-			if(((KeyFPE) key).getRadix() > 0)
+			if (((KeyFPE) key).getRadix() > 0) {
 				temp.setRadix(((KeyFPE) key).getRadix());
+			}
 
-			if(((KeyFPE) key).getTweak() != null)
+			if (((KeyFPE) key).getTweak() != null) {
 				temp.setTweak(((KeyFPE) key).getTweak());
+			}
 
 			this.key = temp;
 		}
 		else {
-			if (key.getCryptoType() == null)
+			if (key.getCryptoType() == null) {
 				this.key.setCryptoType(this.defaultKeyCryptoType);
-			else
+			} else {
 				this.key.setCryptoType(key.getCryptoType());
+				this.enableCryptoType(key.getCryptoType());
+			}
 
-			if (key.getFormatSize() <= 0)
-				this.key.setFormatSize(this.defaultFormatSize);
-			else
+			if (key.getFormatSize() <= 0) {
+				this.key.setFormatSize(this.defaultKeyFormatSize);
+			} else {
 				this.key.setFormatSize(key.getFormatSize());
+			}
+
+			if (key.getKeyPadding() == null) {
+				this.key.setKeyPadding(this.defaultKeyPadding);
+			} else {
+				this.key.setKeyPadding(key.getKeyPadding());
+			}
 		}
 	}
 
 	public void setColumnFamilies(List<Family> families) {
-		this.columnFamilies = new ArrayList<Family>();
-
-		for (Family family : families)
-			this.columnFamilies.add(family);
+		this.columnFamilies = new ArrayList<>();
+		this.columnFamilies.addAll(families);
 	}
 
 	/**
@@ -146,22 +201,32 @@ public class TableSchema {
 	 * @param formatSize column family default size
 	 * @param qualifiers set of column qualifiers
 	 */
-	public void addFamily(String familyName, CryptoTechnique.CryptoType cType, int formatSize, List<Qualifier> qualifiers) {
+	public void addFamily(String familyName, CryptoTechnique.CryptoType cType, int formatSize, Boolean padding, List<Qualifier> qualifiers) {
 		Family family = new Family();
 		family.setFamilyName(familyName);
 
-		if (cType == null)
+		if (cType == null) {
 			family.setCryptoType(defaultColumnsCryptoType);
-		else
+		} else {
 			family.setCryptoType(cType);
+			this.enableCryptoType(family.getCryptoType());
+		}
 
-		if (formatSize <= 0)
-			family.setFormatSize(defaultFormatSize);
-		else
+		if (formatSize <= 0) {
+			family.setFormatSize(defaultColumnFormatSize);
+		} else {
 			family.setFormatSize(formatSize);
+		}
 
-		for (Qualifier q : qualifiers)
+		if (padding == null) {
+			family.setColumnPadding(defaultColumnPadding);
+		} else {
+			family.setColumnPadding(padding);
+		}
+
+		for (Qualifier q : qualifiers) {
 			family.addQualifier(q);
+		}
 
 		this.columnFamilies.add(family);
 	}
@@ -172,11 +237,17 @@ public class TableSchema {
 	 * @param fam Family object
 	 */
 	public void addFamily(Family fam) {
-		if (fam.getCryptoType() == null)
+		if (fam.getCryptoType() == null) {
 			fam.setCryptoType(defaultColumnsCryptoType);
+		}
 
-		if (fam.getFormatSize() <= 0)
-			fam.setFormatSize(defaultFormatSize);
+		if (fam.getFormatSize() <= 0) {
+			fam.setFormatSize(defaultColumnFormatSize);
+		}
+
+		if (fam.getColumnPadding() == null) {
+			fam.setColumnPadding(defaultColumnPadding);
+		}
 
 		this.columnFamilies.add(fam);
 	}
@@ -226,6 +297,10 @@ public class TableSchema {
 			Family f = this.columnFamilies.get(index);
 			f.addQualifier(qualifier);
 			this.columnFamilies.set(index, f);
+			this.enableCryptoType(qualifier.getCryptoType());
+			if(qualifier.getCryptoType().equals(CryptoTechnique.CryptoType.OPE)) {
+				this.enableCryptoType(CryptoTechnique.CryptoType.STD);
+			}
 		}
 	}
 
@@ -262,7 +337,7 @@ public class TableSchema {
 
 		if (cType == null) {
 			LOG.debug("Exception:TableSchema:getCryptoTypeFromQualifier:The specified qualifier ("+family+","+qualifier+") does not exists.");
-			cType = CryptoTechnique.CryptoType.PLT;
+			cType = defaultColumnsCryptoType;
 		}
 
 		return cType;
@@ -333,6 +408,31 @@ public class TableSchema {
 		return formatSize;
 	}
 
+	private Map<CryptoTechnique.CryptoType, Boolean> initializeEnabledCryptoTypes() {
+		Map<CryptoTechnique.CryptoType, Boolean> cTypes = new ConcurrentHashMap<>();
+		for(CryptoTechnique.CryptoType ct : CryptoTechnique.CryptoType.values()) {
+			cTypes.put(ct, false);
+		}
+		return cTypes;
+	}
+
+	private void enableCryptoType(CryptoTechnique.CryptoType cType) {
+		this.enabledCryptoTypes.put(cType, true);
+	}
+
+	public List<CryptoTechnique.CryptoType> getEnabledCryptoTypes() {
+		List<CryptoTechnique.CryptoType> cTypes = new ArrayList<>(this.enabledCryptoTypes.size());
+		for(CryptoTechnique.CryptoType ct : this.enabledCryptoTypes.keySet()) {
+			if(enabledCryptoTypes.get(ct).equals(true)) {
+				cTypes.add(ct);
+			}
+		}
+		return cTypes;
+	}
+
+	public void printEnabledCryptoTypes() {
+		System.out.println(this.enabledCryptoTypes.toString());
+	}
 	
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
@@ -343,7 +443,9 @@ public class TableSchema {
 				"\n");
 		sb.append("> Default Columns CryptoType: " + defaultColumnsCryptoType)
 				.append("\n");
-		sb.append("> Default Format Size CryptoType: " + defaultFormatSize)
+		sb.append("> Default Key Format Size CryptoType: " + defaultKeyFormatSize)
+				.append("\n");
+		sb.append("> Default Column Format Size CryptoType: " + defaultColumnFormatSize)
 				.append("\n");
 		sb.append("Key CryptoType: ").append(this.key.toString()).append("\n");
 		sb.append("Columns: \n");

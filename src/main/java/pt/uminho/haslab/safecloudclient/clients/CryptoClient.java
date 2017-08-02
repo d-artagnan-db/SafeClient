@@ -7,9 +7,9 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique.CryptoType;
 import pt.uminho.haslab.cryptoenv.Utils;
-import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoTable;
 import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
+
 import java.io.IOException;
 
 public class CryptoClient implements TestClient {

@@ -5,13 +5,13 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.filter.*;
+import org.apache.hadoop.hbase.filter.BinaryComparator;
+import org.apache.hadoop.hbase.filter.BinaryPrefixComparator;
+import org.apache.hadoop.hbase.filter.ByteArrayComparable;
 import pt.uminho.haslab.OpeHgd;
 import pt.uminho.haslab.cryptoenv.CryptoHandler;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 import pt.uminho.haslab.cryptoenv.Utils;
-import pt.uminho.haslab.safecloudclient.queryengine.QEngineIntegration;
 import pt.uminho.haslab.safecloudclient.schema.*;
 
 import java.nio.charset.Charset;
@@ -48,15 +48,10 @@ public class CryptoProperties {
 		this.tableSchema = ts;
 
 		this.stdHandler = new CryptoHandler(CryptoTechnique.CryptoType.STD, new ArrayList<>());
-		this.stdKey = this.stdHandler.gen();
-
 		this.detHandler = new CryptoHandler(CryptoTechnique.CryptoType.DET, new ArrayList<>());
-		this.detKey = this.detHandler.gen();
-
 		this.opeHandler = new CryptoHandler(CryptoTechnique.CryptoType.OPE, opeArguments(
 				this.tableSchema.getKey().getFormatSize(),
 				this.tableSchema.getKey().getFormatSize()*2));
-		this.opeKey = this.opeHandler.gen();
 
 		this.opeValueHandler = defineFamilyCryptoHandler(CryptoTechnique.CryptoType.OPE);
 //		this.verifyOpeValueHandler();
@@ -577,15 +572,7 @@ public class CryptoProperties {
 		for(Map.Entry<byte[], NavigableSet<byte[]>> entry : familiesAndQualifiers.entrySet()) {
 			if(!entry.getValue().isEmpty()) {
 				Iterator i = entry.getValue().iterator();
-//=======
-//		for(byte[] family : familiesAndQualifiers.keySet()) {
-//			NavigableSet<byte[]> q = familiesAndQualifiers.get(family);
-//			if(q==null) {
-//				LOG.debug(familiesAndQualifiers.toString());
-//			} else
-//			if (!q.isEmpty()) {
-//				Iterator i = q.iterator();
-//>>>>>>> lean_xcale
+
 				List<byte[]> qualifierList = new ArrayList<>();
 				while (i.hasNext()) {
 					byte[] qualifier = (byte[]) i.next();
@@ -603,52 +590,6 @@ public class CryptoProperties {
 		return result;
 	}
 
-	public void dynamicHColumnDescriptorsAddition(Map<byte[], NavigableSet<byte[]>> familiesAndQualifiers, QEngineIntegration qEngine) {
-		if(!familiesAndQualifiers.isEmpty()) {
-			for (Map.Entry<byte[], NavigableSet<byte[]>> entry : familiesAndQualifiers.entrySet()) {
-				if (!entry.getValue().isEmpty()) {
-					String family = new String(entry.getKey(), Charset.forName("UTF-8"));
-					Iterator i = entry.getValue().iterator();
-
-					while (i.hasNext()) {
-						byte[] temp_qualifier = (byte[]) i.next();
-						String qualifier = new String(temp_qualifier, Charset.forName("UTF-8"));
-						if (!qEngine.doesFamilyContainsQualifier(this.tableSchema, family, qualifier)) {
-							this.tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier, CryptoTechnique.CryptoType.OPE));
-							this.tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier + "_STD", CryptoTechnique.CryptoType.STD));
-							replaceQualifierCryptoHandler(family, qualifier, CryptoTechnique.CryptoType.OPE, qEngine.getFamilyFormatSize());
-						}
-					}
-				}
-			}
-		}
-	}
-
-	public void dynamicHColumnDescriptorsAddition(NavigableMap<byte[], List<Cell>> familiesAndQualifiers, QEngineIntegration qEngine) {
-		if(!familiesAndQualifiers.isEmpty()) {
-			NavigableSet<byte[]> temp_navigable_set = familiesAndQualifiers.navigableKeySet();
-			Iterator i = temp_navigable_set.iterator();
-			while(i.hasNext()) {
-				byte[] temp_family = (byte[]) i.next();
-				String family = new String(temp_family, Charset.forName("UTF-8"));
-				List<Cell> temp_qualifiers = familiesAndQualifiers.get(temp_family);
-				List<byte[]> qualifiers = new ArrayList<>();
-				for(Cell c : temp_qualifiers) {
-					byte[] temp_qualifier = CellUtil.cloneQualifier(c);
-					String qualifier = new String(temp_qualifier, Charset.forName("UTF-8"));
-					qualifiers.add(temp_qualifier);
-					if(!qEngine.doesFamilyContainsQualifier(this.tableSchema, family, qualifier)) {
-						LOG.debug("dynamicHColumnDescriptorsAddition1:"+family+":"+qualifier);
-						this.tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier, CryptoTechnique.CryptoType.PLT));
-
-//						this.tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier, CryptoTechnique.CryptoType.OPE));
-//						this.tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier+"_STD", CryptoTechnique.CryptoType.STD));
-//						replaceQualifierCryptoHandler(family, qualifier, CryptoTechnique.CryptoType.OPE, qEngine.getFamilyFormatSize());
-					}
-				}
-			}
-		}
-	}
 
 	public ByteArrayComparable checkComparatorType(ByteArrayComparable comparable, byte[] encoded_content, CryptoTechnique.CryptoType cType) {
 		String comparator_name = comparable.getClass().getSimpleName();

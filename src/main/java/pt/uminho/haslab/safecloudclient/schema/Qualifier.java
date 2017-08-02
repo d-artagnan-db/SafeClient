@@ -14,19 +14,22 @@ public class Qualifier {
 	private String qualifierName;
 	private CryptoTechnique.CryptoType cryptoType;
 	private int formatSize;
+	private Boolean padding;
 	private Map<String, String> properties;
 
 	public Qualifier() {
 		this.qualifierName = "";
 		this.cryptoType = CryptoTechnique.CryptoType.PLT;
 		this.formatSize = 0;
+		this.padding = null;
 		this.properties = new HashMap<>();
 	}
 
-	public Qualifier(String name, CryptoTechnique.CryptoType cType, int format, Map<String, String> properties) {
+	public Qualifier(String name, CryptoTechnique.CryptoType cType, int format, Boolean padding, Map<String, String> properties) {
 		this.qualifierName = name;
 		this.cryptoType = cType;
 		this.formatSize = format;
+		this.padding = padding;
 		this.properties = properties;
 	}
 
@@ -42,6 +45,10 @@ public class Qualifier {
 		return this.formatSize;
 	}
 
+	public Boolean getPadding() {
+		return this.padding;
+	}
+
 	public void setQualifierName(String name) {
 		this.qualifierName = name;
 	}
@@ -52,6 +59,10 @@ public class Qualifier {
 
 	public void setFormatSize(int format) {
 		this.formatSize = format;
+	}
+
+	public void setPadding(Boolean padding) {
+		this.padding = padding;
 	}
 
 	public Map<String,String> getProperties() {
@@ -74,6 +85,7 @@ public class Qualifier {
 		sb.append("Qualifier Name: ").append(qualifierName).append("\n");
 		sb.append("Qualifier CryptoType: ").append(cryptoType).append("\n");
 		sb.append("Qualifier Format Size: ").append(formatSize).append("\n");
+		sb.append("Qualifier Padding: ").append(padding).append("\n");
 		sb.append("Qualifier Properties: \n");
 		for(String s : this.properties.keySet()) {
 			sb.append(s).append(": ").append(this.properties.get(s)).append("\n");

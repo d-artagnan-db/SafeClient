@@ -79,7 +79,7 @@ public abstract class SimpleHBaseTest {
 			conf.addResource("conf.xml");
 
 			SchemaParser schema = new SchemaParser(conf);
-			schema.parse(schemaFile.getPath());
+			schema.parseDatabaseTables(schemaFile.getPath());
 			System.out.println("DATABASE SCHEMA: \n"+schema.printDatabaseSchemas());
 
 			TableSchema ts = schema.getTableSchema("usertable");
