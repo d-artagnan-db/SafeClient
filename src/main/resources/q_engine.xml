@@ -10,12 +10,12 @@
   <table>
     <name>R-maxdata-CLINIDATA_NEW-DTW_PATIENT</name>
     <default>
-      <key>PLT</key>
-      <columns>PLT</columns>
-      <keypadding>false</keypadding>
-      <colpadding>false</colpadding>
-      <keyformatsize>10</keyformatsize>
-      <colformatsize>10</colformatsize>
+      <!--<key>PLT</key>-->
+      <!--<columns>PLT</columns>-->
+      <!--<keypadding>false</keypadding>-->
+      <!--<colpadding>false</colpadding>-->
+      <!--<keyformatsize>10</keyformatsize>-->
+      <!--<colformatsize>10</colformatsize>-->
     </default>
     <key>
     </key>
@@ -47,9 +47,9 @@
   <table>
     <name>R-maxdata-CLINIDATA_NEW-DTW_PATIENT_ID_BY_PATIENT</name>
     <default>
-      <key>PLT</key>
-      <columns>PLT</columns>
-      <formatsize>10</formatsize>
+      <!--<key>PLT</key>-->
+      <!--<columns>PLT</columns>-->
+      <!--<formatsize>10</formatsize>-->
     </default>
     <key>
     </key>
@@ -69,9 +69,9 @@
   <table>
     <name>R-maxdata-CLINIDATA_NEW-DTW_TEST_RESULT</name>
     <default>
-      <key>PLT</key>
-      <columns>PLT</columns>
-      <formatsize>10</formatsize>
+      <!--<key>PLT</key>-->
+      <!--<columns>PLT</columns>-->
+      <!--<formatsize>10</formatsize>-->
     </default>
     <key>
     </key>

@@ -272,6 +272,7 @@ public class CryptoProperties {
 	 * @param content plaintext row key
 	 * @return the resulting ciphertext
 	 */
+//		TODO: arrange padding properties here
 	public byte[] encodeRowCryptoType(CryptoTechnique.CryptoType cType, byte[] content) {
 //		byte[] row = Utils.addPadding(content, tableSchema.getKey().getFormatSize());
 		byte[] row = content;
@@ -307,6 +308,7 @@ public class CryptoProperties {
 	 * @param qualifier qualifier column
 	 * @return the resulting ciphertext
 	 */
+//		TODO: arrange padding properties here
 	public byte[] encodeValueCryptoType(CryptoTechnique.CryptoType cType, byte[] content, String family, String qualifier) {
 //		byte[] row = Utils.addPadding(content, tableSchema.getFormatSizeFromQualifier(family, qualifier));
 		byte[] row = content;
@@ -343,6 +345,7 @@ public class CryptoProperties {
 	 * @param ciphertext protected row key
 	 * @return the original row key in byte[] format
 	 */
+//		TODO: arrange padding properties here
 	private byte[] decodeRowCryptoType(CryptoTechnique.CryptoType cType, byte[] ciphertext) {
 		switch (cType) {
 			case PLT :
@@ -377,6 +380,7 @@ public class CryptoProperties {
 	 * @param qualifier qualifier column
 	 * @return the original value in byte[] format
 	 */
+//		TODO: arrange padding properties here
 	private byte[] decodeValueCryptoType(CryptoTechnique.CryptoType cType, byte[] ciphertext, String family, String qualifier) {
 		switch (cType) {
 			case PLT :
@@ -568,27 +572,30 @@ public class CryptoProperties {
 	public Map<byte[], List<byte[]>> getHColumnDescriptors(Map<byte[], NavigableSet<byte[]>> familiesAndQualifiers) {
 		String opeValue = "_STD";
 		Map<byte[],List<byte[]>> result = new HashMap<>();
-
-		for(Map.Entry<byte[], NavigableSet<byte[]>> entry : familiesAndQualifiers.entrySet()) {
-			if(!entry.getValue().isEmpty()) {
-				Iterator i = entry.getValue().iterator();
-
+		for(byte[] family : familiesAndQualifiers.keySet()) {
+			NavigableSet<byte[]> q = familiesAndQualifiers.get(family);
+			if(q==null) {
+				LOG.debug(familiesAndQualifiers.toString());
+			} else
+			if (!q.isEmpty()) {
+				Iterator i = q.iterator();
 				List<byte[]> qualifierList = new ArrayList<>();
 				while (i.hasNext()) {
 					byte[] qualifier = (byte[]) i.next();
 					qualifierList.add(qualifier);
-					if (tableSchema.getCryptoTypeFromQualifier(new String(entry.getKey(), Charset.forName("UTF-8")), new String(qualifier, Charset.forName("UTF-8"))) == CryptoTechnique.CryptoType.OPE) {
+					if (tableSchema.getCryptoTypeFromQualifier(new String(family, Charset.forName("UTF-8")), new String(qualifier, Charset.forName("UTF-8"))) == CryptoTechnique.CryptoType.OPE) {
 						String q_std = new String(qualifier, Charset.forName("UTF-8"));
 						qualifierList.add((q_std + opeValue).getBytes(Charset.forName("UTF-8")));
 					}
 
 				}
-				result.put(entry.getKey(), qualifierList);
+				result.put(family, qualifierList);
 			}
 		}
 
 		return result;
 	}
+
 
 
 	public ByteArrayComparable checkComparatorType(ByteArrayComparable comparable, byte[] encoded_content, CryptoTechnique.CryptoType cType) {

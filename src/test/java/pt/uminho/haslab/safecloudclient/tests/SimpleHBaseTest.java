@@ -61,7 +61,8 @@ public abstract class SimpleHBaseTest {
 
 		LOG.debug("Creating clients");
 
-		theClients.put(new CryptoClient("schema.xml"), "usertable");
+//		theClients.put(new CryptoClient("schema.xml"), "usertable");
+		theClients.put(new CryptoClient("q_engine.xml"), "usertable");
 
 		System.out.println("Client created");
 
@@ -75,10 +76,7 @@ public abstract class SimpleHBaseTest {
 			ClassLoader cl = getClass().getClassLoader();
 			File schemaFile = new File("src/main/resources/schema.xml");
 
-			Configuration conf = new Configuration();
-			conf.addResource("conf.xml");
-
-			SchemaParser schema = new SchemaParser(conf);
+			SchemaParser schema = new SchemaParser();
 			schema.parseDatabaseTables(schemaFile.getPath());
 			System.out.println("DATABASE SCHEMA: \n"+schema.printDatabaseSchemas());
 

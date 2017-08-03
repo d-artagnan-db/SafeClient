@@ -59,7 +59,7 @@ public class CryptoTable extends HTable {
 					if (!parsingComplete) {
 						File file = new File(schemaProperty);
 						System.out.println("Thread-"+Thread.currentThread().getId() + ":build database schema.");
-						this.buildDatabaseSchema(file.getPath(), conf);
+						this.buildDatabaseSchema(file.getPath());
 						parsingComplete = true;
 					}
 
@@ -91,6 +91,7 @@ public class CryptoTable extends HTable {
 //		arrange cryptographic keys properties
 
 //		TODO: esta parte depois tem de ser feita com um gestor de chaves
+//		FIXME: The current approach instantiate the same cryptograhic key for all CryptoBox. Solution: Provide different cryptographic keys for each CryptoBox
 		String cryptographicKeyProperty = conf.get("cryptographickey");
 		if(cryptographicKeyProperty != null && !cryptographicKeyProperty.isEmpty()) {
 			while (!keyAcknowledgement) {
@@ -133,12 +134,12 @@ public class CryptoTable extends HTable {
 	 * @param filename path to the database schema
 	 * @return TableSchema object
 	 */
-	public void buildDatabaseSchema(String filename, Configuration conf) {
+	public void buildDatabaseSchema(String filename) {
 		if (filename == null) {
 			throw new NullPointerException("Schema file name cannot be null.");
 		}
 
-		SchemaParser schemaParser = new SchemaParser(conf);
+		SchemaParser schemaParser = new SchemaParser();
 		schemaParser.parseDatabaseTables(filename);
 
 		databaseSchema = new HashMap<>();

@@ -2,19 +2,18 @@ package pt.uminho.haslab.safecloudclient.schema;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.dom4j.*;
+import org.dom4j.Document;
+import org.dom4j.DocumentException;
+import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoTable;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
 
 /**
  * SchemaParser class.
@@ -23,7 +22,6 @@ import java.util.*;
 public class SchemaParser {
 	static final Log LOG = LogFactory.getLog(CryptoTable.class.getName());
 	public Map<String,TableSchema> tableSchemas;
-	private HBaseAdmin admin;
 
 	private CryptoTechnique.CryptoType defaultPropertiesKey;
 	private CryptoTechnique.CryptoType defaultPropertiesColumns;
@@ -34,13 +32,8 @@ public class SchemaParser {
 
 
 
-	public SchemaParser(Configuration conf) {
+	public SchemaParser() {
 		this.tableSchemas = new HashMap<>();
-		try {
-			this.admin = new HBaseAdmin(conf);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 
 	public Map<String, TableSchema> getSchemas() {
