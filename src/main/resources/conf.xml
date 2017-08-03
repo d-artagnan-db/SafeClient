@@ -7,4 +7,8 @@
     <name>schema</name>
     <value>src/main/resources/schema.xml</value>
   </property>
+  <property>
+    <name>cryptographickey</name>
+    <value>key.txt</value>
+  </property>
 </configuration>

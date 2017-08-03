@@ -82,7 +82,7 @@ public class SchemaParser {
 //			Map the schema file into an Element object
 			Element rootElement = document.getRootElement();
 
-			parseDatabaseDefaultProperties(rootElement.element("default"), new TableSchema());
+			parseDatabaseDefaultProperties(rootElement.element("default"));
 
 			List<Element> tables = rootElement.elements("table");
 			for(Element table_element : tables) {
@@ -97,7 +97,7 @@ public class SchemaParser {
 	}
 
 
-	public void parseDatabaseDefaultProperties(Element rootElement, TableSchema tableSchema) {
+	public void parseDatabaseDefaultProperties(Element rootElement) {
 		System.out.println("ParseDatabaseDefaultProperties:");
 
 		if(rootElement != null) {
@@ -139,24 +139,13 @@ public class SchemaParser {
 		}
 	}
 
-	public TableSchema generateDefaultTableSchema(String tablename) {
-		TableSchema temp = new TableSchema();
-		temp.setTablename(tablename);
-
-//		Set default key properties
-//		Set default Column properties
-//		Get HColumnDescriptor
-
-		return null;
-	}
-
 	public TableSchema parseTable(Element rootElement) {
 		TableSchema ts = new TableSchema();
 
-		HColumnDescriptor[] hColumnDescriptors = parseTablename(rootElement, ts);
+		parseTablename(rootElement, ts);
 		parseTableDefaultProperties(rootElement, ts);
 		parseKey(rootElement, ts);
-		parseColumns(rootElement, ts, hColumnDescriptors);
+		parseColumns(rootElement, ts);
 
 		return ts;
 	}
@@ -167,7 +156,7 @@ public class SchemaParser {
 	 * parseTablename(rootElement : Element) method : parse the table name
 	 * @param rootElement main Element node
 	 */
-	public HColumnDescriptor[] parseTablename(Element rootElement, TableSchema tableSchema) {
+	public void parseTablename(Element rootElement, TableSchema tableSchema) {
 		Element nameElement = rootElement.element("name");
 		String name = nameElement.getText();
 		if(name == null || name.isEmpty()) {
@@ -175,13 +164,6 @@ public class SchemaParser {
 		}
 
 		tableSchema.setTablename(name);
-		HTableDescriptor descriptor = getHColumnDescriptors(TableName.valueOf(name));
-		if(descriptor != null) {
-			return descriptor.getColumnFamilies();
-		}
-		else {
-			return null;
-		}
 	}
 
 	/**
@@ -295,8 +277,7 @@ public class SchemaParser {
 	 * parseColumns(rootElement : Element) method : parse the column families and qualifiers properties from the database schema
 	 * @param rootElement main Element node
 	 */
-	public void parseColumns(Element rootElement, TableSchema tableSchema, HColumnDescriptor[] hColumnDescriptors) {
-		boolean hasDescriptor = false;
+	public void parseColumns(Element rootElement, TableSchema tableSchema) {
 		Element columnsElement = rootElement.element("columns");
 		if(columnsElement == null) {
 			throw new NoSuchElementException("Columns arguments cannot be null.");
@@ -326,106 +307,90 @@ public class SchemaParser {
 					familyPadding = String.valueOf(tableSchema.getDefaultColumnPadding());
 				}
 
-//				if(hColumnDescriptors != null && hColumnDescriptors.length > 0) {
-//					hasDescriptor = true;
-//				}
-//
-//				if(hasDescriptor && hasHColumnDescriptor(hColumnDescriptors, familyName)) {
-//					System.out.println("HasDescriptor: " + Arrays.toString(hColumnDescriptors));
-//				}
-//				else if(!hasDescriptor) {
-//					System.out.println("HasDescriptor = false");
-					Family f = new Family(
-							familyName,
-							switchCryptoType(familyCryptoTechnique),
-							formatSizeIntegerValue(familyFormatSize),
-							paddingBooleanConvertion(familyPadding));
 
-					tableSchema.addFamily(f);
+				Family f = new Family(
+						familyName,
+						switchCryptoType(familyCryptoTechnique),
+						formatSizeIntegerValue(familyFormatSize),
+						paddingBooleanConvertion(familyPadding));
 
-					List<Element> qualifiersElement = family.elements("qualifier");
-					for (Element qualifier : qualifiersElement) {
-						String qualifierName = qualifier.elementText("name");
-						String cryptotechniqueQualifier = qualifier.elementText("cryptotechnique");
-						String qualifierFormatsize = qualifier.elementText("colformatsize");
-						String qualifierPadding = qualifier.elementText("colpadding");
+				tableSchema.addFamily(f);
 
-						String instance = qualifier.elementText("instance");
-						String radix = qualifier.elementText("radix");
-						String tweak = qualifier.elementText("tweak");
+				List<Element> qualifiersElement = family.elements("qualifier");
+				for (Element qualifier : qualifiersElement) {
+					String qualifierName = qualifier.elementText("name");
+					String cryptotechniqueQualifier = qualifier.elementText("cryptotechnique");
+					String qualifierFormatsize = qualifier.elementText("colformatsize");
+					String qualifierPadding = qualifier.elementText("colpadding");
 
-						List<Element> misc = qualifier.elements("misc");
-						Map<String, String> properties = parseMiscellaneous(misc);
+					String instance = qualifier.elementText("instance");
+					String radix = qualifier.elementText("radix");
+					String tweak = qualifier.elementText("tweak");
 
-						if (qualifierName == null || qualifierName.isEmpty()) {
-							throw new NullPointerException("Column qualifier name cannot be null nor empty.");
-						}
+					List<Element> misc = qualifier.elements("misc");
+					Map<String, String> properties = parseMiscellaneous(misc);
 
-						if (cryptotechniqueQualifier == null || cryptotechniqueQualifier.isEmpty()) {
-							cryptotechniqueQualifier = familyCryptoTechnique;
-						}
-
-						if (qualifierFormatsize == null || qualifierFormatsize.isEmpty()) {
-							qualifierFormatsize = familyFormatSize;
-						}
-
-						if (qualifierPadding == null || qualifierPadding.isEmpty()) {
-							qualifierPadding = familyPadding;
-						}
-
-						if (cryptotechniqueQualifier.equals("FPE")) {
-							validateFPEArguments(instance, radix, tweak);
-						}
-
-						Qualifier q;
-						if (!cryptotechniqueQualifier.equals("FPE")) {
-							q = new Qualifier(
-									qualifierName,
-									switchCryptoType(cryptotechniqueQualifier),
-									formatSizeIntegerValue(qualifierFormatsize),
-									paddingBooleanConvertion(qualifierPadding),
-									properties);
-
-						} else {
-							q = new QualifierFPE(
-									qualifierName,
-									switchCryptoType(cryptotechniqueQualifier),
-									formatSizeIntegerValue(qualifierFormatsize),
-									paddingBooleanConvertion(qualifierPadding),
-									properties,
-									instance,
-									radixIntegerValue(radix),
-									tweak
-							);
-						}
-
-						tableSchema.addQualifier(familyName, q);
-
-						if (cryptotechniqueQualifier.equals("OPE")) {
-							String stdQualifierName = qualifierName + "_STD";
-							String stdCType = "STD";
-
-							Qualifier std = new Qualifier(
-									stdQualifierName,
-									switchCryptoType(stdCType),
-									formatSizeIntegerValue(qualifierFormatsize),
-									paddingBooleanConvertion(qualifierPadding),
-									properties
-							);
-
-							tableSchema.addQualifier(familyName, std);
-						}
-
+					if (qualifierName == null || qualifierName.isEmpty()) {
+						throw new NullPointerException("Column qualifier name cannot be null nor empty.");
 					}
+
+					if (cryptotechniqueQualifier == null || cryptotechniqueQualifier.isEmpty()) {
+						cryptotechniqueQualifier = familyCryptoTechnique;
+					}
+
+					if (qualifierFormatsize == null || qualifierFormatsize.isEmpty()) {
+						qualifierFormatsize = familyFormatSize;
+					}
+
+					if (qualifierPadding == null || qualifierPadding.isEmpty()) {
+						qualifierPadding = familyPadding;
+					}
+
+					if (cryptotechniqueQualifier.equals("FPE")) {
+						validateFPEArguments(instance, radix, tweak);
+					}
+
+					Qualifier q;
+					if (!cryptotechniqueQualifier.equals("FPE")) {
+						q = new Qualifier(
+								qualifierName,
+								switchCryptoType(cryptotechniqueQualifier),
+								formatSizeIntegerValue(qualifierFormatsize),
+								paddingBooleanConvertion(qualifierPadding),
+								properties);
+
+					} else {
+						q = new QualifierFPE(
+								qualifierName,
+								switchCryptoType(cryptotechniqueQualifier),
+								formatSizeIntegerValue(qualifierFormatsize),
+								paddingBooleanConvertion(qualifierPadding),
+								properties,
+								instance,
+								radixIntegerValue(radix),
+								tweak
+						);
+					}
+
+					tableSchema.addQualifier(familyName, q);
+
+					if (cryptotechniqueQualifier.equals("OPE")) {
+						String stdQualifierName = qualifierName + "_STD";
+						String stdCType = "STD";
+
+						Qualifier std = new Qualifier(
+								stdQualifierName,
+								switchCryptoType(stdCType),
+								formatSizeIntegerValue(qualifierFormatsize),
+								paddingBooleanConvertion(qualifierPadding),
+								properties
+						);
+
+						tableSchema.addQualifier(familyName, std);
+					}
+
 				}
-//				else {
-//					throw new NullPointerException("The column family "+familyName+", specified in the schema file does not match with the HColumnDescriptors:");
-//
-//				}
-//			}
-//			else {
-//				throw new NoSuchElementException("Column family element cannot be null nor empty.");
-//			}
+			}
 		}
 	}
 
@@ -443,6 +408,7 @@ public class SchemaParser {
 		return result;
 	}
 
+//	FIXME: read cType with Enum.valueOf()
 	public CryptoTechnique.CryptoType switchCryptoType(String cType) {
 		if (cType == null)
 			return null;
@@ -517,29 +483,4 @@ public class SchemaParser {
 		return sb.toString();
 	}
 
-	public boolean hasHColumnDescriptor(HColumnDescriptor[] hColumnDescriptors, String descriptor) {
-		boolean col = false;
-		System.out.println("Size: "+hColumnDescriptors.length);
-		for(int i = 0; i < hColumnDescriptors.length && !col; i++) {
-			if(hColumnDescriptors[i].getNameAsString().equals(descriptor)) {
-				col = true;
-			}
-			else {
-				i++;
-			}
-		}
-		return col;
-	}
-
-	public HTableDescriptor getHColumnDescriptors(TableName tablename) {
-		HTableDescriptor descriptor = null;
-		try {
-			if(this.admin.tableExists(tablename)) {
-				descriptor = this.admin.getTableDescriptor(tablename);
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return descriptor;
-	}
 }

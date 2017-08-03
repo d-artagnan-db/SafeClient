@@ -41,13 +41,6 @@ public class CryptoClient implements TestClient {
 		new Thread(new CreateTable("temp_table3")).start();
 
 		CryptoTable ct = new CryptoTable(conf, tableName);
-		byte[] key = Utils.readKeyFromFile("key.txt");
-
-		ct.cryptoProperties.setKey(CryptoType.STD, key);
-		ct.cryptoProperties.setKey(CryptoType.DET, key);
-		ct.cryptoProperties.setKey(CryptoType.OPE, key);
-//		ct.cryptoProperties.setKey(CryptoType.FPE, key);
-
 		System.out.println("Table created Successfully");
 		return ct;
 	}
@@ -84,17 +77,6 @@ public class CryptoClient implements TestClient {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			byte[] key = new byte[0];
-			try {
-				key = Utils.readKeyFromFile("key.txt");
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-
-			ct.cryptoProperties.setKey(CryptoType.STD, key);
-			ct.cryptoProperties.setKey(CryptoType.DET, key);
-			ct.cryptoProperties.setKey(CryptoType.OPE, key);
-//		ct.cryptoProperties.setKey(CryptoType.FPE, key);
 
 		}
 	}

@@ -35,11 +35,11 @@ public class QEngineClient implements TestClient {
         conf.addResource("conf.xml");
 
         CryptoTable ct = new CryptoTable(conf, tableName);
-        byte[] key = Utils.readKeyFromFile("key.txt");
+//        byte[] key = Utils.readKeyFromFile("key.txt");
 //
 //        ct.cryptoProperties.setKey(CryptoTechnique.CryptoType.STD, key);
 //        ct.cryptoProperties.setKey(CryptoTechnique.CryptoType.DET, key);
-        ct.cryptoProperties.setKey(CryptoTechnique.CryptoType.OPE, key);
+//        ct.cryptoProperties.setKey(CryptoTechnique.CryptoType.OPE, key);
 //        ct.cryptoProperties.setKey(CryptoTechnique.CryptoType.FPE, key);
 
         System.out.println("Table created Successfully");

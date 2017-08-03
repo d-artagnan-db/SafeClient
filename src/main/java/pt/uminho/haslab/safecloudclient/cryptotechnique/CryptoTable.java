@@ -34,28 +34,31 @@ public class CryptoTable extends HTable {
 	public ResultScannerFactory resultScannerFactory;
 	public HTableFeaturesUtils htableUtils;
 	public SecureFilterConverter secureFilterConverter;
+
 	private static Map<String, Object> databaseDefaultProperties;
 	private static Map<String,TableSchema> databaseSchema;
 	private static final Lock lock = new ReentrantLock();
 	private static boolean parsingComplete = false;
+
+	private static boolean keyAcknowledgement = false;
+	private static byte[] cryptographicKey;
+
 	public TableSchema tableSchema;
 
 
 	public CryptoTable(Configuration conf, String tableName) throws IOException {
 		super(conf, TableName.valueOf(tableName));
-		String property = conf.get("schema");
+		String schemaProperty = conf.get("schema");
 		LOG.debug("CryptoTable:TableName:"+tableName);
 
-		if(property != null && !property.isEmpty()) {
-			File file = new File(property);
-
+		if(schemaProperty != null && !schemaProperty.isEmpty()) {
 			while(!parsingComplete) {
 				try {
 					lock.lock();
 					System.out.println("Thread-"+Thread.currentThread().getId() + ":Lock achieved.");
 					if (!parsingComplete) {
+						File file = new File(schemaProperty);
 						System.out.println("Thread-"+Thread.currentThread().getId() + ":build database schema.");
-
 						this.buildDatabaseSchema(file.getPath(), conf);
 						parsingComplete = true;
 					}
@@ -70,14 +73,15 @@ public class CryptoTable extends HTable {
 //			FIXME: a tabela pode nao existir no table schema. Se nao existir Cria-se um table schema a default
 			if(databaseSchema.containsKey(tableName)) {
 				this.tableSchema = getTableSchema(tableName);
-				this.cryptoProperties = new CryptoProperties(this.tableSchema);
 			}
 			else {
 				System.out.println("Tablename not found in schema file.");
 				this.tableSchema = generateDefaultTableSchema(tableName, conf);
-				this.cryptoProperties = new CryptoProperties(this.tableSchema);
 				System.out.println("Generate Default Table Schema for "+tableName+" table: "+tableSchema.toString());
 			}
+
+			this.cryptoProperties = new CryptoProperties(this.tableSchema);
+
 		} else {
 			throw new FileNotFoundException("Schema file not found.");
 		}
@@ -85,23 +89,37 @@ public class CryptoTable extends HTable {
 
 //		While the cryptographic keys management is not defined, read keys from specific files
 //		arrange cryptographic keys properties
+
 //		TODO: esta parte depois tem de ser feita com um gestor de chaves
-//		TODO - Apply locks here
-		File cryptographicKey = new File("src/main/resources/key.txt");
-		byte[] key;
-		if(cryptographicKey.isFile() && cryptographicKey.getName().equals("key.txt")) {
-			LOG.debug("File key available.");
-			key = Utils.readKeyFromFile(cryptographicKey.getPath());
-		}
-		else {
-			LOG.debug("No key available. Default key used.");
-			key = new byte[]{(byte) 0x2B, (byte) 0x7E, (byte) 0x15, (byte) 0x16, (byte) 0x28, (byte) 0xAE, (byte) 0xD2,
-					(byte) 0xA6, (byte) 0xAB, (byte) 0xF7, (byte) 0x15, (byte) 0x88, (byte) 0x09, (byte) 0xCF,
-					(byte) 0x4F, (byte) 0x3C};
+		String cryptographicKeyProperty = conf.get("cryptographickey");
+		if(cryptographicKeyProperty != null && !cryptographicKeyProperty.isEmpty()) {
+			while (!keyAcknowledgement) {
+				try {
+					lock.lock();
+					System.out.println("Thread-" + Thread.currentThread().getId() + ":Lock achieved Cryptographic key: " + tableName);
+					if (!keyAcknowledgement) {
+						File keyFile = new File(cryptographicKeyProperty);
+
+						if (keyFile.isFile() && keyFile.getName().equals("key.txt")) {
+							System.out.println("File key.");
+							cryptographicKey = Utils.readKeyFromFile(keyFile.getPath());
+						} else {
+							throw new FileNotFoundException("The file "+cryptographicKeyProperty+" does not match with the requirements.");
+						}
+						keyAcknowledgement = true;
+					}
+				} finally {
+					lock.unlock();
+					System.out.println("Thread-" + Thread.currentThread().getId() + ":Lock released Cryptographic Key: " + tableName);
+				}
+
+			}
+		} else {
+			throw new FileNotFoundException("Cryptographic Key file not found.");
 		}
 
 		for(CryptoTechnique.CryptoType cryptoType : this.tableSchema.getEnabledCryptoTypes()) {
-			this.cryptoProperties.setKey(cryptoType, key);
+			this.cryptoProperties.setKey(cryptoType, cryptographicKey);
 		}
 
 //		this is common for both cases
