@@ -316,26 +316,33 @@ public class CryptoProperties {
 	 */
 	private byte[] decodeRowCryptoType(CryptoTechnique.CryptoType cType, byte[] ciphertext) {
 		byte[] row;
-		if(this.tableSchema.getKeyPadding()) {
-			row = Utils.removePadding(ciphertext);
-		}
-		else {
-			row = ciphertext;
-		}
 		switch (cType) {
 			case PLT :
-				return row;
+				row = ciphertext;
+				break;
 			case STD :
-				return this.stdHandler.decrypt(this.stdKey, row);
+				row = this.stdHandler.decrypt(this.stdKey, ciphertext);
+				break;
 			case DET :
-				return this.detHandler.decrypt(this.detKey, row);
+				row = this.detHandler.decrypt(this.detKey, ciphertext);
+				break;
 			case OPE :
-				return this.opeHandler.decrypt(this.opeKey, row);
+				row = this.opeHandler.decrypt(this.opeKey, ciphertext);
+				break;
 			case FPE :
-				return this.fpeHandler.decrypt(this.fpeKey.get("KEY"), row);
+				row = this.fpeHandler.decrypt(this.fpeKey.get("KEY"), ciphertext);
+				break;
 			default :
-				return null;
+				throw new NullPointerException("CryptoProperties:decodeRowCryptoType:Cryptographic Type not recognized.");
 		}
+
+		if(this.tableSchema.getKeyPadding()) {
+			return Utils.removePadding(row);
+		}
+		else {
+			return ciphertext;
+		}
+
 	}
 
 	/**
@@ -348,28 +355,35 @@ public class CryptoProperties {
 	 */
 	private byte[] decodeValueCryptoType(CryptoTechnique.CryptoType cType, byte[] ciphertext, String family, String qualifier) {
 		byte[] value;
-		if(this.tableSchema.getColumnPadding(family, qualifier)) {
-			value = Utils.removePadding(ciphertext);
-		}
-		else {
-			value = ciphertext;
-		}
 		switch (cType) {
 			case PLT :
-				return value;
+				value = ciphertext;
+				break;
 			case STD :
-				return this.stdHandler.decrypt(this.stdKey, value);
+				value = this.stdHandler.decrypt(this.stdKey, ciphertext);
+				break;
 			case DET :
-				return this.detHandler.decrypt(this.detKey, value);
+				value = this.detHandler.decrypt(this.detKey, ciphertext);
+				break;
 			case OPE :
 				CryptoHandler opeCh = getCryptoHandler(CryptoTechnique.CryptoType.OPE, family, qualifier);
-				return opeCh.decrypt(this.opeKey, value);
+				value = opeCh.decrypt(this.opeKey, ciphertext);
+				break;
 			case FPE :
 				CryptoHandler fpeCH = getCryptoHandler(CryptoTechnique.CryptoType.FPE, family, qualifier);
-				return fpeCH.decrypt(this.fpeKey.get(family+":"+qualifier), value);
+				value = fpeCH.decrypt(this.fpeKey.get(family+":"+qualifier), ciphertext);
+				break;
 			default :
-				return null;
+				throw new NullPointerException("CryptoProperties:decodeValueCryptoType:Cryptographic Type not recognized.");
 		}
+
+		if(this.tableSchema.getColumnPadding(family, qualifier)) {
+			return Utils.removePadding(value);
+		}
+		else {
+			return value;
+		}
+
 	}
 
 	/**
@@ -434,31 +448,17 @@ public class CryptoProperties {
 	 * @return decrypted HBase Result
 	 */
 	public Result decodeResult(byte[] row, Result res) {
+//		TODO remove me
 //		byte[] decodedRow = this.decodeRow(row);
-		row = Utils.removePadding(row);
+//		row = Utils.removePadding(row);
 		String opeValues = "_STD";
 		List<Cell> cellList = new ArrayList<>();
 
 		while (res.advance()) {
 			Cell cell = res.current();
 			byte[] cf = CellUtil.cloneFamily(cell);
-
-//			if(cf.length > 0) {
-//				LOG.debug("CF ("+new String(cf)+")");
-//			}
-
 			byte[] cq = CellUtil.cloneQualifier(cell);
-
-//			if(cq.length > 0) {
-//				LOG.debug("CQ ("+new String(cq)+")");
-//			}
-
 			byte[] value = CellUtil.cloneValue(cell);
-
-//			if(value.length > 0) {
-//				LOG.debug("Value ("+new String(value)+")");
-//			}
-
 			long timestamp = cell.getTimestamp();
 			byte type = cell.getTypeByte();
 
@@ -497,11 +497,9 @@ public class CryptoProperties {
 							type,
 							this.decodeValue(cf, cq, value));
 				}
-//				LOG.debug("Get:Result:decodeResult:Cell: "
-//						+new String(CellUtil.cloneFamily(decCell))
-//						+":"+new String(CellUtil.cloneQualifier(decCell))
-//						+":"+new String(CellUtil.cloneValue(decCell)));
+
 				cellList.add(decCell);
+
 			}
 			else if(cf.length == 0) {
 				decCell = CellUtil.createCell(
@@ -512,7 +510,6 @@ public class CryptoProperties {
 						type,
 						value);
 
-//				LOG.debug("Get:Result:decodeResult:Cell: Just Row: "+decCell.toString());
 				cellList.add(decCell);
 			}
 		}

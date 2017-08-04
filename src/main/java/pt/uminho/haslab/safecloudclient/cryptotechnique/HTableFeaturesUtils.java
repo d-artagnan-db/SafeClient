@@ -46,12 +46,12 @@ public class HTableFeaturesUtils {
                 String qualifierString = new String(qualifier, Charset.forName("UTF-8"));
                 String opeValues = "_STD";
 
-    //				Verify if the actual qualifier corresponds to the supporting qualifier (<qualifier>_STD)
+                //				Verify if the actual qualifier corresponds to the supporting qualifier (<qualifier>_STD)
                 if (qualifierString.length() >= opeValues.length()) {
                     verifyProperty = qualifierString.substring(qualifierString.length() - opeValues.length(), qualifierString.length()).equals(opeValues);
                 }
                 if (!verifyProperty) {
-    //					Encode the original value with the corresponding CryptoBox
+                    //					Encode the original value with the corresponding CryptoBox
                     destination.add(
                             family,
                             qualifier,
@@ -60,14 +60,14 @@ public class HTableFeaturesUtils {
                                     qualifier,
                                     value));
 
-                    LOG.debug("<TableName:Family:Qualifier:Row:Value>=<"+
-                            tableSchema.getTablename()+","+
-                            new String(family)+","+
-                            new String(qualifier)+"\n");
+                    LOG.debug("<TableName:Family:Qualifier:Row:Value>=<" +
+                            tableSchema.getTablename() + "," +
+                            new String(family) + "," +
+                            new String(qualifier) + "\n");
 //                            new String(CellUtil.cloneRow(cell))+","+
 //                            Arrays.toString(value)+">\n");
 
-    //					If the actual qualifier CryptoType is equal to OPE, encode the same value with STD CryptoBox
+                    //					If the actual qualifier CryptoType is equal to OPE, encode the same value with STD CryptoBox
                     if (tableSchema.getCryptoTypeFromQualifier(new String(family, Charset.forName("UTF-8")), qualifierString) == CryptoTechnique.CryptoType.OPE) {
                         destination.add(
                                 family,
@@ -89,37 +89,35 @@ public class HTableFeaturesUtils {
     public List<String> deleteCells(CellScanner cs) {
         List<String> cellsToDelete = new ArrayList<>();
         try {
-            while(cs.advance()) {
+            while (cs.advance()) {
                 Cell cell = cs.current();
                 byte[] family = CellUtil.cloneFamily(cell);
                 byte[] qualifier = CellUtil.cloneQualifier(cell);
 
-                if(family.length != 0 && qualifier.length != 0) {
-                    if(this.cp.tableSchema.getCryptoTypeFromQualifier(new String(family), new String(qualifier)) == CryptoTechnique.CryptoType.OPE) {
+                if (family.length != 0 && qualifier.length != 0) {
+                    if (this.cp.tableSchema.getCryptoTypeFromQualifier(new String(family), new String(qualifier)) == CryptoTechnique.CryptoType.OPE) {
                         cellsToDelete.add(new String(family) + "#" + new String(qualifier));
-                        cellsToDelete.add(new String(family) + "#" + new String(qualifier)+"_STD");
-                    }
-                    else {
+                        cellsToDelete.add(new String(family) + "#" + new String(qualifier) + "_STD");
+                    } else {
                         cellsToDelete.add(new String(family) + "#" + new String(qualifier));
                     }
-                }
-                else if(family.length != 0) {
+                } else if (family.length != 0) {
                     cellsToDelete.add(new String(family));
                 }
             }
         } catch (IOException e) {
-            LOG.error("Exception in deleteCells CellScanner: "+e.getMessage());
+            LOG.error("Exception in deleteCells CellScanner: " + e.getMessage());
         }
         return cellsToDelete;
     }
 
     public void wrapDeletedCells(List<String> cellsToDelete, Delete delete) {
-        if(cellsToDelete.size() != 0) {
-            for(String c : cellsToDelete) {
+        if (cellsToDelete.size() != 0) {
+            for (String c : cellsToDelete) {
                 String[] familiesAndQualifiers = c.split("#");
-                if(familiesAndQualifiers.length == 1) {
+                if (familiesAndQualifiers.length == 1) {
                     delete.deleteFamily(familiesAndQualifiers[0].getBytes());
-                } else if(familiesAndQualifiers.length == 2) {
+                } else if (familiesAndQualifiers.length == 2) {
                     delete.deleteColumns(familiesAndQualifiers[0].getBytes(), familiesAndQualifiers[1].getBytes());
                 } else {
                     throw new IllegalArgumentException("Family or qualifier cannot contains # character.");
@@ -130,31 +128,32 @@ public class HTableFeaturesUtils {
 
     /**
      * isScanOrFilter(scan : Scan) method : check the CryptoType of a scan operation. It may vary if it's a Scan, Row Filter or SingleColumnValueFilter
+     *
      * @param scan scan object used to check the instance
      * @return the Scan's CryptoType (Row Key CryptoType in case of Scan or RowFilter, Qualifier CryptoType in case of SingleColumnValueFilter)
      */
     public CryptoTechnique.CryptoType isScanOrFilter(Scan scan) {
-        if(scan.hasFilter()) {
+        if (scan.hasFilter()) {
 //            WARNING: First modification
             return secureFilterConverter.getFilterCryptoType(scan.getFilter());
-        }
-        else {
+        } else {
             return cp.tableSchema.getKey().getCryptoType();
         }
     }
 
     /**
      * encodeDelimitingRows(encScan : Scan, startRow : byte[], stopRow : byte[]) method : set the encrypted start and stop rows to an encrypted scan operator
-     * @param encScan encrytped scan operator
+     *
+     * @param encScan  encrytped scan operator
      * @param startRow original start row
-     * @param stopRow original stop row
+     * @param stopRow  original stop row
      * @return an encrypted scan with the respective start and stop row, both encrypted with the row key CryptoBox
      */
     public Scan encodeDelimitingRows(Scan encScan, byte[] startRow, byte[] stopRow) {
-        if (startRow != null && startRow.length > 0 && stopRow != null && stopRow.length > 0 ) {
+        if (startRow != null && startRow.length > 0 && stopRow != null && stopRow.length > 0) {
             encScan.setStartRow(cp.encodeRow(startRow));
             encScan.setStopRow(cp.encodeRow(stopRow));
-        } else if (startRow != null && startRow.length > 0 ) {
+        } else if (startRow != null && startRow.length > 0) {
             encScan.setStartRow(cp.encodeRow(startRow));
         } else if (stopRow != null && stopRow.length > 0) {
             encScan.setStopRow(cp.encodeRow(stopRow));
@@ -164,6 +163,7 @@ public class HTableFeaturesUtils {
 
     /**
      * encryptedScan(s : Scan) : convert a regular Scan object in the respective encrypted object
+     *
      * @param s scan object
      * @return the respective encrypted scan object
      */
@@ -173,17 +173,17 @@ public class HTableFeaturesUtils {
         Scan encScan = null;
 
 
-        if(s.hasFilter() && (s.getFilter() instanceof FilterList)) {
+        if (s.hasFilter() && (s.getFilter() instanceof FilterList)) {
             Filter encryptedFilter = secureFilterConverter.buildEncryptedFilter(s.getFilter(), this.cp.tableSchema.getKey().getCryptoType());
             encScan = new Scan();
             Map<byte[], List<byte[]>> cols = cp.getHColumnDescriptors(s.getFamilyMap());
-            for(Map.Entry<byte[], List<byte[]>> entry : cols.entrySet()) {
-                for(byte[] qualifier : entry.getValue()) {
+            for (Map.Entry<byte[], List<byte[]>> entry : cols.entrySet()) {
+                for (byte[] qualifier : entry.getValue()) {
                     encScan.addColumn(entry.getKey(), qualifier);
                 }
             }
 
-            switch(this.cp.tableSchema.getKey().getCryptoType()) {
+            switch (this.cp.tableSchema.getKey().getCryptoType()) {
                 case PLT:
                 case OPE:
                     encScan = encodeDelimitingRows(encScan, s.getStartRow(), s.getStopRow());
@@ -214,7 +214,7 @@ public class HTableFeaturesUtils {
                     encScan = new Scan();
 //				Add only the specified qualifiers in the original scan (s), instead of retrieve all (unnecessary) values).
                     for (Map.Entry<byte[], List<byte[]>> cols : hColumnDescriptors.entrySet()) {
-                        for(byte[] qualifier : cols.getValue()) {
+                        for (byte[] qualifier : cols.getValue()) {
                             encScan.addColumn(cols.getKey(), qualifier);
                         }
                     }
@@ -240,7 +240,7 @@ public class HTableFeaturesUtils {
                     encScan = new Scan();
 //				Add only the specified qualifiers in the original scan (s), instead of retrieve all (unnecessary) values).
                     for (Map.Entry<byte[], List<byte[]>> cols : hColumnDescriptors.entrySet()) {
-                        for(byte[] qualifier : cols.getValue()) {
+                        for (byte[] qualifier : cols.getValue()) {
                             encScan.addColumn(cols.getKey(), qualifier);
                         }
                     }
@@ -248,7 +248,6 @@ public class HTableFeaturesUtils {
 // 				the start and stop row must be encoded with the respective row key CryptoBox
                     if ((cp.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.PLT) ||
                             (cp.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.OPE)) {
-                        System.out.println("Vou fazer uma delimiting rows.");
                         encScan = encodeDelimitingRows(encScan, startRow, stopRow);
                     }
                     if (s.hasFilter()) {
@@ -268,13 +267,14 @@ public class HTableFeaturesUtils {
 
     /**
      * parseFilter(filter : Filter) method : when setting a filter, parse it and handle it according the respective CryptoType
+     *
      * @param filter Filter object
      * @return provide an encrypted Filter, with the respective operator and compare value.
      */
     public Object parseFilter(Filter filter) {
         Object returnValue = null;
 
-        if(filter != null) {
+        if (filter != null) {
             CryptoTechnique.CryptoType cType = this.secureFilterConverter.getFilterCryptoType(filter);
             returnValue = this.secureFilterConverter.parseFilter(filter, cType);
         }
@@ -290,31 +290,10 @@ public class HTableFeaturesUtils {
     public CryptoTechnique.CryptoType verifyFilterCryptoType(Scan scan) {
 
         CryptoTechnique.CryptoType cryptoType = cp.tableSchema.getKey().getCryptoType();
-//      Warning: third modification
-        if(scan.hasFilter()) {
+        if (scan.hasFilter()) {
             cryptoType = this.secureFilterConverter.getFilterCryptoType(scan.getFilter());
         }
         return cryptoType;
     }
-
-
-//    public void createDynamicColumnsForAtomicOperations(QEngineIntegration qEngine, TableSchema tableSchema, String family, String qualifier){
-//
-////		In case of default schema, verify and/or create both family and qualifier instances in TableSchema
-//        if (!qEngine.doesColumnFamilyExist(tableSchema, family)) {
-//            tableSchema.addFamily(qEngine.createDefaultFamily(family));
-//        }
-//
-//        if(qualifier != null) {
-//            if (!qEngine.doesFamilyContainsQualifier(tableSchema, family, qualifier)) {
-////                WARNING: this is just for CLINIDATA USE CASE
-//                tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier, CryptoTechnique.CryptoType.PLT));
-////                tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier, CryptoTechnique.CryptoType.OPE));
-////                tableSchema.addQualifier(family, qEngine.createDefaultQualifier(qualifier + "_STD", CryptoTechnique.CryptoType.STD));
-////                cp.replaceQualifierCryptoHandler(family, qualifier, qEngine.getCryptographicTechnique(), qEngine.getFamilyFormatSize());
-//            }
-//        }
-//
-//    }
 
 }

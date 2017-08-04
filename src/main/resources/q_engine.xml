@@ -1,7 +1,7 @@
 <schema>
   <default>
     <key>PLT</key>
-    <columns>DET</columns>
+    <columns>PLT</columns>
     <keypadding>false</keypadding>
     <colpadding>false</colpadding>
     <keyformatsize>10</keyformatsize>
@@ -9,16 +9,6 @@
   </default>
   <table>
     <name>R-maxdata-CLINIDATA_NEW-DTW_PATIENT</name>
-    <default>
-      <!--<key>PLT</key>-->
-      <!--<columns>PLT</columns>-->
-      <!--<keypadding>false</keypadding>-->
-      <!--<colpadding>false</colpadding>-->
-      <!--<keyformatsize>10</keyformatsize>-->
-      <!--<colformatsize>10</colformatsize>-->
-    </default>
-    <key>
-    </key>
     <columns>
       <family>
         <name>DQE</name>
@@ -34,6 +24,7 @@
           <name>2</name>
           <cryptotechnique>OPE</cryptotechnique>
           <colformatsize>16</colformatsize>
+          <colpadding>true</colpadding>
         </qualifier>
         <qualifier>
           <!--CALCULATE_BIRTHDAY_STAMP-->
@@ -47,13 +38,6 @@
   </table>
   <table>
     <name>R-maxdata-CLINIDATA_NEW-DTW_PATIENT_ID_BY_PATIENT</name>
-    <default>
-      <!--<key>PLT</key>-->
-      <!--<columns>PLT</columns>-->
-      <!--<formatsize>10</formatsize>-->
-    </default>
-    <key>
-    </key>
     <columns>
       <family>
         <name>DQE</name>
@@ -69,13 +53,6 @@
   </table>
   <table>
     <name>R-maxdata-CLINIDATA_NEW-DTW_TEST_RESULT</name>
-    <default>
-      <!--<key>PLT</key>-->
-      <!--<columns>PLT</columns>-->
-      <!--<formatsize>10</formatsize>-->
-    </default>
-    <key>
-    </key>
     <columns>
       <family>
         <name>DQE</name>

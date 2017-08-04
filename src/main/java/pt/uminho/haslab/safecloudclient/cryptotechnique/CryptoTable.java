@@ -55,18 +55,18 @@ public class CryptoTable extends HTable {
 			while(!parsingComplete) {
 				try {
 					lock.lock();
-					System.out.println("Thread-"+Thread.currentThread().getId() + ":Lock achieved.");
+					LOG.debug("Thread-"+Thread.currentThread().getId() + ":Lock achieved.");
 					if (!parsingComplete) {
 						File file = new File(schemaProperty);
-						System.out.println("Thread-"+Thread.currentThread().getId() + ":build database schema.");
+						LOG.debug("Thread-"+Thread.currentThread().getId() + ":build database schema.");
 						this.buildDatabaseSchema(file.getPath());
 						parsingComplete = true;
 					}
 
 				} finally {
 					lock.unlock();
-					System.out.println("Thread-"+Thread.currentThread().getId() + ":Lock released.");
-					System.out.println("Thread-"+Thread.currentThread().getId() + ":Shared ObjectId (database schema):" + System.identityHashCode(databaseSchema));
+					LOG.debug("Thread-"+Thread.currentThread().getId() + ":Lock released.");
+					LOG.debug("Thread-"+Thread.currentThread().getId() + ":Shared ObjectId (database schema):" + System.identityHashCode(databaseSchema));
 				}
 			}
 
@@ -75,9 +75,9 @@ public class CryptoTable extends HTable {
 				this.tableSchema = getTableSchema(tableName);
 			}
 			else {
-				System.out.println("Tablename not found in schema file.");
+				LOG.debug("Tablename not found in schema file.");
 				this.tableSchema = generateDefaultTableSchema(tableName, conf);
-				System.out.println("Generate Default Table Schema for "+tableName+" table: "+tableSchema.toString());
+				LOG.debug("Generate Default Table Schema for "+tableName+" table: "+tableSchema.toString());
 			}
 
 			this.cryptoProperties = new CryptoProperties(this.tableSchema);
@@ -97,12 +97,12 @@ public class CryptoTable extends HTable {
 			while (!keyAcknowledgement) {
 				try {
 					lock.lock();
-					System.out.println("Thread-" + Thread.currentThread().getId() + ":Lock achieved Cryptographic key: " + tableName);
+					LOG.debug("Thread-" + Thread.currentThread().getId() + ":Lock achieved Cryptographic key: " + tableName);
 					if (!keyAcknowledgement) {
 						File keyFile = new File(cryptographicKeyProperty);
 
 						if (keyFile.isFile() && keyFile.getName().equals("key.txt")) {
-							System.out.println("File key.");
+							LOG.debug("File key.");
 							cryptographicKey = Utils.readKeyFromFile(keyFile.getPath());
 						} else {
 							throw new FileNotFoundException("The file "+cryptographicKeyProperty+" does not match with the requirements.");
@@ -111,7 +111,7 @@ public class CryptoTable extends HTable {
 					}
 				} finally {
 					lock.unlock();
-					System.out.println("Thread-" + Thread.currentThread().getId() + ":Lock released Cryptographic Key: " + tableName);
+					LOG.debug("Thread-" + Thread.currentThread().getId() + ":Lock released Cryptographic Key: " + tableName);
 				}
 
 			}
@@ -305,7 +305,8 @@ public class CryptoTable extends HTable {
 					ResultScanner encScan = super.getScanner(stdGetScan);
 					for (Result r = encScan.next(); r != null; r = encScan.next()) {
 						byte[] aux = this.cryptoProperties.decodeRow(r.getRow());
-						row = Utils.removePadding(row);
+//						TODO remove me
+//						row = Utils.removePadding(row);
 
 						if (Arrays.equals(row, aux)) {
 							getResult = this.cryptoProperties.decodeResult(row, r);
@@ -329,10 +330,6 @@ public class CryptoTable extends HTable {
 
 					if (!res.isEmpty()) {
 						getResult = this.cryptoProperties.decodeResult(row, res);
-						LOG.debug("Get:Result:"+getResult.toString());
-					}
-					else {
-						LOG.debug("Get:EmptyResult");
 					}
 
 					return getResult;
@@ -402,7 +399,8 @@ public class CryptoTable extends HTable {
 						ResultScanner encScan = super.getScanner(new Scan());
 						for (Result r = encScan.next(); r != null; r = encScan.next()) {
 							byte[] aux = this.cryptoProperties.decodeRow(r.getRow());
-							row = Utils.removePadding(row);
+//							TODO remove me
+//							row = Utils.removePadding(row);
 
 //							Third phase: decode result
 							if (Arrays.equals(row, aux)) {
@@ -460,7 +458,8 @@ public class CryptoTable extends HTable {
 					ResultScanner encScan = super.getScanner(new Scan());
 					for (Result r = encScan.next(); r != null; r = encScan.next()) {
 						byte[] resultRowKey = this.cryptoProperties.decodeRow(r.getRow());
-						row = Utils.removePadding(row);
+//						TODO remove me
+//						row = Utils.removePadding(row);
 
 						if (Arrays.equals(row, resultRowKey)) {
 							Delete del = new Delete(r.getRow());
@@ -505,7 +504,8 @@ public class CryptoTable extends HTable {
 						ResultScanner encScan = super.getScanner(new Scan());
 						for (Result r = encScan.next(); r != null; r = encScan.next()) {
 							byte[] resultValue = this.cryptoProperties.decodeRow(r.getRow());
-							row = Utils.removePadding(row);
+//							TODO remove me
+//							row = Utils.removePadding(row);
 
 							if (Arrays.equals(row, resultValue)) {
 								Delete encryptedDelete = new Delete(r.getRow());
@@ -550,7 +550,6 @@ public class CryptoTable extends HTable {
 			byte[] endRow = scan.getStopRow();
 
 //			Transform the original object in an encrypted scan.
-			LOG.debug("SCAN:Vanilla:"+scan.toString());
 			Scan encScan = this.htableUtils.buildEncryptedScan(scan);
 			encScan.setCaching(scan.getCaching());
 
@@ -563,8 +562,6 @@ public class CryptoTable extends HTable {
 					endRow,
 					encryptedResultScanner,
 					this.htableUtils.parseFilter(scan.getFilter()));
-
-			LOG.debug("SCAN:ResultScanner:ClassType:"+rs.getClass().getSimpleName());
 
 			return rs;
 		} catch (Exception e) {
@@ -600,7 +597,8 @@ public class CryptoTable extends HTable {
 //						step 2 : check if specified row exists
 					for(Result r = rs.next(); r != null; r = rs.next()) {
 						byte[] resultRow = this.cryptoProperties.decodeRow(r.getRow());
-						row = Utils.removePadding(row);
+//						TODO remove me
+//						row = Utils.removePadding(row);
 						if (Arrays.equals(row, resultRow)) {
 //								Get the stored value for the specified family and qualifier and check if it's equal to a given value
 							byte[] encryptedValue = r.getValue(family, qualifier);
@@ -637,7 +635,8 @@ public class CryptoTable extends HTable {
 						Result encryptedResult = super.get(new Get(encryptedRow));
 						Result temp_result = this.cryptoProperties.decodeResult(row, encryptedResult);
 						byte[] temp_val = temp_result.getValue(family, qualifier);
-						value = Utils.removePadding(value);
+//						TODO remove me
+//						value = Utils.removePadding(value);
 						if(Arrays.equals(temp_val, value)) {
 							encryptedValue = encryptedResult.getValue(family, qualifier);
 						}
@@ -706,7 +705,8 @@ public class CryptoTable extends HTable {
 						ResultScanner stdScanner = super.getScanner(new Scan());
 						for(Result r = stdScanner.next(); r != null; r = stdScanner.next()) {
 							byte[] aux = this.cryptoProperties.decodeRow(r.getRow());
-							row = Utils.removePadding(row);
+//							TODO remove me
+//							row = Utils.removePadding(row);
 
 							if (Arrays.equals(row, aux)) {
 								operationValue = super.incrementColumnValue(r.getRow(), family, qualifier, amount);
@@ -754,7 +754,8 @@ public class CryptoTable extends HTable {
 					for(Result r = rs.next(); r != null; r = rs.next()) {
 						if(!r.isEmpty()) {
 							byte[] temp_row = this.cryptoProperties.decodeRow(r.getRow());
-							row = Utils.removePadding(row);
+//							TODO remove me
+//							row = Utils.removePadding(row);
 							if(Arrays.equals(temp_row, row)) {
 								stdHRegionLocation = super.getRegionLocation(r.getRow());
 								break;
@@ -810,7 +811,8 @@ public class CryptoTable extends HTable {
 					Bytes.ByteArrayComparator bcomp = new Bytes.ByteArrayComparator();
 					for(Result r = rs.next(); r != null; r = rs.next()) {
 						decodedRow = this.cryptoProperties.decodeRow(r.getRow());
-						row = Utils.removePadding(row);
+//						TODO remove me
+//						row = Utils.removePadding(row);
 						if(Arrays.equals(decodedRow, row)) {
 							encResult = super.getRowOrBefore(r.getRow(), family);
 							break;

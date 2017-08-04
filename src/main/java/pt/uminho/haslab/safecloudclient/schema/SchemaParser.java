@@ -29,11 +29,12 @@ public class SchemaParser {
 	private Boolean defaultPropertiesColumnPadding;
 	private int defaultPropertiesKeyFormatSize;
 	private int defaultPropertiesColFormatSize;
-
+	private boolean hasDefaultDatabaseProperties;
 
 
 	public SchemaParser() {
 		this.tableSchemas = new HashMap<>();
+		this.hasDefaultDatabaseProperties = false;
 	}
 
 	public Map<String, TableSchema> getSchemas() {
@@ -91,8 +92,6 @@ public class SchemaParser {
 
 
 	private void parseDatabaseDefaultProperties(Element rootElement) {
-		System.out.println("ParseDatabaseDefaultProperties:");
-
 		if(rootElement != null) {
 			String key = rootElement.elementText("key");
 			String cols = rootElement.elementText("columns");
@@ -126,6 +125,7 @@ public class SchemaParser {
 			this.defaultPropertiesColumnPadding = paddingBooleanConvertion(colPadding);
 			this.defaultPropertiesKeyFormatSize = formatSizeIntegerValue(keySize);
 			this.defaultPropertiesColFormatSize = formatSizeIntegerValue(colSize);
+			this.hasDefaultDatabaseProperties = true;
 		}
 		else {
 			throw new NullPointerException("SchemaParser:parseDatabaseDefaultProperties:Default element cannot be null.");
@@ -208,6 +208,14 @@ public class SchemaParser {
 			} else {
 				tableSchema.setDefaultColumnPadding(paddingBooleanConvertion(colpadding));
 			}
+		}
+		else if(this.hasDefaultDatabaseProperties) {
+			tableSchema.setDefaultKeyCryptoType(this.defaultPropertiesKey);
+			tableSchema.setDefaultColumnsCryptoType(this.defaultPropertiesColumns);
+			tableSchema.setDefaultKeyFormatSize(this.defaultPropertiesKeyFormatSize);
+			tableSchema.setDefaultColumnFormatSize(this.defaultPropertiesColFormatSize);
+			tableSchema.setDefaultKeyPadding(this.defaultPropertiesKeyPadding);
+			tableSchema.setDefaultColumnPadding(this.defaultPropertiesColumnPadding);
 		}
 		else {
 			throw new NullPointerException("CryptoWorker:SchemaParser:parseDefault:Default arguments specification cannot be null nor empty.");
@@ -469,6 +477,14 @@ public class SchemaParser {
 
 	public String printDatabaseSchemas() {
 		StringBuilder sb = new StringBuilder();
+		sb.append("ParseDatabaseDefaultProperties:\n");
+		sb.append("Default Key CryptoType: ").append(this.defaultPropertiesKey).append("\n");
+		sb.append("Default Columns CryptoType: ").append(this.defaultPropertiesColumns).append("\n");
+		sb.append("Default Key Padding: ").append(this.defaultPropertiesKeyPadding).append("\n");
+		sb.append("Default Column Padding: ").append(this.defaultPropertiesColumnPadding).append("\n");
+		sb.append("Default Key FormatSize: ").append(this.defaultPropertiesKeyFormatSize).append("\n");
+		sb.append("Default Column FormatSize: ").append(this.defaultPropertiesColFormatSize).append("\n");
+
 		for(String schema : tableSchemas.keySet()) {
 			sb.append("---------------------------\n");
 			sb.append(tableSchemas.get(schema).toString());

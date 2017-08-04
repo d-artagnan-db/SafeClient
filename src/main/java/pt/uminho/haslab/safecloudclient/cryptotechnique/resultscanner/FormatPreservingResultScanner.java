@@ -67,8 +67,6 @@ public class FormatPreservingResultScanner implements ResultScanner {
             }
             else if(filterProperties.length == 4) {
                 this.filterType = "SingleColumnValueFilter";
-//                this.family = (byte[]) filterProperties[0];
-//                this.qualifier = (byte[]) filterProperties[1];
                 this.compareOp = (CompareFilter.CompareOp) filterProperties[2];
                 this.compareValue = (byte[]) filterProperties[3];
             }
@@ -77,53 +75,20 @@ public class FormatPreservingResultScanner implements ResultScanner {
         }
     }
 
-    // public int getPaddingSize(byte[] row) {
-    // int paddingSize = row.length;
-    // if (hasStartRow && hasEndRow) {
-    // if (startRow.length > paddingSize)
-    // paddingSize = startRow.length;
-    // if (endRow.length > paddingSize)
-    // paddingSize = endRow.length;
-    // } else if (hasStartRow && !hasEndRow) {
-    // if (startRow.length > paddingSize)
-    // paddingSize = startRow.length;
-    // } else if (hasEndRow) {
-    // if (endRow.length > paddingSize)
-    // paddingSize = endRow.length;
-    // }
-    //
-    // if (hasFilter) {
-    // if (compareValue.length > paddingSize)
-    // paddingSize = compareValue.length;
-    // }
-    // return paddingSize;
-    // }
-
     /**
      * digestStartEndRow(paddingSize : int, row : byte[]) method : check if a row key is between the start and stop rows
-     * @param paddingSize Not applicable
      * @param row row key
      * @return true if is comprehended between the two delimiter rows. Otherwise false.
      */
-    public boolean digestStartEndRow(int paddingSize, byte[] row) {
+    public boolean digestStartEndRow(byte[] row) {
         boolean digest;
         Bytes.ByteArrayComparator byteArrayComparator = new Bytes.ByteArrayComparator();
 
         if (hasStartRow && hasEndRow) {
-             row = Utils.addPadding(row, paddingSize);
-             startRow = Utils.addPadding(startRow, paddingSize);
-             endRow = Utils.addPadding(endRow, paddingSize);
-
             digest = (byteArrayComparator.compare(row, startRow) >= 0 && byteArrayComparator.compare(row, endRow) < 0);
         } else if (hasStartRow && !hasEndRow) {
-             row = Utils.addPadding(row, paddingSize);
-             startRow = Utils.addPadding(startRow, paddingSize);
-
             digest = (byteArrayComparator.compare(row, startRow) >= 0);
         } else if (hasEndRow) {
-             row = Utils.addPadding(row, paddingSize);
-             endRow = Utils.addPadding(endRow, paddingSize);
-
             digest = (byteArrayComparator.compare(row, endRow) < 0);
         } else {
             digest = true;
@@ -134,33 +99,18 @@ public class FormatPreservingResultScanner implements ResultScanner {
 
     /**
      * digestFilter(paddingSize : int, main : byte[], value : byte[]) method : check if a value match the filter properties
-     * @param paddingSize Not applicable
      * @param main compare value
      * @param value value to perform the comparison
      * @return true if match the filter properties. Otherwise false.
      */
-    public boolean digestFilter(int paddingSize, byte[] main, byte[] value) {
-        boolean digest = true;
+    public boolean digestFilter(byte[] main, byte[] value) {
+        boolean digest;
         Bytes.ByteArrayComparator byteArrayComparator = new Bytes.ByteArrayComparator();
-         main = Utils.addPadding(main, paddingSize);
-         value = Utils.addPadding(value, paddingSize);
 
         switch (this.compareOp) {
             case EQUAL :
                 digest = (byteArrayComparator.compare(main, value) == 0);
                 break;
-//			case GREATER :
-//				digest = (byteArrayComparator.compare(main, value) > 0);
-//				break;
-//			case LESS :
-//				digest = (byteArrayComparator.compare(main, value) < 0);
-//				break;
-//			case GREATER_OR_EQUAL :
-//				digest = (byteArrayComparator.compare(main, value) >= 0);
-//				break;
-//			case LESS_OR_EQUAL :
-//				digest = (byteArrayComparator.compare(main, value) < 0);
-//				break;
             default:
                 digest = false;
                 break;
@@ -178,13 +128,12 @@ public class FormatPreservingResultScanner implements ResultScanner {
         boolean digest;
         if (res != null) {
             byte[] row = this.cProperties.decodeRow(res.getRow());
-            int paddingSize = this.cProperties.tableSchema.getKey().getFormatSize();
 
-            digest = digestStartEndRow(paddingSize, row);
+            digest = digestStartEndRow(row);
 
             if (hasFilter && digest) {
                 if(this.filterType.equals("RowFilter")) {
-                    digest = digestFilter(paddingSize, row, this.compareValue);
+                    digest = digestFilter(row, this.compareValue);
                 }
 //				else if(this.filterType.equals("SingleColumnValueFilter")) {
 //					byte[] qualifierValue = this.cProperties.decodeValue(
