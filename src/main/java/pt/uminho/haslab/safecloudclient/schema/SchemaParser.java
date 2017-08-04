@@ -90,7 +90,7 @@ public class SchemaParser {
 	}
 
 
-	public void parseDatabaseDefaultProperties(Element rootElement) {
+	private void parseDatabaseDefaultProperties(Element rootElement) {
 		System.out.println("ParseDatabaseDefaultProperties:");
 
 		if(rootElement != null) {
@@ -132,7 +132,7 @@ public class SchemaParser {
 		}
 	}
 
-	public TableSchema parseTable(Element rootElement) {
+	private TableSchema parseTable(Element rootElement) {
 		TableSchema ts = new TableSchema();
 
 		parseTablename(rootElement, ts);
@@ -149,7 +149,7 @@ public class SchemaParser {
 	 * parseTablename(rootElement : Element) method : parse the table name
 	 * @param rootElement main Element node
 	 */
-	public void parseTablename(Element rootElement, TableSchema tableSchema) {
+	private void parseTablename(Element rootElement, TableSchema tableSchema) {
 		Element nameElement = rootElement.element("name");
 		String name = nameElement.getText();
 		if(name == null || name.isEmpty()) {
@@ -163,7 +163,7 @@ public class SchemaParser {
 	 * parseDefault(rootElement : Element) method : parse the default database parameters
 	 * @param rootElement main Element node
 	 */
-	public void parseTableDefaultProperties(Element rootElement, TableSchema tableSchema) {
+	private void parseTableDefaultProperties(Element rootElement, TableSchema tableSchema) {
 		Element defaultElement = rootElement.element("default");
 		if (defaultElement != null) {
 			String key = defaultElement.elementText("key");
@@ -218,7 +218,7 @@ public class SchemaParser {
 	 * parseKey(rootElement : Element) method : parse the key properties from the database schema
 	 * @param rootElement main Element node
 	 */
-	public void parseKey(Element rootElement, TableSchema tableSchema) {
+	private void parseKey(Element rootElement, TableSchema tableSchema) {
 		Element keyElement = rootElement.element("key");
 		if (keyElement != null) {
 			String cryptotechnique = keyElement.elementText("cryptotechnique");
@@ -270,7 +270,7 @@ public class SchemaParser {
 	 * parseColumns(rootElement : Element) method : parse the column families and qualifiers properties from the database schema
 	 * @param rootElement main Element node
 	 */
-	public void parseColumns(Element rootElement, TableSchema tableSchema) {
+	private void parseColumns(Element rootElement, TableSchema tableSchema) {
 		Element columnsElement = rootElement.element("columns");
 		if(columnsElement == null) {
 			throw new NoSuchElementException("Columns arguments cannot be null.");
@@ -393,7 +393,7 @@ public class SchemaParser {
 	 * @param properties list of Element nodes
 	 * @return a mapper of the property and the type in Map<String,String> format
 	 */
-	public Map<String,String> parseMiscellaneous(List<Element> properties) {
+	private Map<String,String> parseMiscellaneous(List<Element> properties) {
 		Map<String, String > result = new HashMap<>();
 		for(Element property : properties) {
 			result.put(property.elementText("property"), property.elementText("type"));
@@ -402,7 +402,7 @@ public class SchemaParser {
 	}
 
 //	FIXME: read cType with Enum.valueOf()
-	public CryptoTechnique.CryptoType switchCryptoType(String cType) {
+	private CryptoTechnique.CryptoType switchCryptoType(String cType) {
 		if (cType == null)
 			return null;
 		else
@@ -446,14 +446,14 @@ public class SchemaParser {
 		return value;
 	}
 
-	public int radixIntegerValue(String radix) {
+	private int radixIntegerValue(String radix) {
 		if (radix == null || radix.isEmpty())
 			return 10;
 		else
 			return Integer.parseInt(radix);
 	}
 
-	public void validateFPEArguments(String instance, String radix, String tweak) {
+	private void validateFPEArguments(String instance, String radix, String tweak) {
 		if(instance == null || instance.isEmpty()) {
 			throw new NullPointerException("Format-Preserving Encryption instance cannot be null nor empty.");
 		}

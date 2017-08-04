@@ -129,29 +129,6 @@ public class CryptoProperties {
 		return familyCryptoHandler;
 	}
 
-	public void replaceQualifierCryptoHandler(String family, String qualifier, CryptoTechnique.CryptoType cType, int formatSize) {
-		switch(cType) {
-			case OPE:
-				CryptoHandler cryptoHandler = new CryptoHandler(cType, opeArguments(formatSize, formatSize * 2));
-
-				if (this.opeValueHandler.containsKey(family)) {
-					Map<String, CryptoHandler> temp_handlers = this.opeValueHandler.get(family);
-
-					if (temp_handlers != null) {
-						this.opeValueHandler.get(family).put(qualifier, cryptoHandler);
-					}
-				}
-				break;
-			case FPE:
-				throw new UnsupportedOperationException("FPE instance does not support this operation.");
-			case PLT:
-			case STD:
-			case DET:
-			default:
-				break;
-		}
-	}
-
 	/**
 	 * verifyOpeValueHandler() method : only used to check the OPE CryptoHandlers
 	 */
@@ -272,29 +249,26 @@ public class CryptoProperties {
 	 * @param content plaintext row key
 	 * @return the resulting ciphertext
 	 */
-//		TODO: arrange padding properties here
-	public byte[] encodeRowCryptoType(CryptoTechnique.CryptoType cType, byte[] content) {
-//		byte[] row = Utils.addPadding(content, tableSchema.getKey().getFormatSize());
-		byte[] row = content;
+	private byte[] encodeRowCryptoType(CryptoTechnique.CryptoType cType, byte[] content) {
+		byte[] row;
+		if(this.tableSchema.getKeyPadding()) {
+			row = Utils.addPadding(content, this.tableSchema.getKeyFormatSize());
+		}
+		else {
+			row = content;
+		}
+
 		switch (cType) {
 			case PLT :
 				return row;
-//				return content;
 			case STD :
-//				LOG.debug("STD row encryption <"+this.tableSchema.getTablename()+">\n");
 				return this.stdHandler.encrypt(this.stdKey, row);
-//				return this.stdHandler.encrypt(this.stdKey, content);
 			case DET :
-//				LOG.debug("DET row encryption <"+this.tableSchema.getTablename()+">\n");
 				return this.detHandler.encrypt(this.detKey, row);
-//				return this.detHandler.encrypt(this.detKey, content);
 			case OPE :
-//				LOG.debug("OPE row encryption <"+this.tableSchema.getTablename()+">\n");
-				return this.opeHandler.encrypt(this.opeKey, Utils.addPadding(content, tableSchema.getKey().getFormatSize()));
-//				return this.opeHandler.encrypt(this.opeKey, content);
+				return this.opeHandler.encrypt(this.opeKey, row);
 			case FPE :
 				return this.fpeHandler.encrypt(this.fpeKey.get("KEY"), row);
-//				return this.fpeHandler.encrypt(this.fpeKey.get("KEY"), content);
 			default :
 				return null;
 		}
@@ -308,32 +282,27 @@ public class CryptoProperties {
 	 * @param qualifier qualifier column
 	 * @return the resulting ciphertext
 	 */
-//		TODO: arrange padding properties here
-	public byte[] encodeValueCryptoType(CryptoTechnique.CryptoType cType, byte[] content, String family, String qualifier) {
-//		byte[] row = Utils.addPadding(content, tableSchema.getFormatSizeFromQualifier(family, qualifier));
-		byte[] row = content;
+	private byte[] encodeValueCryptoType(CryptoTechnique.CryptoType cType, byte[] content, String family, String qualifier) {
+		byte[] value;
+		if(this.tableSchema.getColumnPadding(family, qualifier)) {
+			value = Utils.addPadding(content, this.tableSchema.getFormatSizeFromQualifier(family, qualifier));
+		}
+		else {
+			value = content;
+		}
 		switch (cType) {
 			case PLT :
-//				LOG.debug("PLT values encryption <"+this.tableSchema.getTablename()+","+family+","+qualifier+">\n");
-				return row;
-//				return content;
+				return value;
 			case STD :
-//				LOG.debug("STD values encryption <"+this.tableSchema.getTablename()+","+family+","+qualifier+">\n");
-				return this.stdHandler.encrypt(this.stdKey, row);
-//				return this.stdHandler.encrypt(this.stdKey, content);
+				return this.stdHandler.encrypt(this.stdKey, value);
 			case DET :
-//				LOG.debug("DET values encryption <"+this.tableSchema.getTablename()+","+family+","+qualifier+">\n");
-				return this.detHandler.encrypt(this.detKey, row);
-//				return this.detHandler.encrypt(this.detKey, content);
+				return this.detHandler.encrypt(this.detKey, value);
 			case OPE :
 				CryptoHandler opeCh = getCryptoHandler(CryptoTechnique.CryptoType.OPE, family, qualifier);
-//				LOG.debug("OPE values encryption <"+this.tableSchema.getTablename()+","+family+","+qualifier+">\n");
-				return opeCh.encrypt(this.opeKey, Utils.addPadding(content, tableSchema.getFormatSizeFromQualifier(family, qualifier)));
-//				return opeCh.encrypt(this.opeKey, content);
+				return opeCh.encrypt(this.opeKey, value);
 			case FPE :
 				CryptoHandler fpeCH = getCryptoHandler(CryptoTechnique.CryptoType.FPE, family, qualifier);
-				return fpeCH.encrypt(this.fpeKey.get(family+":"+qualifier), row);
-//				return fpeCH.encrypt(this.fpeKey.get(family+":"+qualifier), content);
+				return fpeCH.encrypt(this.fpeKey.get(family+":"+qualifier), value);
 			default :
 				return null;
 		}
@@ -345,28 +314,25 @@ public class CryptoProperties {
 	 * @param ciphertext protected row key
 	 * @return the original row key in byte[] format
 	 */
-//		TODO: arrange padding properties here
 	private byte[] decodeRowCryptoType(CryptoTechnique.CryptoType cType, byte[] ciphertext) {
+		byte[] row;
+		if(this.tableSchema.getKeyPadding()) {
+			row = Utils.removePadding(ciphertext);
+		}
+		else {
+			row = ciphertext;
+		}
 		switch (cType) {
 			case PLT :
-//				byte[] unpadded = Utils.removePadding(ciphertext);
-//				return unpadded;
-				return ciphertext;
+				return row;
 			case STD :
-//				return Utils.removePadding(this.stdHandler.decrypt(this.stdKey, ciphertext));
-//				LOG.debug("STD row decryption <"+this.tableSchema.getTablename()+">\n");
-				return this.stdHandler.decrypt(this.stdKey, ciphertext);
+				return this.stdHandler.decrypt(this.stdKey, row);
 			case DET :
-//				return Utils.removePadding(this.detHandler.decrypt(this.detKey, ciphertext));
-//				LOG.debug("DET row decryption <"+this.tableSchema.getTablename()+">\n");
-				return this.detHandler.decrypt(this.detKey, ciphertext);
+				return this.detHandler.decrypt(this.detKey, row);
 			case OPE :
-//				LOG.debug("OPE row decryption <"+this.tableSchema.getTablename()+">\n");
-				return Utils.removePadding(this.opeHandler.decrypt(this.opeKey, ciphertext));
-//				return this.opeHandler.decrypt(this.opeKey, ciphertext);
+				return this.opeHandler.decrypt(this.opeKey, row);
 			case FPE :
-//				return Utils.removePadding(this.fpeHandler.decrypt(this.fpeKey.get("KEY"), ciphertext));
-				return this.fpeHandler.decrypt(this.fpeKey.get("KEY"), ciphertext);
+				return this.fpeHandler.decrypt(this.fpeKey.get("KEY"), row);
 			default :
 				return null;
 		}
@@ -380,37 +346,27 @@ public class CryptoProperties {
 	 * @param qualifier qualifier column
 	 * @return the original value in byte[] format
 	 */
-//		TODO: arrange padding properties here
 	private byte[] decodeValueCryptoType(CryptoTechnique.CryptoType cType, byte[] ciphertext, String family, String qualifier) {
+		byte[] value;
+		if(this.tableSchema.getColumnPadding(family, qualifier)) {
+			value = Utils.removePadding(ciphertext);
+		}
+		else {
+			value = ciphertext;
+		}
 		switch (cType) {
 			case PLT :
-//				byte[] unpadded = Utils.removePadding(ciphertext);
-//				return unpadded;
-//				LOG.debug("PLT values decryption <"+this.tableSchema.getTablename()+","+family+","+qualifier+">\n");
-				return ciphertext;
+				return value;
 			case STD :
-//				return  Utils.removePadding(this.stdHandler.decrypt(this.stdKey, ciphertext));
-//				LOG.debug("STD values decryption <"+this.tableSchema.getTablename()+","+family+","+qualifier+">\n");
-				byte[] std_value = this.stdHandler.decrypt(this.stdKey, ciphertext);
-//				LOG.debug("STD value: "+new String(std_value));
-				return std_value;
+				return this.stdHandler.decrypt(this.stdKey, value);
 			case DET :
-//				return  Utils.removePadding(this.detHandler.decrypt(this.detKey, ciphertext));
-//				LOG.debug("DET values decryption <"+this.tableSchema.getTablename()+","+family+","+qualifier+">\n");
-				byte[] det_value = this.detHandler.decrypt(this.detKey, ciphertext);
-//				LOG.debug("DET value: "+ new String(det_value));
-				return det_value;
+				return this.detHandler.decrypt(this.detKey, value);
 			case OPE :
 				CryptoHandler opeCh = getCryptoHandler(CryptoTechnique.CryptoType.OPE, family, qualifier);
-//				LOG.debug("OPE values decryption <"+this.tableSchema.getTablename()+","+family+","+qualifier+">\n");
-				byte[] ope_value = Utils.removePadding(opeCh.decrypt(this.opeKey, ciphertext));
-//				LOG.debug("OPE value: "+new String(ope_value));
-				return ope_value;
-//				return opeCh.decrypt(this.opeKey, ciphertext);
+				return opeCh.decrypt(this.opeKey, value);
 			case FPE :
 				CryptoHandler fpeCH = getCryptoHandler(CryptoTechnique.CryptoType.FPE, family, qualifier);
-//				return  Utils.removePadding(fpeCH.decrypt(this.fpeKey.get(family+":"+qualifier), ciphertext));
-				return fpeCH.decrypt(this.fpeKey.get(family+":"+qualifier), ciphertext);
+				return fpeCH.decrypt(this.fpeKey.get(family+":"+qualifier), value);
 			default :
 				return null;
 		}

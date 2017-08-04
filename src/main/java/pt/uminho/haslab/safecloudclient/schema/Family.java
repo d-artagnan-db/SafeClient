@@ -184,6 +184,8 @@ public class Family {
 	}
 
 
+
+
 	/**
 	 * containsQualifier(qualifier :String) method : verify if qualifier List contains a given qualifier
 	 * @param qualifier column qualifier

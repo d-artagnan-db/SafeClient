@@ -321,6 +321,7 @@ public class TableSchema {
 	 * @param qualifier column qualifier
 	 * @return the respective CryptoType
 	 */
+//	TODO: profile
 	public CryptoTechnique.CryptoType getCryptoTypeFromQualifier(String family, String qualifier) {
 		CryptoTechnique.CryptoType cType = null;
 		for (Family f : this.columnFamilies) {
@@ -392,6 +393,7 @@ public class TableSchema {
 	 * @param qualifier column qualifier
 	 * @return the respective format size in Integer format
 	 */
+//	TODO: profile
 	public Integer getFormatSizeFromQualifier(String family, String qualifier) {
 		int formatSize = 0;
 		for (Family f : this.columnFamilies) {
@@ -406,6 +408,35 @@ public class TableSchema {
 			}
 		}
 		return formatSize;
+	}
+
+	public Integer getKeyFormatSize() {
+		return this.key.getFormatSize();
+	}
+
+	public Boolean getKeyPadding() {
+		return this.key.getKeyPadding();
+	}
+
+//	TODO: profile
+	public Boolean getColumnPadding(String family, String qualifier) {
+		Boolean columnPadding = null;
+		for (Family f : this.columnFamilies) {
+			if (f.getFamilyName().equals(family)) {
+				columnPadding = f.getColumnPadding();
+				for(Qualifier q : f.getQualifiers()) {
+					if(q.getName().equals(qualifier)) {
+						columnPadding = q.getPadding();
+						break;
+					}
+				}
+				break;
+			}
+		}
+		if(columnPadding == null) {
+			columnPadding = this.defaultColumnPadding;
+		}
+		return columnPadding;
 	}
 
 	private Map<CryptoTechnique.CryptoType, Boolean> initializeEnabledCryptoTypes() {

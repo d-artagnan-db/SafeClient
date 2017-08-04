@@ -1,7 +1,7 @@
 <schema>
   <default>
     <key>PLT</key>
-    <columns>PLT</columns>
+    <columns>DET</columns>
     <keypadding>false</keypadding>
     <colpadding>false</colpadding>
     <keyformatsize>10</keyformatsize>
@@ -27,19 +27,20 @@
           <!--NAME-->
           <name>1</name>
           <cryptotechnique>DET</cryptotechnique>
-          <formatsize>100</formatsize>
+          <colformatsize>100</colformatsize>
         </qualifier>
         <qualifier>
           <!--BIRTHDAY_STAMP-->
           <name>2</name>
           <cryptotechnique>OPE</cryptotechnique>
-          <formatsize>16</formatsize>
+          <colformatsize>16</colformatsize>
         </qualifier>
         <qualifier>
           <!--CALCULATE_BIRTHDAY_STAMP-->
           <name>3</name>
           <cryptotechnique>OPE</cryptotechnique>
-          <formatsize>16</formatsize>
+          <colformatsize>16</colformatsize>
+          <colpadding>true</colpadding>
         </qualifier>
       </family>
     </columns>
@@ -61,7 +62,7 @@
           <!--SUBJECT_ID-->
           <name>2</name>
           <cryptotechnique>DET</cryptotechnique>
-          <formatsize>5</formatsize>
+          <colformatsize>5</colformatsize>
         </qualifier>
       </family>
     </columns>
@@ -83,7 +84,7 @@
           <!--NORMAL_VALUE-->
           <name>3</name>
           <cryptotechnique>STD</cryptotechnique>
-          <formatsize>4000</formatsize>
+          <colformatsize>4000</colformatsize>
         </qualifier>
       </family>
     </columns>
