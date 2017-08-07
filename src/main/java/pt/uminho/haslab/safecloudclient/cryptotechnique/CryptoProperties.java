@@ -517,9 +517,8 @@ public class CryptoProperties {
 		for(byte[] family : familiesAndQualifiers.keySet()) {
 			NavigableSet<byte[]> q = familiesAndQualifiers.get(family);
 			if(q==null) {
-				LOG.debug("CryptoProperties:getHColumnDescriptors:"+ familiesAndQualifiers.toString());
-			} else
-			if (!q.isEmpty()) {
+				LOG.info("CryptoProperties:getHColumnDescriptors:"+ familiesAndQualifiers.toString());
+			} else if (!q.isEmpty()) {
 				Iterator i = q.iterator();
 				List<byte[]> qualifierList = new ArrayList<>();
 				while (i.hasNext()) {
