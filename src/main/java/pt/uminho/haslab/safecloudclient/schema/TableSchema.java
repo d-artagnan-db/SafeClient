@@ -337,7 +337,7 @@ public class TableSchema {
 		}
 
 		if (cType == null) {
-			LOG.debug("Exception:TableSchema:getCryptoTypeFromQualifier:The specified qualifier ("+family+","+qualifier+") does not exists.");
+			LOG.error("Exception:TableSchema:getCryptoTypeFromQualifier:The specified qualifier ("+family+","+qualifier+") does not exists.");
 			cType = defaultColumnsCryptoType;
 		}
 

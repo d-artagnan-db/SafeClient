@@ -129,17 +129,6 @@ public class CryptoProperties {
 		return familyCryptoHandler;
 	}
 
-	/**
-	 * verifyOpeValueHandler() method : only used to check the OPE CryptoHandlers
-	 */
-	public void verifyOpeValueHandler() {
-		for(String family : this.opeValueHandler.keySet()) {
-			LOG.debug("Family Size: "+this.opeValueHandler.get(family).size());
-			for(String qualifier : this.opeValueHandler.get(family).keySet()) {
-				LOG.debug("Qualifier Properties: "+qualifier+" - "+this.opeValueHandler.get(family).get(qualifier).toString());
-			}
-		}
-	}
 
 	/**
 	 * getCryptoHandler(family : String, qualifier : String) method : get an OPE CryptoHandler of a given family and qualifier
@@ -528,7 +517,7 @@ public class CryptoProperties {
 		for(byte[] family : familiesAndQualifiers.keySet()) {
 			NavigableSet<byte[]> q = familiesAndQualifiers.get(family);
 			if(q==null) {
-				LOG.debug(familiesAndQualifiers.toString());
+				LOG.debug("CryptoProperties:getHColumnDescriptors:"+ familiesAndQualifiers.toString());
 			} else
 			if (!q.isEmpty()) {
 				Iterator i = q.iterator();
@@ -551,6 +540,7 @@ public class CryptoProperties {
 
 
 
+//	TODO support more Comparators
 	public ByteArrayComparable checkComparatorType(ByteArrayComparable comparable, byte[] encoded_content, CryptoTechnique.CryptoType cType) {
 		String comparator_name = comparable.getClass().getSimpleName();
 
@@ -558,14 +548,12 @@ public class CryptoProperties {
 			switch (comparator_name) {
 				case "BinaryPrefixComparator":
 					if (cType == CryptoTechnique.CryptoType.PLT) {
-						LOG.debug("New BinaryPrefixComparator created");
 						return new BinaryPrefixComparator(encoded_content);
 					} else {
 						LOG.error("UnsupportedOperationException: BinaryPrefixComparator not supported for the current CryptoBoxes.");
 						throw new UnsupportedOperationException("BinaryPrefixComparator not supported for the current CryptoBoxes.");
 					}
 				case "BinaryComparator":
-					LOG.debug("New BinaryComparator created");
 					return new BinaryComparator(encoded_content);
 				default:
 					LOG.error(comparator_name+" not supported for the current CyrptoBoxes.");
@@ -573,7 +561,7 @@ public class CryptoProperties {
 			}
 		}
 		else {
-			LOG.debug("NullPointerException: ByteArrayComparable object cannot be empty or null.");
+			LOG.error("NullPointerException: ByteArrayComparable object cannot be empty or null.");
 			throw new NullPointerException("ByteArrayComparable object cannot be empty or null.");
 		}
 	}

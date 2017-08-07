@@ -55,7 +55,6 @@ public class CryptoTable extends HTable {
 			while(!parsingComplete) {
 				try {
 					lock.lock();
-					LOG.debug("Thread-"+Thread.currentThread().getId() + ":Lock achieved.");
 					if (!parsingComplete) {
 						File file = new File(schemaProperty);
 						LOG.debug("Thread-"+Thread.currentThread().getId() + ":build database schema.");
@@ -65,17 +64,13 @@ public class CryptoTable extends HTable {
 
 				} finally {
 					lock.unlock();
-					LOG.debug("Thread-"+Thread.currentThread().getId() + ":Lock released.");
-					LOG.debug("Thread-"+Thread.currentThread().getId() + ":Shared ObjectId (database schema):" + System.identityHashCode(databaseSchema));
 				}
 			}
 
-//			FIXME: a tabela pode nao existir no table schema. Se nao existir Cria-se um table schema a default
 			if(databaseSchema.containsKey(tableName)) {
 				this.tableSchema = getTableSchema(tableName);
 			}
 			else {
-				LOG.debug("Tablename not found in schema file.");
 				this.tableSchema = generateDefaultTableSchema(tableName, conf);
 				LOG.debug("Generate Default Table Schema for "+tableName+" table: "+tableSchema.toString());
 			}
@@ -97,7 +92,6 @@ public class CryptoTable extends HTable {
 			while (!keyAcknowledgement) {
 				try {
 					lock.lock();
-					LOG.debug("Thread-" + Thread.currentThread().getId() + ":Lock achieved Cryptographic key: " + tableName);
 					if (!keyAcknowledgement) {
 						File keyFile = new File(cryptographicKeyProperty);
 
@@ -111,7 +105,6 @@ public class CryptoTable extends HTable {
 					}
 				} finally {
 					lock.unlock();
-					LOG.debug("Thread-" + Thread.currentThread().getId() + ":Lock released Cryptographic Key: " + tableName);
 				}
 
 			}
@@ -217,7 +210,6 @@ public class CryptoTable extends HTable {
 //	 */
 	@Override
 	public void put(Put put) {
-		LOG.debug("Put operation started.");
 		try {
 			byte[] row = put.getRow();
 			if(row.length == 0) {
@@ -234,21 +226,8 @@ public class CryptoTable extends HTable {
 		}
 	}
 
-//	@Override
-//	public void put(Put put) {
-//		try {
-//			LOG.debug("SUPER:PUT: "+put.toString());
-//			super.put(put);
-//		} catch (InterruptedIOException e) {
-//			e.printStackTrace();
-//		} catch (RetriesExhaustedWithDetailsException e) {
-//			e.printStackTrace();
-//		}
-//	}
-
 	@Override
 	public void put(List<Put> puts) {
-		LOG.debug("Batch Put operation started.");
 		try {
 			List<Put> encryptedPuts = new ArrayList<>(puts.size());
 			for(Put p : puts) {
@@ -280,8 +259,6 @@ public class CryptoTable extends HTable {
 	 */
 	@Override
 	public Result get(Get get) {
-		LOG.debug("Get operation started.");
-
 		Result getResult = Result.EMPTY_RESULT;
 
 		try {
@@ -305,9 +282,6 @@ public class CryptoTable extends HTable {
 					ResultScanner encScan = super.getScanner(stdGetScan);
 					for (Result r = encScan.next(); r != null; r = encScan.next()) {
 						byte[] aux = this.cryptoProperties.decodeRow(r.getRow());
-//						TODO remove me
-//						row = Utils.removePadding(row);
-
 						if (Arrays.equals(row, aux)) {
 							getResult = this.cryptoProperties.decodeResult(row, r);
 							break;
@@ -347,7 +321,6 @@ public class CryptoTable extends HTable {
 
 	@Override
 	public Result[] get(List<Get> gets) {
-		LOG.debug("Batch Get operation started.");
 		Result[] results = new Result[gets.size()];
 		List<Get> encryptedGets = new ArrayList<>(gets.size());
 
@@ -399,9 +372,6 @@ public class CryptoTable extends HTable {
 						ResultScanner encScan = super.getScanner(new Scan());
 						for (Result r = encScan.next(); r != null; r = encScan.next()) {
 							byte[] aux = this.cryptoProperties.decodeRow(r.getRow());
-//							TODO remove me
-//							row = Utils.removePadding(row);
-
 //							Third phase: decode result
 							if (Arrays.equals(row, aux)) {
 								results[i] = this.cryptoProperties.decodeResult(row, r);
@@ -443,7 +413,6 @@ public class CryptoTable extends HTable {
 	 */
 	@Override
 	public void delete(Delete delete) {
-		LOG.debug("Delete operation started.");
 		try {
 			byte[] row = delete.getRow();
 			if(row.length == 0) {
@@ -458,9 +427,6 @@ public class CryptoTable extends HTable {
 					ResultScanner encScan = super.getScanner(new Scan());
 					for (Result r = encScan.next(); r != null; r = encScan.next()) {
 						byte[] resultRowKey = this.cryptoProperties.decodeRow(r.getRow());
-//						TODO remove me
-//						row = Utils.removePadding(row);
-
 						if (Arrays.equals(row, resultRowKey)) {
 							Delete del = new Delete(r.getRow());
 							this.htableUtils.wrapDeletedCells(cellsToDelete, del);
@@ -487,7 +453,6 @@ public class CryptoTable extends HTable {
 
 	@Override
 	public void delete(List<Delete> deletes) {
-		LOG.debug("Batch Delete operation started.");
 		try {
 			List<Delete> encryptedDeletes = new ArrayList<>(deletes.size());
 			for (Delete del : deletes) {
@@ -504,9 +469,6 @@ public class CryptoTable extends HTable {
 						ResultScanner encScan = super.getScanner(new Scan());
 						for (Result r = encScan.next(); r != null; r = encScan.next()) {
 							byte[] resultValue = this.cryptoProperties.decodeRow(r.getRow());
-//							TODO remove me
-//							row = Utils.removePadding(row);
-
 							if (Arrays.equals(row, resultValue)) {
 								Delete encryptedDelete = new Delete(r.getRow());
 								this.htableUtils.wrapDeletedCells(cellsToDelete, encryptedDelete);
@@ -544,7 +506,6 @@ public class CryptoTable extends HTable {
 //	 */
 	@Override
 	public ResultScanner getScanner(Scan scan) {
-		LOG.debug("GetScanner operation started.");
 		try {
 			byte[] startRow = scan.getStartRow();
 			byte[] endRow = scan.getStopRow();
@@ -573,7 +534,6 @@ public class CryptoTable extends HTable {
 
 	@Override
 	public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier, byte[] value, Put put) {
-		LOG.debug("CheckAndPut operation started.");
 		boolean operationPerformed = false;
 
 		try {
@@ -597,8 +557,6 @@ public class CryptoTable extends HTable {
 //						step 2 : check if specified row exists
 					for(Result r = rs.next(); r != null; r = rs.next()) {
 						byte[] resultRow = this.cryptoProperties.decodeRow(r.getRow());
-//						TODO remove me
-//						row = Utils.removePadding(row);
 						if (Arrays.equals(row, resultRow)) {
 //								Get the stored value for the specified family and qualifier and check if it's equal to a given value
 							byte[] encryptedValue = r.getValue(family, qualifier);
@@ -671,7 +629,6 @@ public class CryptoTable extends HTable {
 
 	@Override
 	public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount) {
-		LOG.debug("IncrementColumnValue operation started.");
 		long operationValue = 0;
 		try {
 			if(row.length == 0) {
@@ -705,9 +662,6 @@ public class CryptoTable extends HTable {
 						ResultScanner stdScanner = super.getScanner(new Scan());
 						for(Result r = stdScanner.next(); r != null; r = stdScanner.next()) {
 							byte[] aux = this.cryptoProperties.decodeRow(r.getRow());
-//							TODO remove me
-//							row = Utils.removePadding(row);
-
 							if (Arrays.equals(row, aux)) {
 								operationValue = super.incrementColumnValue(r.getRow(), family, qualifier, amount);
 								break;
@@ -741,7 +695,6 @@ public class CryptoTable extends HTable {
 
 	@Override
 	public HRegionLocation getRegionLocation(byte[] row) {
-		LOG.debug("GetRegionLocation operation started.");
 		try {
 			if(row.length == 0) {
 				throw new NullPointerException("Row Key cannot be null.");
@@ -754,8 +707,6 @@ public class CryptoTable extends HTable {
 					for(Result r = rs.next(); r != null; r = rs.next()) {
 						if(!r.isEmpty()) {
 							byte[] temp_row = this.cryptoProperties.decodeRow(r.getRow());
-//							TODO remove me
-//							row = Utils.removePadding(row);
 							if(Arrays.equals(temp_row, row)) {
 								stdHRegionLocation = super.getRegionLocation(r.getRow());
 								break;
@@ -779,7 +730,6 @@ public class CryptoTable extends HTable {
 
 	@Override
 	public Result getRowOrBefore(byte[] row, byte[] family) {
-		LOG.debug("GetRowOrBefore operation started.");
 		try {
 			if (row.length == 0) {
 				throw new NullPointerException("Row Key cannot be null.");
@@ -787,16 +737,6 @@ public class CryptoTable extends HTable {
 			if (family == null) {
 				throw new NullPointerException("Column family cannot be null.");
 			}
-
-////			In case of default schema, verify and/or create both family and qualifier instances in TableSchema
-//			if(!SCHEMA_FILE) {
-//				this.htableUtils.createDynamicColumnsForAtomicOperations(this.qEngine, this.tableSchema, new String(family), null);
-//			}
-//			else {
-//				if(!this.tableSchema.containsFamily(new String(family))) {
-//					throw new NullPointerException("Column family "+new String(family)+" not defined in schema file.");
-//				}
-//			}
 
 			switch(this.tableSchema.getKey().getCryptoType()) {
 
@@ -811,8 +751,6 @@ public class CryptoTable extends HTable {
 					Bytes.ByteArrayComparator bcomp = new Bytes.ByteArrayComparator();
 					for(Result r = rs.next(); r != null; r = rs.next()) {
 						decodedRow = this.cryptoProperties.decodeRow(r.getRow());
-//						TODO remove me
-//						row = Utils.removePadding(row);
 						if(Arrays.equals(decodedRow, row)) {
 							encResult = super.getRowOrBefore(r.getRow(), family);
 							break;
