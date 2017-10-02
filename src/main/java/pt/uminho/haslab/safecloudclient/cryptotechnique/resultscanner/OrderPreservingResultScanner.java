@@ -21,7 +21,7 @@ public class OrderPreservingResultScanner implements ResultScanner {
 	}
 
 	/**
-	 * next() method : decode both row key and result set for the current Result object from the encryptedScanner
+	 * next() method : decode both Row-Key and result set for the current Result object from the encryptedScanner
 	 * @return the original Result
 	 * @throws IOException
 	 */

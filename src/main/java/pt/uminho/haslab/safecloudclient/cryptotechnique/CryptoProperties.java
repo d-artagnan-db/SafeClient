@@ -30,7 +30,7 @@ public class CryptoProperties {
 //	For each CryptoBox a new CryptoHandler object must be instantiated
 	public CryptoHandler stdHandler;
 	public CryptoHandler detHandler;
-//	This object handles the row keys protected with the OPE CryptoBox
+//	This object handles the Row-Keys protected with the OPE CryptoBox
 	public CryptoHandler opeHandler;
 //	Since the OPE CryptoBox need to be initialized with the plaintext size and ciphertext size, each value protected with OPE must have an individual CryptoHandler
 	public Map<String, Map<String, CryptoHandler>> opeValueHandler;
@@ -233,9 +233,9 @@ public class CryptoProperties {
 	}
 
 	/**
-	 * encodeRowCryptoType(cType : CryptoType, content : byte[]) method : encrypts the row key
+	 * encodeRowCryptoType(cType : CryptoType, content : byte[]) method : encrypts the Row-Key
 	 * @param cType CryptoBox type
-	 * @param content plaintext row key
+	 * @param content plaintext Row-Key
 	 * @return the resulting ciphertext
 	 */
 	private byte[] encodeRowCryptoType(CryptoTechnique.CryptoType cType, byte[] content) {
@@ -298,10 +298,10 @@ public class CryptoProperties {
 	}
 
 	/**
-	 * decodeRowCryptoType(cType : CryptoType, ciphertext : byte[]) method : decrypts the row key ciphertext
+	 * decodeRowCryptoType(cType : CryptoType, ciphertext : byte[]) method : decrypts the Row-Key ciphertext
 	 * @param cType CryptoBox type
-	 * @param ciphertext protected row key
-	 * @return the original row key in byte[] format
+	 * @param ciphertext protected Row-Key
+	 * @return the original Row-Key in byte[] format
 	 */
 	private byte[] decodeRowCryptoType(CryptoTechnique.CryptoType cType, byte[] ciphertext) {
 		byte[] row;
@@ -376,9 +376,9 @@ public class CryptoProperties {
 	}
 
 	/**
-	 * encodeRow(content : byte[]) method : get the row key CryptoType and encrypt the row key
-	 * @param content plaintext row key
-	 * @return call the encodeRowCryptoType method. Return the encoded row key in byte[] format
+	 * encodeRow(content : byte[]) method : get the Row-Key CryptoType and encrypt the Row-Key
+	 * @param content plaintext Row-Key
+	 * @return call the encodeRowCryptoType method. Return the encoded Row-Key in byte[] format
 	 */
 	public byte[] encodeRow(byte[] content) {
 		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getKey().getCryptoType();
@@ -386,9 +386,9 @@ public class CryptoProperties {
 	}
 
 	/**
-	 * decodeRow(content : byte[]) method : get the row key CryptoType and decrypt the row key
-	 * @param content ciphertext row key
-	 * @return call the decodeRowCryptoType method. Return the original plaintext row key in byte[] format
+	 * decodeRow(content : byte[]) method : get the Row-Key CryptoType and decrypt the Row-Key
+	 * @param content ciphertext Row-Key
+	 * @return call the decodeRowCryptoType method. Return the original plaintext Row-Key in byte[] format
 	 */
 	public byte[] decodeRow(byte[] content) {
 		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getKey().getCryptoType();
@@ -432,7 +432,7 @@ public class CryptoProperties {
 
 	/**
 	 * decodeResult(row :byte[], res : Result) method : decrypt all qualifiers from the HBase Result encrypted object
-	 * @param row original row key
+	 * @param row original Row-Key
 	 * @param res HBase Result object encrypted
 	 * @return decrypted HBase Result
 	 */

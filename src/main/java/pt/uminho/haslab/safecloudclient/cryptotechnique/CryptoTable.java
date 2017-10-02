@@ -58,6 +58,7 @@ public class CryptoTable extends HTable {
 					if (!parsingComplete) {
 						File file = new File(schemaProperty);
 						LOG.debug("Thread-"+Thread.currentThread().getId() + ":build database schema.");
+//						TODO: jtpaulo - Qual era o problema c/ a leitura da chave e do configuration file.
 						this.buildDatabaseSchema(file.getPath());
 						parsingComplete = true;
 					}
@@ -213,10 +214,10 @@ public class CryptoTable extends HTable {
 		try {
 			byte[] row = put.getRow();
 			if(row.length == 0) {
-				throw new NullPointerException("Row Key cannot be null.");
+				throw new NullPointerException("Row-Key cannot be null.");
 			}
 
-//			Encode the row key
+//			Encode the Row-Key
 			Put encPut = new Put(this.cryptoProperties.encodeRow(row));
 			this.htableUtils.encryptCells(put.cellScanner(), this.tableSchema, encPut, this.cryptoProperties);
 			super.put(encPut);
@@ -233,10 +234,10 @@ public class CryptoTable extends HTable {
 			for(Put p : puts) {
 				byte[] row = p.getRow();
 				if(row.length == 0) {
-					throw new NullPointerException("Row Key cannot be null.");
+					throw new NullPointerException("Row-Key cannot be null.");
 				}
 
-//				Encode the row key
+//				Encode the Row-Key
 				Put encPut = new Put(this.cryptoProperties.encodeRow(row));
 				this.htableUtils.encryptCells(p.cellScanner(), this.tableSchema, encPut, this.cryptoProperties);
 				encryptedPuts.add(encPut);
@@ -244,6 +245,7 @@ public class CryptoTable extends HTable {
 
 			super.put(encryptedPuts);
 
+//			FIXME: turn the exceptions generic
 		} catch (InterruptedIOException | RetriesExhaustedWithDetailsException e) {
 			LOG.error("Exception in put (list<Put> puts) method. " + e.getMessage());
 		}
@@ -251,7 +253,7 @@ public class CryptoTable extends HTable {
 
 	/**
 	 * get(Get get) method : secure get method.
-	 * The original get object sets the row key to search in the database system. Before the get operation, the row key
+	 * The original get object sets the Row-Key to search in the database system. Before the get operation, the Row-Key
 	 * is encrypted accordingly the respective CryptoBox and its issued. After the server response, all the values must be
 	 * decoded with the respective CryptoBox, resulting in the original values stored by the user.
 	 * @param get original get object that contains the key to perform the operation.
@@ -264,12 +266,12 @@ public class CryptoTable extends HTable {
 		try {
 			byte[] row = get.getRow();
 			if(row.length == 0) {
-				throw new NullPointerException("Row Key cannot be null.");
+				throw new NullPointerException("Row-Key cannot be null.");
 			}
 
 			Map<byte[],List<byte[]>> columns = this.cryptoProperties.getHColumnDescriptors(get.getFamilyMap());
 
-//			Verify the row key CryptoBox
+//			Verify the Row-Key CryptoBox
 			switch (this.cryptoProperties.tableSchema.getKey().getCryptoType()) {
 				case STD :
 					Scan stdGetScan = new Scan();
@@ -327,7 +329,7 @@ public class CryptoTable extends HTable {
 		for(Get g : gets) {
 			byte[] row = g.getRow();
 			if(row.length == 0) {
-				throw new NullPointerException("Row Key cannot be null.");
+				throw new NullPointerException("Row-Key cannot be null.");
 			}
 
 			Map<byte[],List<byte[]>> columns = this.cryptoProperties.getHColumnDescriptors(g.getFamilyMap());
@@ -407,7 +409,7 @@ public class CryptoTable extends HTable {
 
 	/**
 	 * delete(Delete delete) method : secure delete method.
-	 * The original delete object sets the row key to search in the database system. Before the delete operation, the row key
+	 * The original delete object sets the Row-Key to search in the database system. Before the delete operation, the Row-Key
 	 * is encrypted accordingly the respective CryptoBox and its issued.
 	 * @param delete original get object that contains the key to perform the operation.
 	 */
@@ -416,12 +418,12 @@ public class CryptoTable extends HTable {
 		try {
 			byte[] row = delete.getRow();
 			if(row.length == 0) {
-				throw new NullPointerException("Row Key cannot be null.");
+				throw new NullPointerException("Row-Key cannot be null.");
 			}
 
 			List<String> cellsToDelete = this.htableUtils.deleteCells(delete.cellScanner());
 
-//			Verify the row key CryptoBox
+//			Verify the Row-Key CryptoBox
 			switch (this.cryptoProperties.tableSchema.getKey().getCryptoType()) {
 				case STD :
 					ResultScanner encScan = super.getScanner(new Scan());
@@ -458,12 +460,12 @@ public class CryptoTable extends HTable {
 			for (Delete del : deletes) {
 				byte[] row = del.getRow();
 				if (row.length == 0) {
-					throw new NullPointerException("Row Key cannot be null.");
+					throw new NullPointerException("Row-Key cannot be null.");
 				}
 
 				List<String> cellsToDelete = this.htableUtils.deleteCells(del.cellScanner());
 
-//				Verify the row key CryptoBox
+//				Verify the Row-Key CryptoBox
 				switch (this.cryptoProperties.tableSchema.getKey().getCryptoType()) {
 					case STD:
 						ResultScanner encScan = super.getScanner(new Scan());
@@ -538,7 +540,7 @@ public class CryptoTable extends HTable {
 
 		try {
 			if(row.length == 0) {
-				throw new NullPointerException("Row Key cannot be null.");
+				throw new NullPointerException("Row-Key cannot be null.");
 			}
 			if(family == null) {
 				throw new NullPointerException("Column family cannot be null.");
@@ -632,7 +634,7 @@ public class CryptoTable extends HTable {
 		long operationValue = 0;
 		try {
 			if(row.length == 0) {
-				throw new NullPointerException("Row Key cannot be null.");
+				throw new NullPointerException("Row-Key cannot be null.");
 			}
 			if(family == null) {
 				throw new NullPointerException("Column family cannot be null.");
@@ -683,6 +685,8 @@ public class CryptoTable extends HTable {
 		return operationValue;
 	}
 
+//	TODO remove method
+
 	@Override
 	public NavigableMap<HRegionInfo, ServerName> getRegionLocations() {
 		try {
@@ -697,7 +701,7 @@ public class CryptoTable extends HTable {
 	public HRegionLocation getRegionLocation(byte[] row) {
 		try {
 			if(row.length == 0) {
-				throw new NullPointerException("Row Key cannot be null.");
+				throw new NullPointerException("Row-Key cannot be null.");
 			}
 
 			switch(this.tableSchema.getKey().getCryptoType()) {
@@ -732,7 +736,7 @@ public class CryptoTable extends HTable {
 	public Result getRowOrBefore(byte[] row, byte[] family) {
 		try {
 			if (row.length == 0) {
-				throw new NullPointerException("Row Key cannot be null.");
+				throw new NullPointerException("Row-Key cannot be null.");
 			}
 			if (family == null) {
 				throw new NullPointerException("Column family cannot be null.");

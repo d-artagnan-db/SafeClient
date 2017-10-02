@@ -74,8 +74,8 @@ public class StandardResultScanner implements ResultScanner {
 	}
 
 	/**
-	 * digestStartEndRow(paddingSize : int, row : byte[]) method : check if a row key is between the start and stop rows
-	 * @param row row key
+	 * digestStartEndRow(paddingSize : int, row : byte[]) method : check if a Row-Key is between the start and stop rows
+	 * @param row Row-Key
 	 * @return true if is comprehended between the two delimiter rows. Otherwise false.
 	 */
 	public boolean digestStartEndRow(byte[] row) {
@@ -117,7 +117,7 @@ public class StandardResultScanner implements ResultScanner {
 	}
 
 	/**
-	 * next() method : decode both row key and result set for the current Result object from the encrypted scanner
+	 * next() method : decode both Row-Key and result set for the current Result object from the encrypted scanner
 	 * @return the original result
 	 * @throws IOException
 	 */

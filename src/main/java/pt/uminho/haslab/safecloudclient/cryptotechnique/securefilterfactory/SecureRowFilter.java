@@ -24,7 +24,7 @@ public class SecureRowFilter implements SecureFilterProperties {
     @Override
     public Filter buildEncryptedFilter(Filter plaintextFilter, CryptoTechnique.CryptoType cryptoType) {
         RowFilter plainRowFilter = (RowFilter) plaintextFilter;
-//      In the RowFilter case, the CryptoType is protecting the row key
+//      In the RowFilter case, the CryptoType is protecting the Row-Key
         switch (cryptoType) {
             case STD:
             case DET:

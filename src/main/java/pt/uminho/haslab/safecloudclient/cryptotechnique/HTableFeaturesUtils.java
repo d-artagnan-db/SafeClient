@@ -26,14 +26,16 @@ import java.util.Map;
 public class HTableFeaturesUtils {
     static final Log LOG = LogFactory.getLog(CryptoTable.class.getName());
 
-    public CryptoProperties cp;
-    public SecureFilterConverter secureFilterConverter;
+    private CryptoProperties cp;
+    private SecureFilterConverter secureFilterConverter;
 
     public HTableFeaturesUtils(CryptoProperties cryptoProperties, SecureFilterConverter secureFilterConverter) {
-        cp = cryptoProperties;
+        this.cp = cryptoProperties;
         this.secureFilterConverter = secureFilterConverter;
     }
 
+
+//    TODO: tentar passar o cellScanner apara um array e fazer o processamento da informação em paralelo
     public void encryptCells(CellScanner cs, TableSchema tableSchema, Put destination, CryptoProperties cryptoProperties) {
         try {
             while (cs.advance()) {
@@ -123,7 +125,7 @@ public class HTableFeaturesUtils {
      * isScanOrFilter(scan : Scan) method : check the CryptoType of a scan operation. It may vary if it's a Scan, Row Filter or SingleColumnValueFilter
      *
      * @param scan scan object used to check the instance
-     * @return the Scan's CryptoType (Row Key CryptoType in case of Scan or RowFilter, Qualifier CryptoType in case of SingleColumnValueFilter)
+     * @return the Scan's CryptoType (Row-Key CryptoType in case of Scan or RowFilter, Qualifier CryptoType in case of SingleColumnValueFilter)
      */
     public CryptoTechnique.CryptoType isScanOrFilter(Scan scan) {
         if (scan.hasFilter()) {
@@ -140,7 +142,7 @@ public class HTableFeaturesUtils {
      * @param encScan  encrytped scan operator
      * @param startRow original start row
      * @param stopRow  original stop row
-     * @return an encrypted scan with the respective start and stop row, both encrypted with the row key CryptoBox
+     * @return an encrypted scan with the respective start and stop row, both encrypted with the Row-Key CryptoBox
      */
     public Scan encodeDelimitingRows(Scan encScan, byte[] startRow, byte[] stopRow) {
         if (startRow != null && startRow.length > 0 && stopRow != null && stopRow.length > 0) {
@@ -212,7 +214,7 @@ public class HTableFeaturesUtils {
                         }
                     }
 //				Since the scanCryptoType defines the CryptoType of the scan or filter operaion, in case of SingleColumnValueFilter,
-// 				the start and stop row must be encoded with the respective row key CryptoBox
+// 				the start and stop row must be encoded with the respective Row-Key CryptoBox
                     if ((cp.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.PLT) ||
                             (cp.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.OPE)) {
                         encScan = encodeDelimitingRows(encScan, startRow, stopRow);
@@ -238,7 +240,7 @@ public class HTableFeaturesUtils {
                         }
                     }
 //				Since the scanCryptoType defines the CryptoType of the scan or filter operaion, in case of SingleColumnValueFilter,
-// 				the start and stop row must be encoded with the respective row key CryptoBox
+// 				the start and stop row must be encoded with the respective Row-Key CryptoBox
                     if ((cp.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.PLT) ||
                             (cp.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.OPE)) {
                         encScan = encodeDelimitingRows(encScan, startRow, stopRow);

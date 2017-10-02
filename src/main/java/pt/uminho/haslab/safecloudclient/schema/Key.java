@@ -4,7 +4,7 @@ import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 
 /**
  * Key class.
- * Holds all the relevant information associated to the row key
+ * Holds all the relevant information associated to the Row-Key
  */
 public class Key {
 

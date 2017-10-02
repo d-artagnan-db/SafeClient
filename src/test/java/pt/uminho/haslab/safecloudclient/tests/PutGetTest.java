@@ -46,7 +46,7 @@ public class PutGetTest extends SimpleHBaseTest {
 			Result res = table.get(get);
 			if (!res.isEmpty()) {
 				byte[] storedValue = res.getValue(cf, cq);
-				LOG.debug("Row key is " + new BigInteger(res.getRow()));
+				LOG.debug("Row-Key is " + new BigInteger(res.getRow()));
 				LOG.debug("first val" + value);
 				LOG.debug("stored value " + new BigInteger(storedValue));
 				assertEquals(value, new BigInteger(storedValue));

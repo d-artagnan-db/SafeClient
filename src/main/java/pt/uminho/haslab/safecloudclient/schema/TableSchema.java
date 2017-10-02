@@ -20,21 +20,21 @@ import static pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties.
 public class TableSchema {
 	static final Log LOG = LogFactory.getLog(CryptoTable.class.getName());
 	private String tablename;
-//	Default Row Key CryptoBox
+//	Default Row-Key CryptoBox
 	private CryptoTechnique.CryptoType defaultKeyCryptoType;
 //	Default Qualifiers CryptoBox
 	private CryptoTechnique.CryptoType defaultColumnsCryptoType;
-	//	Default row key format size
+	//	Default Row-Key format size
 	private int defaultKeyFormatSize;
 	//	Default values format size
 	private int defaultColumnFormatSize;
-	//	Default row key padding
+	//	Default Row-Key padding
 	private Boolean defaultKeyPadding;
 	//	Default values padding
 	private Boolean defaultColumnPadding;
 
 
-//	Key object. Contains CryptoBox, formatSize and other information about the Row Key
+//	Key object. Contains CryptoBox, formatSize and other information about the Row-Key
 	private Key key;
 //  Collection of the database column families (and qualifiers)
 	private List<Family> columnFamilies;

@@ -101,7 +101,7 @@ public class SchemaParser {
 			String colSize = rootElement.elementText("colformatsize");
 
 			if (key == null || key.isEmpty()) {
-				throw new NullPointerException("CryptoWorker:SchemaParser:parseDatabaseDefaultProperties:Default row key Cryptographic Type cannot be null nor empty.");
+				throw new NullPointerException("CryptoWorker:SchemaParser:parseDatabaseDefaultProperties:Default Row-Key Cryptographic Type cannot be null nor empty.");
 			}
 			if (cols == null || cols.isEmpty()) {
 				throw new NullPointerException("CryptoWorker:SchemaParser:parseDatabaseDefaultProperties:Default columns Cryptographic Type cannot be null nor empty.");
