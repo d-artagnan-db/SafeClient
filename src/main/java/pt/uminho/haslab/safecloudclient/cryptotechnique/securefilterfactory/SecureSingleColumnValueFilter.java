@@ -90,6 +90,6 @@ public class SecureSingleColumnValueFilter implements SecureFilterProperties {
     @Override
     public CryptoTechnique.CryptoType getFilterCryptoType(Filter plaintextFilter) {
         SingleColumnValueFilter singleFilter = (SingleColumnValueFilter) plaintextFilter;
-        return this.cryptoProperties.tableSchema.getCryptoTypeFromQualifier(new String(singleFilter.getFamily()), new String(singleFilter.getQualifier()));
+        return this.cryptoProperties.tableSchema.getCryptoTypeFromQualifier(singleFilter.getFamily(), singleFilter.getQualifier());
     }
 }

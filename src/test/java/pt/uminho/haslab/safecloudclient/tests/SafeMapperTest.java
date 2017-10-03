@@ -30,7 +30,7 @@ public class SafeMapperTest {
 
         TableSchema ts = parser.getTableSchema(tablename);
         System.out.println("Key Padding: "+ts.getKeyPadding());
-        System.out.println("Column Padding: "+ts.getColumnPadding(family, qualifier));
+        System.out.println("Column Padding: "+ts.getColumnPadding(family.getBytes(), qualifier.getBytes()));
 
     }
 

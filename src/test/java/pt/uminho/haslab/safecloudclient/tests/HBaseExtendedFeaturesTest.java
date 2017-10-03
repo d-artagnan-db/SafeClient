@@ -58,19 +58,19 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
             testGetRowOrBefore(table, String.valueOf(10).getBytes(), "Physician".getBytes());
             testGetRowOrBefore(table, String.valueOf(0).getBytes(), "Physician".getBytes());
 //
-//            testFilter(table, RowFilter, CompareFilter.CompareOp.EQUAL, "5");
-//            testFilter(table, RowFilter, CompareFilter.CompareOp.NOT_EQUAL, "5");
-//            testFilter(table, RowFilter, CompareFilter.CompareOp.GREATER, "5");
-//            testFilter(table, RowFilter, CompareFilter.CompareOp.GREATER_OR_EQUAL, "5");
-//            testFilter(table, RowFilter, CompareFilter.CompareOp.LESS, "5");
-//            testFilter(table, RowFilter, CompareFilter.CompareOp.LESS_OR_EQUAL, "5");
+            testFilter(table, RowFilter, CompareFilter.CompareOp.EQUAL, "5");
+            testFilter(table, RowFilter, CompareFilter.CompareOp.NOT_EQUAL, "5");
+            testFilter(table, RowFilter, CompareFilter.CompareOp.GREATER, "5");
+            testFilter(table, RowFilter, CompareFilter.CompareOp.GREATER_OR_EQUAL, "5");
+            testFilter(table, RowFilter, CompareFilter.CompareOp.LESS, "5");
+            testFilter(table, RowFilter, CompareFilter.CompareOp.LESS_OR_EQUAL, "5");
 //
-//            testFilter(table, FilterType.SingleColumnValueFilter, CompareFilter.CompareOp.EQUAL, "5:Hello:5");
-//            testFilter(table, FilterType.SingleColumnValueFilter, CompareFilter.CompareOp.GREATER_OR_EQUAL, "5:Hello:5");
-//            testFilter(table, FilterType.SingleColumnValueFilter, CompareFilter.CompareOp.LESS, "5:Hello:5");
+            testFilter(table, FilterType.SingleColumnValueFilter, CompareFilter.CompareOp.EQUAL, "5:Hello:5");
+            testFilter(table, FilterType.SingleColumnValueFilter, CompareFilter.CompareOp.GREATER_OR_EQUAL, "5:Hello:5");
+            testFilter(table, FilterType.SingleColumnValueFilter, CompareFilter.CompareOp.LESS, "5:Hello:5");
 
-//
-//            testFilter(table, FilterType.FilterList, CompareFilter.CompareOp.EQUAL, "5:Hello:5");
+
+            testFilter(table, FilterType.FilterList, CompareFilter.CompareOp.EQUAL, "5:Hello:5");
 
             testFilter(table, FilterType.WhileMatchFilter, CompareFilter.CompareOp.LESS, "5");
 //            byte[] startRow = "4".getBytes();
@@ -80,13 +80,13 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
 //            testScan(table, null, stopRow);
 //            testScan(table, startRow, stopRow);
 
-//            testFilter(table, FilterType.FilterList, CompareFilter.CompareOp.EQUAL, "5:Hello:5");
-//            byte[] startRow = "4".getBytes();
-//            byte[] stopRow = "15".getBytes();
-//            testScan(table, null, null);
-//            testScan(table, startRow, null);
-//            testScan(table, null, stopRow);
-//            testScan(table, startRow, stopRow);
+            testFilter(table, FilterType.FilterList, CompareFilter.CompareOp.EQUAL, "5:Hello:5");
+            byte[] startRow = "4".getBytes();
+            byte[] stopRow = "15".getBytes();
+            testScan(table, null, null);
+            testScan(table, startRow, null);
+            testScan(table, null, stopRow);
+            testScan(table, startRow, stopRow);
 //
         } catch (IOException e) {
             LOG.error("Exception in test execution. " + e.getMessage());

@@ -2,6 +2,7 @@ package pt.uminho.haslab.safecloudclient.schema;
 
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,29 +12,30 @@ import java.util.Map;
  */
 public class Qualifier {
 
-	private String qualifierName;
+	private byte[] qualifierName;
 	private CryptoTechnique.CryptoType cryptoType;
 	private int formatSize;
 	private Boolean padding;
 	private Map<String, String> properties;
 
 	public Qualifier() {
-		this.qualifierName = "";
+		this.qualifierName = null;
 		this.cryptoType = CryptoTechnique.CryptoType.PLT;
 		this.formatSize = 0;
 		this.padding = null;
 		this.properties = new HashMap<>();
 	}
 
-	public Qualifier(String name, CryptoTechnique.CryptoType cType, int format, Boolean padding, Map<String, String> properties) {
-		this.qualifierName = name;
+	public Qualifier(byte[] name, CryptoTechnique.CryptoType cType, int format, Boolean padding, Map<String, String> properties) {
+//		this.qualifierName = name;
+		this.qualifierName = Arrays.copyOf(name, name.length);
 		this.cryptoType = cType;
 		this.formatSize = format;
 		this.padding = padding;
 		this.properties = properties;
 	}
 
-	public String getName() {
+	public byte[] getName() {
 		return this.qualifierName;
 	}
 
@@ -49,8 +51,8 @@ public class Qualifier {
 		return this.padding;
 	}
 
-	public void setQualifierName(String name) {
-		this.qualifierName = name;
+	public void setQualifierName(byte[] name) {
+		this.qualifierName = Arrays.copyOf(name, name.length);
 	}
 
 	public void setCryptoType(CryptoTechnique.CryptoType cryptoType) {
@@ -82,7 +84,7 @@ public class Qualifier {
 
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("Qualifier Name: ").append(qualifierName).append("\n");
+		sb.append("Qualifier Name: ").append(Arrays.toString(qualifierName)).append("\n");
 		sb.append("Qualifier CryptoType: ").append(cryptoType).append("\n");
 		sb.append("Qualifier Format Size: ").append(formatSize).append("\n");
 		sb.append("Qualifier Padding: ").append(padding).append("\n");

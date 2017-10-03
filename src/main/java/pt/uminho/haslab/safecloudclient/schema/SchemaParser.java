@@ -310,7 +310,7 @@ public class SchemaParser {
 
 
 				Family f = new Family(
-						familyName,
+						familyName.getBytes(),
 						switchCryptoType(familyCryptoTechnique),
 						formatSizeIntegerValue(familyFormatSize),
 						paddingBooleanConvertion(familyPadding));
@@ -354,7 +354,7 @@ public class SchemaParser {
 					Qualifier q;
 					if (!cryptotechniqueQualifier.equals("FPE")) {
 						q = new Qualifier(
-								qualifierName,
+								qualifierName.getBytes(),
 								switchCryptoType(cryptotechniqueQualifier),
 								formatSizeIntegerValue(qualifierFormatsize),
 								paddingBooleanConvertion(qualifierPadding),
@@ -362,7 +362,7 @@ public class SchemaParser {
 
 					} else {
 						q = new QualifierFPE(
-								qualifierName,
+								qualifierName.getBytes(),
 								switchCryptoType(cryptotechniqueQualifier),
 								formatSizeIntegerValue(qualifierFormatsize),
 								paddingBooleanConvertion(qualifierPadding),
@@ -373,21 +373,21 @@ public class SchemaParser {
 						);
 					}
 
-					tableSchema.addQualifier(familyName, q);
+					tableSchema.addQualifier(familyName.getBytes(), q);
 
 					if (cryptotechniqueQualifier.equals("OPE")) {
 						String stdQualifierName = qualifierName + "_STD";
 						String stdCType = "STD";
 
 						Qualifier std = new Qualifier(
-								stdQualifierName,
+								stdQualifierName.getBytes(),
 								switchCryptoType(stdCType),
 								formatSizeIntegerValue(qualifierFormatsize),
 								paddingBooleanConvertion(qualifierPadding),
 								properties
 						);
 
-						tableSchema.addQualifier(familyName, std);
+						tableSchema.addQualifier(familyName.getBytes(), std);
 					}
 
 				}

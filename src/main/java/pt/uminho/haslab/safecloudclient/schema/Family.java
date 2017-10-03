@@ -4,6 +4,7 @@ import org.apache.commons.codec.digest.Crypt;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -15,29 +16,33 @@ import static pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties.
  */
 public class Family {
 
-	private String familyName;
+	private byte[] familyName;
 	private CryptoTechnique.CryptoType cryptoType;
 	private int formatSize;
+//	TODO: perhaps this attribute needs to be changed to a Map<byte[],Qualifier> in order to perform a faster search (O(1) vs O(N));
 	private List<Qualifier> qualifiers;
 	private Boolean columnPadding;
 
 	public Family() {
-		this.familyName = "";
+		this.familyName = null;
 		this.cryptoType = CryptoTechnique.CryptoType.PLT;
 		this.formatSize = 0;
 		this.qualifiers = new ArrayList<>();
 		this.columnPadding = null;
 	}
 
-	public Family(String familyName, CryptoTechnique.CryptoType cType, int formatSize, Boolean columnPadding) {
-        this.familyName = familyName;
-        this.cryptoType = cType;
+//	TEST-ME
+	public Family(byte[] familyName, CryptoTechnique.CryptoType cType, int formatSize, Boolean columnPadding) {
+//        this.familyName = familyName;
+        this.familyName = Arrays.copyOf(familyName, familyName.length);
+		this.cryptoType = cType;
         this.formatSize = formatSize;
         this.qualifiers = new ArrayList<>();
         this.columnPadding = columnPadding;
     }
 
-    public Family(String familyName, CryptoTechnique.CryptoType cType, int formatSize, Boolean columnPadding, List<Qualifier> quals) {
+//    FIXME: if I am not using this constructor, delete it
+    public Family(byte[] familyName, CryptoTechnique.CryptoType cType, int formatSize, Boolean columnPadding, List<Qualifier> quals) {
 		this.familyName = familyName;
 		this.cryptoType = cType;
 		this.formatSize = formatSize;
@@ -46,7 +51,7 @@ public class Family {
 	}
 
 
-	public String getFamilyName() {
+	public byte[] getFamilyName() {
 		return this.familyName;
 	}
 
@@ -62,16 +67,16 @@ public class Family {
 		return this.columnPadding;
 	}
 
+//	TEST-ME
 	public List<Qualifier> getQualifiers() {
 		List<Qualifier> qualifiersTemp = new ArrayList<Qualifier>();
-		for (Qualifier q : this.qualifiers)
-			qualifiersTemp.add(q);
+		qualifiersTemp.addAll(this.qualifiers);
 		return qualifiersTemp;
 	}
 
 
-	public void setFamilyName(String familyName) {
-		this.familyName = familyName;
+	public void setFamilyName(byte[] familyName) {
+		this.familyName = Arrays.copyOf(familyName, familyName.length);
 	}
 
 	public void setCryptoType(CryptoTechnique.CryptoType cType) {
@@ -86,11 +91,10 @@ public class Family {
 		this.columnPadding = columnPadding;
 	}
 
+//	TEST-ME
 	public void setQualifiers(List<Qualifier> qualifiers) {
 		this.qualifiers = new ArrayList<Qualifier>();
-		for (Qualifier q : qualifiers) {
-			this.qualifiers.add(q);
-		}
+		this.qualifiers.addAll(qualifiers);
 	}
 
 
@@ -102,7 +106,7 @@ public class Family {
 	 * @param cryptoType CryptoBox type
 	 * @param formatSize size of qualifier
 	 */
-	public void addQualifier(String qualifierName, CryptoTechnique.CryptoType cryptoType, int formatSize, Boolean columnPadding, Map<String,String> properties) {
+	public void addQualifier(byte[] qualifierName, CryptoTechnique.CryptoType cryptoType, int formatSize, Boolean columnPadding, Map<String,String> properties) {
 		CryptoTechnique.CryptoType cType;
 		int fSize = 0;
 		Boolean padding = false;
@@ -191,10 +195,10 @@ public class Family {
 	 * @param qualifier column qualifier
 	 * @return true if qualifier exist. Otherwise false.
 	 */
-	public boolean containsQualifier(String qualifier) {
+	public boolean containsQualifier(byte[] qualifier) {
 		boolean contains = false;
 		for (Qualifier q : this.qualifiers) {
-			if (q.getName().equals(qualifier)) {
+			if (Arrays.equals(q.getName(), qualifier)) {
 				contains = true;
 				break;
 			}
@@ -204,10 +208,10 @@ public class Family {
 
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("Family Name: ").append(familyName).append("\n");
-		sb.append("Family CryptoType: ").append(cryptoType).append("\n");
-		sb.append("Family FormatSize: ").append(formatSize).append("\n");
-		sb.append("Family Padding: ").append(columnPadding).append("\n");
+		sb.append("Family Name: ").append(Arrays.toString(this.familyName)).append("\n");
+		sb.append("Family CryptoType: ").append(this.cryptoType).append("\n");
+		sb.append("Family FormatSize: ").append(this.formatSize).append("\n");
+		sb.append("Family Padding: ").append(this.columnPadding).append("\n");
 		sb.append("Column Qualifiers: \n");
 		for (Qualifier q : this.qualifiers) {
 			sb.append(q.toString());

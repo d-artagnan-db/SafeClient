@@ -16,9 +16,7 @@ import pt.uminho.haslab.safecloudclient.schema.TableSchema;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by rgmacedo on 5/17/17.
@@ -45,15 +43,17 @@ public class HTableFeaturesUtils {
                 byte[] value = CellUtil.cloneValue(cell);
 
                 boolean verifyProperty = false;
-                String qualifierString = new String(qualifier, Charset.forName("UTF-8"));
-                String opeValues = "_STD";
+//                String qualifierString = new String(qualifier, Charset.forName("UTF-8"));
+                byte[] opeValues = "_STD".getBytes();
 
-                //				Verify if the actual qualifier corresponds to the supporting qualifier (<qualifier>_STD)
-                if (qualifierString.length() >= opeValues.length()) {
-                    verifyProperty = qualifierString.substring(qualifierString.length() - opeValues.length(), qualifierString.length()).equals(opeValues);
+//				Verify if the actual qualifier corresponds to the supporting qualifier (<qualifier>_STD)
+                if (qualifier.length >= opeValues.length) {
+//                    verifyProperty = qualifierString.substring(qualifierString.length() - opeValues.length, qualifierString.length()).equals(opeValues);
+//				    TEST-ME
+                    verifyProperty = Arrays.equals(Arrays.copyOfRange(qualifier, qualifier.length-opeValues.length, qualifier.length), opeValues);
                 }
                 if (!verifyProperty) {
-                    //					Encode the original value with the corresponding CryptoBox
+//					Encode the original value with the corresponding CryptoBox
                     destination.add(
                             family,
                             qualifier,
@@ -62,14 +62,18 @@ public class HTableFeaturesUtils {
                                     qualifier,
                                     value));
 
-                    //					If the actual qualifier CryptoType is equal to OPE, encode the same value with STD CryptoBox
-                    if (tableSchema.getCryptoTypeFromQualifier(new String(family, Charset.forName("UTF-8")), qualifierString) == CryptoTechnique.CryptoType.OPE) {
+//					If the actual qualifier CryptoType is equal to OPE, encode the same value with STD CryptoBox
+                    if (tableSchema.getCryptoTypeFromQualifier(family, qualifier) == CryptoTechnique.CryptoType.OPE) {
+//					    TEST-ME
+                        byte[] temp_std_qualifier = new byte[qualifier.length+opeValues.length];
+                        System.arraycopy(qualifier, 0, temp_std_qualifier, 0, qualifier.length);
+                        System.arraycopy(opeValues, 0, temp_std_qualifier, qualifier.length, opeValues.length);
                         destination.add(
                                 family,
-                                (qualifierString + opeValues).getBytes(Charset.forName("UTF-8")),
+                                temp_std_qualifier,
                                 cryptoProperties.encodeValue(
                                         family,
-                                        (qualifierString + opeValues).getBytes(Charset.forName("UTF-8")),
+                                        temp_std_qualifier,
                                         value)
                         );
                     }
@@ -81,23 +85,40 @@ public class HTableFeaturesUtils {
         }
     }
 
-    public List<String> deleteCells(CellScanner cs) {
-        List<String> cellsToDelete = new ArrayList<>();
+    public Map<byte[], List<byte[]>> deleteCells(CellScanner cs) {
+        Map<byte[], List<byte[]>> cellsToDelete = new HashMap<>();
+        byte[] opeValues = "_STD".getBytes();
         try {
             while (cs.advance()) {
                 Cell cell = cs.current();
                 byte[] family = CellUtil.cloneFamily(cell);
                 byte[] qualifier = CellUtil.cloneQualifier(cell);
 
+//                  TEST-ME
                 if (family.length != 0 && qualifier.length != 0) {
-                    if (this.cp.tableSchema.getCryptoTypeFromQualifier(new String(family), new String(qualifier)) == CryptoTechnique.CryptoType.OPE) {
-                        cellsToDelete.add(new String(family) + "#" + new String(qualifier));
-                        cellsToDelete.add(new String(family) + "#" + new String(qualifier) + "_STD");
-                    } else {
-                        cellsToDelete.add(new String(family) + "#" + new String(qualifier));
+                    if (!cellsToDelete.containsKey(family)) {
+                        cellsToDelete.put(family, new ArrayList<byte[]>());
                     }
+
+                    cellsToDelete.get(family).add(qualifier);
+
+                    if (this.cp.tableSchema.getCryptoTypeFromQualifier(family, qualifier) == CryptoTechnique.CryptoType.OPE) {
+//                        cellsToDelete.add(new String(family) + "#" + new String(qualifier));
+//                        cellsToDelete.add(new String(family) + "#" + new String(qualifier) + "_STD");
+
+                        byte[] temp_std_qualifier = new byte[qualifier.length + opeValues.length];
+                        System.arraycopy(qualifier, 0, temp_std_qualifier, 0, qualifier.length);
+                        System.arraycopy(opeValues, 0, temp_std_qualifier, qualifier.length, opeValues.length);
+
+                        cellsToDelete.get(family).add(temp_std_qualifier);
+                    }
+
                 } else if (family.length != 0) {
-                    cellsToDelete.add(new String(family));
+//                    cellsToDelete.add(family);
+                    if(!cellsToDelete.containsKey(family)) {
+                        cellsToDelete.put(family, new ArrayList<byte[]>());
+                    }
+
                 }
             }
         } catch (IOException e) {
@@ -106,16 +127,37 @@ public class HTableFeaturesUtils {
         return cellsToDelete;
     }
 
-    public void wrapDeletedCells(List<String> cellsToDelete, Delete delete) {
+//    public void wrapDeletedCells(List<byte[]> cellsToDelete, Delete delete) {
+//        if (cellsToDelete.size() != 0) {
+//            for (byte[] c : cellsToDelete) {
+//
+//                String[] familiesAndQualifiers = c.split("#");
+//                if (familiesAndQualifiers.length == 1) {
+//                    delete.deleteFamily(familiesAndQualifiers[0].getBytes());
+//                } else if (familiesAndQualifiers.length == 2) {
+//                    delete.deleteColumns(familiesAndQualifiers[0].getBytes(), familiesAndQualifiers[1].getBytes());
+//                } else {
+//                    throw new IllegalArgumentException("Family or qualifier cannot contains # character.");
+//                }
+//            }
+//        }
+//    }
+
+
+//    TEST-ME
+    public void wrapDeletedCells(Map<byte[], List<byte[]>> cellsToDelete, Delete delete) {
         if (cellsToDelete.size() != 0) {
-            for (String c : cellsToDelete) {
-                String[] familiesAndQualifiers = c.split("#");
-                if (familiesAndQualifiers.length == 1) {
-                    delete.deleteFamily(familiesAndQualifiers[0].getBytes());
-                } else if (familiesAndQualifiers.length == 2) {
-                    delete.deleteColumns(familiesAndQualifiers[0].getBytes(), familiesAndQualifiers[1].getBytes());
-                } else {
-                    throw new IllegalArgumentException("Family or qualifier cannot contains # character.");
+            for (Map.Entry<byte[], List<byte[]>> entry : cellsToDelete.entrySet()) {
+                byte[] family = entry.getKey();
+                List<byte[]> qualifiers = entry.getValue();
+
+                if(qualifiers.size() == 0) {
+                    delete.deleteFamily(family);
+                }
+                else {
+                    for(byte[] cq : qualifiers) {
+                        delete.deleteColumns(family, cq);
+                    }
                 }
             }
         }

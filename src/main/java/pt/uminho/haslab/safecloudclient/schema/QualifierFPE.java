@@ -13,7 +13,7 @@ import static pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties.
  * Created by rgmacedo on 5/4/17.
  */
 public class QualifierFPE extends Qualifier {
-    private String qualifierName;
+    private byte[] qualifierName;
     private CryptoTechnique.CryptoType cryptoType;
     private int formatSize;
     private Boolean padding;
@@ -24,7 +24,7 @@ public class QualifierFPE extends Qualifier {
     private String tweak;
 
     public QualifierFPE() {
-        this.qualifierName = "";
+        this.qualifierName = null;
         this.cryptoType = CryptoTechnique.CryptoType.FPE;
         this.formatSize = 0;
         this.padding = null;
@@ -35,7 +35,7 @@ public class QualifierFPE extends Qualifier {
         this.tweak = "";
     }
 
-    public QualifierFPE(String qualifierName, CryptoTechnique.CryptoType cType, int formatSize, Boolean padding, Map<String,String> prop, String instance, int radix, String tweak) {
+    public QualifierFPE(byte[] qualifierName, CryptoTechnique.CryptoType cType, int formatSize, Boolean padding, Map<String,String> prop, String instance, int radix, String tweak) {
         super(qualifierName,cType,formatSize,padding,prop);
         this.instance = instance;
         this.fpe_instance = whichFpeInstance(instance);

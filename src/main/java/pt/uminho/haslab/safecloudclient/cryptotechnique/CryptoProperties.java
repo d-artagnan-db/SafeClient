@@ -33,16 +33,16 @@ public class CryptoProperties {
 //	This object handles the Row-Keys protected with the OPE CryptoBox
 	public CryptoHandler opeHandler;
 //	Since the OPE CryptoBox need to be initialized with the plaintext size and ciphertext size, each value protected with OPE must have an individual CryptoHandler
-	public Map<String, Map<String, CryptoHandler>> opeValueHandler;
+	public Map<byte[], Map<byte[], CryptoHandler>> opeValueHandler;
 
 	public CryptoHandler fpeHandler;
-	public Map<String, Map<String, CryptoHandler>> fpeValueHandler;
+	public Map<byte[], Map<byte[], CryptoHandler>> fpeValueHandler;
 
 //	Cryptographic Keys stored in byte[] format
 	public byte[] stdKey;
 	public byte[] detKey;
 	public byte[] opeKey;
-	public Map<String, byte[]>fpeKey;
+	public Map<byte[], byte[]>fpeKey;
 
 	public CryptoProperties(TableSchema ts) {
 		this.tableSchema = ts;
@@ -61,7 +61,7 @@ public class CryptoProperties {
 			this.fpeHandler = new CryptoHandler(CryptoTechnique.CryptoType.FPE, this.fpeArguments(temp_key_fpe));
 			byte[] temp_key = temp_key_fpe.getSecurityParameters(this.fpeHandler.gen());
 			this.fpeKey = new HashMap<>();
-			this.fpeKey.put("KEY",temp_key);
+			this.fpeKey.put("KEY".getBytes(), temp_key);
 		}
 		this.fpeValueHandler = defineFamilyCryptoHandler(CryptoTechnique.CryptoType.FPE);
 
@@ -102,10 +102,10 @@ public class CryptoProperties {
 	 * defineFamilyCryptoHandler() method : creates a Map of CryptoHandler's for each qualifier protected with OPE CryptoBox.
 	 * @return a collection of families and the respective qualifiers CryptoHandler (Map<FamilyName, Map<QualifierName, CryptoHandler>>)
 	 */
-	public Map<String, Map<String, CryptoHandler>> defineFamilyCryptoHandler(CryptoTechnique.CryptoType cType) {
-		Map<String, Map<String, CryptoHandler>> familyCryptoHandler = new HashMap<>();
+	public Map<byte[], Map<byte[], CryptoHandler>> defineFamilyCryptoHandler(CryptoTechnique.CryptoType cType) {
+		Map<byte[], Map<byte[], CryptoHandler>> familyCryptoHandler = new HashMap<>();
 		for(Family f : this.tableSchema.getColumnFamilies()) {
-			Map<String, CryptoHandler> qualifierCryptoHandler = new HashMap<>();
+			Map<byte[], CryptoHandler> qualifierCryptoHandler = new HashMap<>();
 			for(Qualifier q : f.getQualifiers()) {
 				if(q.getCryptoType().equals(cType)) {
 					CryptoHandler ch;
@@ -136,7 +136,7 @@ public class CryptoProperties {
 	 * @param qualifier
 	 * @return the CryptoHandler that corresponds to the family and qualifier specified
 	 */
-	public CryptoHandler getCryptoHandler(CryptoTechnique.CryptoType ctype, String family, String qualifier) {
+	public CryptoHandler getCryptoHandler(CryptoTechnique.CryptoType ctype, byte[] family, byte[] qualifier) {
 		switch(ctype) {
 			case OPE :
 //				Check if Qualifier CryptoHandler is available. If not, return the CryptoHandler of the respective family
@@ -171,7 +171,7 @@ public class CryptoProperties {
 			case OPE :
 				return opeKey;
 			case FPE :
-				return fpeKey.get("KEY");
+				return fpeKey.get("KEY".getBytes());
 			default :
 				return null;
 		}
@@ -195,7 +195,7 @@ public class CryptoProperties {
 				break;
 			case FPE :
 				KeyFPE temp_key_fpe = (KeyFPE) this.tableSchema.getKey();
-				this.fpeKey.put("KEY",temp_key_fpe.getSecurityParameters(key));
+				this.fpeKey.put("KEY".getBytes(), temp_key_fpe.getSecurityParameters(key));
 				setQualifiersFPEKey(key);
 				break;
 			default :
@@ -226,7 +226,9 @@ public class CryptoProperties {
 			for (Qualifier q : f.getQualifiers()) {
 				if (q.getCryptoType().equals(CryptoTechnique.CryptoType.FPE)) {
 					QualifierFPE qFPE = (QualifierFPE) q;
-					this.fpeKey.put(f.getFamilyName() + ":" + qFPE.getName(), qFPE.getSecurityParameters(key));
+//					TEST-ME
+//					this.fpeKey.put(Arrays.toString(f.getFamilyName()) + ":" + Arrays.toString(qFPE.getName()), qFPE.getSecurityParameters(key));
+					this.fpeKey.put(concatStringBetweenByteArrays(f.getFamilyName(), qFPE.getName(), ":"), qFPE.getSecurityParameters(key));
 				}
 			}
 		}
@@ -257,7 +259,7 @@ public class CryptoProperties {
 			case OPE :
 				return this.opeHandler.encrypt(this.opeKey, row);
 			case FPE :
-				return this.fpeHandler.encrypt(this.fpeKey.get("KEY"), row);
+				return this.fpeHandler.encrypt(this.fpeKey.get("KEY".getBytes()), row);
 			default :
 				return null;
 		}
@@ -271,7 +273,7 @@ public class CryptoProperties {
 	 * @param qualifier qualifier column
 	 * @return the resulting ciphertext
 	 */
-	private byte[] encodeValueCryptoType(CryptoTechnique.CryptoType cType, byte[] content, String family, String qualifier) {
+	private byte[] encodeValueCryptoType(CryptoTechnique.CryptoType cType, byte[] content, byte[] family, byte[] qualifier) {
 		byte[] value;
 		if(this.tableSchema.getColumnPadding(family, qualifier)) {
 			value = Utils.addPadding(content, this.tableSchema.getFormatSizeFromQualifier(family, qualifier));
@@ -291,7 +293,9 @@ public class CryptoProperties {
 				return opeCh.encrypt(this.opeKey, value);
 			case FPE :
 				CryptoHandler fpeCH = getCryptoHandler(CryptoTechnique.CryptoType.FPE, family, qualifier);
-				return fpeCH.encrypt(this.fpeKey.get(family+":"+qualifier), value);
+//				return fpeCH.encrypt(this.fpeKey.get(family+":"+qualifier), value);
+//					TEST-ME
+				return fpeCH.encrypt(this.fpeKey.get(concatStringBetweenByteArrays(family,  qualifier, ":")), value);
 			default :
 				return null;
 		}
@@ -319,7 +323,7 @@ public class CryptoProperties {
 				row = this.opeHandler.decrypt(this.opeKey, ciphertext);
 				break;
 			case FPE :
-				row = this.fpeHandler.decrypt(this.fpeKey.get("KEY"), ciphertext);
+				row = this.fpeHandler.decrypt(this.fpeKey.get("KEY".getBytes()), ciphertext);
 				break;
 			default :
 				throw new NullPointerException("CryptoProperties:decodeRowCryptoType:Cryptographic Type not recognized.");
@@ -342,7 +346,7 @@ public class CryptoProperties {
 	 * @param qualifier qualifier column
 	 * @return the original value in byte[] format
 	 */
-	private byte[] decodeValueCryptoType(CryptoTechnique.CryptoType cType, byte[] ciphertext, String family, String qualifier) {
+	private byte[] decodeValueCryptoType(CryptoTechnique.CryptoType cType, byte[] ciphertext, byte[] family, byte[] qualifier) {
 		byte[] value;
 		switch (cType) {
 			case PLT :
@@ -360,7 +364,9 @@ public class CryptoProperties {
 				break;
 			case FPE :
 				CryptoHandler fpeCH = getCryptoHandler(CryptoTechnique.CryptoType.FPE, family, qualifier);
-				value = fpeCH.decrypt(this.fpeKey.get(family+":"+qualifier), ciphertext);
+//				value = fpeCH.decrypt(this.fpeKey.get(family+":"+qualifier), ciphertext);
+//					TEST-ME
+				value = fpeCH.decrypt(this.fpeKey.get(concatStringBetweenByteArrays(family,  qualifier, ":")), ciphertext);
 				break;
 			default :
 				throw new NullPointerException("CryptoProperties:decodeValueCryptoType:Cryptographic Type not recognized.");
@@ -403,10 +409,10 @@ public class CryptoProperties {
 	 * @return call the encodeValueCryptoType method. Return the encoded value in byte[] format
 	 */
 	public byte[] encodeValue(byte[] family, byte[] qualifier, byte[] value) {
-		String f = new String(family, Charset.forName("UTF-8"));
-		String q = new String(qualifier, Charset.forName("UTF-8"));
-		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getCryptoTypeFromQualifier(f, q);
-		return encodeValueCryptoType(cryptoType, value, f, q);
+//		String f = new String(family, Charset.forName("UTF-8"));
+//		String q = new String(qualifier, Charset.forName("UTF-8"));
+		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getCryptoTypeFromQualifier(family, qualifier);
+		return encodeValueCryptoType(cryptoType, value, family, qualifier);
 	}
 
 	/**
@@ -417,17 +423,18 @@ public class CryptoProperties {
 	 * @return call the decodeValueCryptoType method. Return the original value in byte[] format
 	 */
 	public byte[] decodeValue(byte[] family, byte[] qualifier, byte[] value) {
-		String f = new String(family, Charset.forName("UTF-8"));
-		String q = new String(qualifier, Charset.forName("UTF-8"));
+//		String f = new String(family, Charset.forName("UTF-8"));
+//		String q = new String(qualifier, Charset.forName("UTF-8"));
 
-		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getCryptoTypeFromQualifier(f, q);
+		CryptoTechnique.CryptoType cryptoType = this.tableSchema.getCryptoTypeFromQualifier(family, qualifier);
 //		If CryptoType equals to null, it means that either an error occurred in the Qualifier creation or the Qualifier
 // 		instance does not exists.
 		if(cryptoType == null) {
-			cryptoType = this.tableSchema.getFamily(new String(family)).getCryptoType();
+//			cryptoType = this.tableSchema.getFamily(new String(family)).getCryptoType();
+			cryptoType = this.tableSchema.getFamily(family).getCryptoType();
 		}
 
-		return decodeValueCryptoType(cryptoType, value, f, q);
+		return decodeValueCryptoType(cryptoType, value, family, qualifier);
 	}
 
 	/**
@@ -440,7 +447,8 @@ public class CryptoProperties {
 //		TODO remove me
 //		byte[] decodedRow = this.decodeRow(row);
 //		row = Utils.removePadding(row);
-		String opeValues = "_STD";
+//		String opeValues = "_STD";
+		byte[] opeValues = "_STD".getBytes();
 		List<Cell> cellList = new ArrayList<>();
 
 		while (res.advance()) {
@@ -452,18 +460,25 @@ public class CryptoProperties {
 			byte type = cell.getTypeByte();
 
 			Cell decCell;
-			String qualifier = new String(cq, Charset.forName("UTF-8"));
+//			String qualifier = new String(cq, Charset.forName("UTF-8"));
 
 //			Verify if the actual qualifier is equal to <qualifier>_STD
 			boolean verifyProperty = false;
-			if(qualifier.length() >= opeValues.length()) {
-				verifyProperty = qualifier.substring(qualifier.length()-opeValues.length(), qualifier.length()).equals(opeValues);
+			if(cq.length >= opeValues.length) {
+//				verifyProperty = qualifier.substring(qualifier.length()-opeValues.length(), qualifier.length()).equals(opeValues);
+//				TEST-ME
+				verifyProperty = Arrays.equals(Arrays.copyOfRange(cq, cq.length-opeValues.length, cq.length), opeValues);
 			}
 
 			if(!verifyProperty && cf.length > 0) {
 //				If the qualifier's CryptoType equal to OPE, decrypt the auxiliary qualifier (<qualifier_STD>)
-				if (tableSchema.getCryptoTypeFromQualifier(new String(cf, Charset.forName("UTF-8")), qualifier) == CryptoTechnique.CryptoType.OPE) {
-					Cell stdCell = res.getColumnLatestCell(cf, (qualifier + opeValues).getBytes(Charset.forName("UTF-8")));
+				if (tableSchema.getCryptoTypeFromQualifier(cf, cq) == CryptoTechnique.CryptoType.OPE) {
+//					TEST-ME
+					byte[] temp_std_qualifier = new byte[cq.length+opeValues.length];
+					System.arraycopy(cq, 0, temp_std_qualifier, 0, cq.length);
+					System.arraycopy(opeValues, 0, temp_std_qualifier, cq.length, opeValues.length);
+
+					Cell stdCell = res.getColumnLatestCell(cf, temp_std_qualifier);
 					decCell = CellUtil.createCell(
 							row,
 							cf,
@@ -512,7 +527,7 @@ public class CryptoProperties {
 	 * @return user friendly mapper, providing the column families and the respective column qualifiers in the Map<byte[], List<byte[]>> format.
 	 */
 	public Map<byte[], List<byte[]>> getHColumnDescriptors(Map<byte[], NavigableSet<byte[]>> familiesAndQualifiers) {
-		String opeValue = "_STD";
+		byte[] opeValue = "_STD".getBytes();
 		Map<byte[],List<byte[]>> result = new HashMap<>();
 		for(byte[] family : familiesAndQualifiers.keySet()) {
 			NavigableSet<byte[]> q = familiesAndQualifiers.get(family);
@@ -524,9 +539,14 @@ public class CryptoProperties {
 				while (i.hasNext()) {
 					byte[] qualifier = (byte[]) i.next();
 					qualifierList.add(qualifier);
-					if (tableSchema.getCryptoTypeFromQualifier(new String(family, Charset.forName("UTF-8")), new String(qualifier, Charset.forName("UTF-8"))) == CryptoTechnique.CryptoType.OPE) {
-						String q_std = new String(qualifier, Charset.forName("UTF-8"));
-						qualifierList.add((q_std + opeValue).getBytes(Charset.forName("UTF-8")));
+					if (tableSchema.getCryptoTypeFromQualifier(family, qualifier) == CryptoTechnique.CryptoType.OPE) {
+//						String q_std = new String(qualifier, Charset.forName("UTF-8"));
+//						qualifierList.add((q_std + opeValue).getBytes(Charset.forName("UTF-8")));
+//						TEST-ME
+						byte[] temp_std_qualifier = new byte[qualifier.length+opeValue.length];
+						System.arraycopy(qualifier, 0, temp_std_qualifier, 0, qualifier.length);
+						System.arraycopy(opeValue, 0, temp_std_qualifier, qualifier.length, opeValue.length);
+						qualifierList.add(temp_std_qualifier);
 					}
 
 				}
@@ -599,5 +619,21 @@ public class CryptoProperties {
 		}
 		return temp;
 	}
+
+
+//	TEST-ME - (this is temporary)
+	public byte[] concatStringBetweenByteArrays(byte[] b1, byte[] b2, String s) {
+		byte[] string = s.getBytes();
+		byte[] result = new byte[b1.length + string.length + b2.length];
+
+		System.arraycopy(b1, 0, result,0, b1.length);
+		System.arraycopy(string, 0, result, b1.length, string.length);
+		System.arraycopy(b2, 0, result, (b1.length+string.length), b2.length);
+
+		return result;
+	}
+
+
+
 
 }

@@ -5,10 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoTable;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties.whichFpeInstance;
@@ -201,7 +198,7 @@ public class TableSchema {
 	 * @param formatSize column family default size
 	 * @param qualifiers set of column qualifiers
 	 */
-	public void addFamily(String familyName, CryptoTechnique.CryptoType cType, int formatSize, Boolean padding, List<Qualifier> qualifiers) {
+	public void addFamily(byte[] familyName, CryptoTechnique.CryptoType cType, int formatSize, Boolean padding, List<Qualifier> qualifiers) {
 		Family family = new Family();
 		family.setFamilyName(familyName);
 
@@ -252,13 +249,15 @@ public class TableSchema {
 		this.columnFamilies.add(fam);
 	}
 
-	public Family getFamily(String familyName) {
+	public Family getFamily(byte[] familyName) {
 		Family wantedFamily = null;
 		boolean hasFamily = false;
+
 		Iterator<Family> family_iterator = this.columnFamilies.iterator();
 		while(family_iterator.hasNext() && !hasFamily) {
 			Family temp_family = family_iterator.next();
-			if(temp_family.getFamilyName().equals(familyName)) {
+
+			if(Arrays.equals(temp_family.getFamilyName(), familyName)) {
 				wantedFamily = temp_family;
 				hasFamily = true;
 			}
@@ -267,10 +266,10 @@ public class TableSchema {
 		return wantedFamily;
 	}
 
-	public boolean containsFamily(String family) {
+	public boolean containsFamily(byte[] family) {
 		boolean contains = false;
 		for(Family f : this.columnFamilies) {
-			if(f.getFamilyName().equals(family)) {
+			if(Arrays.equals(f.getFamilyName(), family)) {
 				contains = true;
 				break;
 			}
@@ -283,11 +282,11 @@ public class TableSchema {
 	 * @param familyName column family name
 	 * @param qualifier Qualifier object.
 	 */
-	public void addQualifier(String familyName, Qualifier qualifier) {
+	public void addQualifier(byte[] familyName, Qualifier qualifier) {
 		int index = 0;
 
 		for (Family f : this.columnFamilies) {
-			if (f.getFamilyName().equals(familyName)) {
+			if (Arrays.equals(f.getFamilyName(), familyName)) {
 				index = this.columnFamilies.indexOf(f);
 				break;
 			}
@@ -304,7 +303,7 @@ public class TableSchema {
 		}
 	}
 
-	public boolean containsQualifier(String family, String qualifier) {
+	public boolean containsQualifier(byte[] family, byte[] qualifier) {
 		boolean contains = false;
 		if (containsFamily(family)) {
 			if(getFamily(family).containsQualifier(qualifier)) {
@@ -322,12 +321,12 @@ public class TableSchema {
 	 * @return the respective CryptoType
 	 */
 //	TODO: profile
-	public CryptoTechnique.CryptoType getCryptoTypeFromQualifier(String family, String qualifier) {
+	public CryptoTechnique.CryptoType getCryptoTypeFromQualifier(byte[] family, byte[] qualifier) {
 		CryptoTechnique.CryptoType cType = null;
 		for (Family f : this.columnFamilies) {
-			if (f.getFamilyName().equals(family)) {
+			if (Arrays.equals(f.getFamilyName(), family)) {
 				for (Qualifier q : f.getQualifiers()) {
-					if (q.getName().equals(qualifier)) {
+					if (Arrays.equals(q.getName(), qualifier)) {
 						cType = q.getCryptoType();
 						break;
 					}
@@ -371,12 +370,12 @@ public class TableSchema {
 	 * @param qualifier column qualifier
 	 * @return the respective Generator in string format
 	 */
-	public String getGeneratorTypeFromQualifier(String family, String qualifier) {
+	public String getGeneratorTypeFromQualifier(byte[] family, byte[] qualifier) {
 		String gen = null;
 		for(Family f : this.columnFamilies) {
-			if (f.getFamilyName().equals(family)) {
+			if (Arrays.equals(f.getFamilyName(), family)) {
 				for(Qualifier q : f.getQualifiers()) {
-					if (q.getName().equals(qualifier)) {
+					if (Arrays.equals(q.getName(), qualifier)) {
 						gen = q.getProperties().get("GENERATOR");
 						break;
 					}
@@ -394,12 +393,12 @@ public class TableSchema {
 	 * @return the respective format size in Integer format
 	 */
 //	TODO: profile
-	public Integer getFormatSizeFromQualifier(String family, String qualifier) {
+	public Integer getFormatSizeFromQualifier(byte[] family, byte[] qualifier) {
 		int formatSize = 0;
 		for (Family f : this.columnFamilies) {
-			if (f.getFamilyName().equals(family)) {
+			if (Arrays.equals(f.getFamilyName(), family)) {
 				for (Qualifier q : f.getQualifiers()) {
-					if (q.getName().equals(qualifier)) {
+					if (Arrays.equals(q.getName(), qualifier)) {
 						formatSize = q.getFormatSize();
 						break;
 					}
@@ -419,13 +418,13 @@ public class TableSchema {
 	}
 
 //	TODO: profile
-	public Boolean getColumnPadding(String family, String qualifier) {
+	public Boolean getColumnPadding(byte[] family, byte[] qualifier) {
 		Boolean columnPadding = null;
 		for (Family f : this.columnFamilies) {
-			if (f.getFamilyName().equals(family)) {
+			if (Arrays.equals(f.getFamilyName(), family)) {
 				columnPadding = f.getColumnPadding();
 				for(Qualifier q : f.getQualifiers()) {
-					if(q.getName().equals(qualifier)) {
+					if(Arrays.equals(q.getName(), qualifier)) {
 						columnPadding = q.getPadding();
 						break;
 					}
