@@ -7,6 +7,8 @@ import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties;
 
+import java.nio.ByteBuffer;
+
 /**
  * Created by rgmacedo on 5/23/17.
  */
@@ -29,8 +31,8 @@ public class SecureSingleColumnValueFilter implements SecureFilterProperties {
                 if(singleFilter.getOperator() == CompareFilter.CompareOp.EQUAL) {
                     byte[] encryptedValue =
                             this.cryptoProperties.encodeValue(
-                                    singleFilter.getFamily(),
-                                    singleFilter.getQualifier(),
+                                    ByteBuffer.wrap(singleFilter.getFamily()),
+                                    ByteBuffer.wrap(singleFilter.getQualifier()),
                                     singleFilter.getComparator().getValue());
 
                     return new SingleColumnValueFilter(
@@ -46,8 +48,8 @@ public class SecureSingleColumnValueFilter implements SecureFilterProperties {
             case OPE:
                 byte[] encryptedValue =
                         this.cryptoProperties.encodeValue(
-                            singleFilter.getFamily(),
-                            singleFilter.getQualifier(),
+                            ByteBuffer.wrap(singleFilter.getFamily()),
+                            ByteBuffer.wrap(singleFilter.getQualifier()),
                             singleFilter.getComparator().getValue());
 
                 return new SingleColumnValueFilter(
@@ -90,6 +92,6 @@ public class SecureSingleColumnValueFilter implements SecureFilterProperties {
     @Override
     public CryptoTechnique.CryptoType getFilterCryptoType(Filter plaintextFilter) {
         SingleColumnValueFilter singleFilter = (SingleColumnValueFilter) plaintextFilter;
-        return this.cryptoProperties.tableSchema.getCryptoTypeFromQualifier(singleFilter.getFamily(), singleFilter.getQualifier());
+        return this.cryptoProperties.tableSchema.getCryptoTypeFromQualifier(ByteBuffer.wrap(singleFilter.getFamily()), ByteBuffer.wrap(singleFilter.getQualifier()));
     }
 }

@@ -2,6 +2,7 @@ package pt.uminho.haslab.safecloudclient.schema;
 
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,7 +14,7 @@ import static pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties.
  * Created by rgmacedo on 5/4/17.
  */
 public class QualifierFPE extends Qualifier {
-    private byte[] qualifierName;
+    private ByteBuffer qualifierName;
     private CryptoTechnique.CryptoType cryptoType;
     private int formatSize;
     private Boolean padding;
@@ -35,7 +36,7 @@ public class QualifierFPE extends Qualifier {
         this.tweak = "";
     }
 
-    public QualifierFPE(byte[] qualifierName, CryptoTechnique.CryptoType cType, int formatSize, Boolean padding, Map<String,String> prop, String instance, int radix, String tweak) {
+    public QualifierFPE(ByteBuffer qualifierName, CryptoTechnique.CryptoType cType, int formatSize, Boolean padding, Map<String,String> prop, String instance, int radix, String tweak) {
         super(qualifierName,cType,formatSize,padding,prop);
         this.instance = instance;
         this.fpe_instance = whichFpeInstance(instance);

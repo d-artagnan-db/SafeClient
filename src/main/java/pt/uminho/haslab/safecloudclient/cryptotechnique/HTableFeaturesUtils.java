@@ -15,6 +15,7 @@ import pt.uminho.haslab.safecloudclient.cryptotechnique.securefilterfactory.Secu
 import pt.uminho.haslab.safecloudclient.schema.TableSchema;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.*;
 
@@ -58,12 +59,12 @@ public class HTableFeaturesUtils {
                             family,
                             qualifier,
                             cryptoProperties.encodeValue(
-                                    family,
-                                    qualifier,
+                                    ByteBuffer.wrap(family),
+                                    ByteBuffer.wrap(qualifier),
                                     value));
 
 //					If the actual qualifier CryptoType is equal to OPE, encode the same value with STD CryptoBox
-                    if (tableSchema.getCryptoTypeFromQualifier(family, qualifier) == CryptoTechnique.CryptoType.OPE) {
+                    if (tableSchema.getCryptoTypeFromQualifier(ByteBuffer.wrap(family), ByteBuffer.wrap(qualifier)) == CryptoTechnique.CryptoType.OPE) {
 //					    TEST-ME
                         byte[] temp_std_qualifier = new byte[qualifier.length+opeValues.length];
                         System.arraycopy(qualifier, 0, temp_std_qualifier, 0, qualifier.length);
@@ -72,8 +73,8 @@ public class HTableFeaturesUtils {
                                 family,
                                 temp_std_qualifier,
                                 cryptoProperties.encodeValue(
-                                        family,
-                                        temp_std_qualifier,
+                                        ByteBuffer.wrap(family),
+                                        ByteBuffer.wrap(temp_std_qualifier),
                                         value)
                         );
                     }
@@ -85,19 +86,19 @@ public class HTableFeaturesUtils {
         }
     }
 
-    public Map<byte[], List<byte[]>> deleteCells(CellScanner cs) {
-        Map<byte[], List<byte[]>> cellsToDelete = new HashMap<>();
+    public Map<ByteBuffer, List<ByteBuffer>> deleteCells(CellScanner cs) {
+        Map<ByteBuffer, List<ByteBuffer>> cellsToDelete = new HashMap<>();
         byte[] opeValues = "_STD".getBytes();
         try {
             while (cs.advance()) {
                 Cell cell = cs.current();
-                byte[] family = CellUtil.cloneFamily(cell);
-                byte[] qualifier = CellUtil.cloneQualifier(cell);
+                ByteBuffer family = ByteBuffer.wrap(CellUtil.cloneFamily(cell));
+                ByteBuffer qualifier = ByteBuffer.wrap(CellUtil.cloneQualifier(cell));
 
 //                  TEST-ME
-                if (family.length != 0 && qualifier.length != 0) {
+                if (family.array().length != 0 && qualifier.array().length != 0) {
                     if (!cellsToDelete.containsKey(family)) {
-                        cellsToDelete.put(family, new ArrayList<byte[]>());
+                        cellsToDelete.put(family, new ArrayList<ByteBuffer>());
                     }
 
                     cellsToDelete.get(family).add(qualifier);
@@ -106,17 +107,21 @@ public class HTableFeaturesUtils {
 //                        cellsToDelete.add(new String(family) + "#" + new String(qualifier));
 //                        cellsToDelete.add(new String(family) + "#" + new String(qualifier) + "_STD");
 
-                        byte[] temp_std_qualifier = new byte[qualifier.length + opeValues.length];
-                        System.arraycopy(qualifier, 0, temp_std_qualifier, 0, qualifier.length);
-                        System.arraycopy(opeValues, 0, temp_std_qualifier, qualifier.length, opeValues.length);
+//                        byte[] temp_std_qualifier = new byte[qualifier.length + opeValues.length];
+//                        System.arraycopy(qualifier, 0, temp_std_qualifier, 0, qualifier.length);
+//                        System.arraycopy(opeValues, 0, temp_std_qualifier, qualifier.length, opeValues.length);
+
+                        ByteBuffer ope_values_buffer = ByteBuffer.wrap(opeValues);
+                        ByteBuffer temp_std_qualifier = ByteBuffer.allocate(qualifier.capacity()+ope_values_buffer.capacity()).put(qualifier).put(ope_values_buffer);
+
 
                         cellsToDelete.get(family).add(temp_std_qualifier);
                     }
 
-                } else if (family.length != 0) {
+                } else if (family.array().length != 0) {
 //                    cellsToDelete.add(family);
                     if(!cellsToDelete.containsKey(family)) {
-                        cellsToDelete.put(family, new ArrayList<byte[]>());
+                        cellsToDelete.put(family, new ArrayList<ByteBuffer>());
                     }
 
                 }
@@ -145,18 +150,18 @@ public class HTableFeaturesUtils {
 
 
 //    TEST-ME
-    public void wrapDeletedCells(Map<byte[], List<byte[]>> cellsToDelete, Delete delete) {
+    public void wrapDeletedCells(Map<ByteBuffer, List<ByteBuffer>> cellsToDelete, Delete delete) {
         if (cellsToDelete.size() != 0) {
-            for (Map.Entry<byte[], List<byte[]>> entry : cellsToDelete.entrySet()) {
-                byte[] family = entry.getKey();
-                List<byte[]> qualifiers = entry.getValue();
+            for (Map.Entry<ByteBuffer, List<ByteBuffer>> entry : cellsToDelete.entrySet()) {
+                ByteBuffer family = entry.getKey();
+                List<ByteBuffer> qualifiers = entry.getValue();
 
                 if(qualifiers.size() == 0) {
-                    delete.deleteFamily(family);
+                    delete.deleteFamily(family.array());
                 }
                 else {
-                    for(byte[] cq : qualifiers) {
-                        delete.deleteColumns(family, cq);
+                    for(ByteBuffer cq : qualifiers) {
+                        delete.deleteColumns(family.array(), cq.array());
                     }
                 }
             }
@@ -213,10 +218,10 @@ public class HTableFeaturesUtils {
         if (s.hasFilter() && (s.getFilter() instanceof FilterList)) {
             Filter encryptedFilter = secureFilterConverter.buildEncryptedFilter(s.getFilter(), this.cp.tableSchema.getKey().getCryptoType());
             encScan = new Scan();
-            Map<byte[], List<byte[]>> cols = cp.getHColumnDescriptors(s.getFamilyMap());
-            for (Map.Entry<byte[], List<byte[]>> entry : cols.entrySet()) {
+            Map<ByteBuffer, List<byte[]>> cols = cp.getHColumnDescriptors(s.getFamilyMap());
+            for (Map.Entry<ByteBuffer, List<byte[]>> entry : cols.entrySet()) {
                 for (byte[] qualifier : entry.getValue()) {
-                    encScan.addColumn(entry.getKey(), qualifier);
+                    encScan.addColumn(entry.getKey().array(), qualifier);
                 }
             }
 
@@ -240,7 +245,7 @@ public class HTableFeaturesUtils {
 //		get the CryptoType of the Scan/Filter operation
             CryptoTechnique.CryptoType scanCryptoType = isScanOrFilter(s);
 //		Map the database column families and qualifiers into a collection
-            Map<byte[], List<byte[]>> hColumnDescriptors = cp.getHColumnDescriptors(s.getFamilyMap());
+            Map<ByteBuffer, List<byte[]>> hColumnDescriptors = cp.getHColumnDescriptors(s.getFamilyMap());
 
             switch (scanCryptoType) {
 //			In case of standard or deterministic encryption, since no order is preserved a full table scan must be performed.
@@ -250,9 +255,9 @@ public class HTableFeaturesUtils {
                 case FPE:
                     encScan = new Scan();
 //				Add only the specified qualifiers in the original scan (s), instead of retrieve all (unnecessary) values).
-                    for (Map.Entry<byte[], List<byte[]>> cols : hColumnDescriptors.entrySet()) {
+                    for (Map.Entry<ByteBuffer, List<byte[]>> cols : hColumnDescriptors.entrySet()) {
                         for (byte[] qualifier : cols.getValue()) {
-                            encScan.addColumn(cols.getKey(), qualifier);
+                            encScan.addColumn(cols.getKey().array(), qualifier);
                         }
                     }
 //				Since the scanCryptoType defines the CryptoType of the scan or filter operaion, in case of SingleColumnValueFilter,
@@ -276,9 +281,9 @@ public class HTableFeaturesUtils {
                 case OPE:
                     encScan = new Scan();
 //				Add only the specified qualifiers in the original scan (s), instead of retrieve all (unnecessary) values).
-                    for (Map.Entry<byte[], List<byte[]>> cols : hColumnDescriptors.entrySet()) {
+                    for (Map.Entry<ByteBuffer, List<byte[]>> cols : hColumnDescriptors.entrySet()) {
                         for (byte[] qualifier : cols.getValue()) {
-                            encScan.addColumn(cols.getKey(), qualifier);
+                            encScan.addColumn(cols.getKey().array(), qualifier);
                         }
                     }
 //				Since the scanCryptoType defines the CryptoType of the scan or filter operaion, in case of SingleColumnValueFilter,

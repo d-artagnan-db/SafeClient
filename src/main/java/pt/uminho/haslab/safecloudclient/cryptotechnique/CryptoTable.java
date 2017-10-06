@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -187,7 +188,7 @@ public class CryptoTable extends HTable {
 			if(columnDescriptors != null) {
 				for(HColumnDescriptor hcol :columnDescriptors) {
 					Family tempFamily = new Family(
-							hcol.getName(),
+							ByteBuffer.wrap(hcol.getName()),
 							(CryptoTechnique.CryptoType) databaseDefaultProperties.get("defaultPropertiesColumns"),
 							(Integer) databaseDefaultProperties.get("defaultPropertiesColFormatSize"),
 							(Boolean) databaseDefaultProperties.get("defaultPropertiesColumnPadding"));
@@ -269,15 +270,15 @@ public class CryptoTable extends HTable {
 				throw new NullPointerException("Row-Key cannot be null.");
 			}
 
-			Map<byte[],List<byte[]>> columns = this.cryptoProperties.getHColumnDescriptors(get.getFamilyMap());
+			Map<ByteBuffer,List<byte[]>> columns = this.cryptoProperties.getHColumnDescriptors(get.getFamilyMap());
 
 //			Verify the Row-Key CryptoBox
 			switch (this.cryptoProperties.tableSchema.getKey().getCryptoType()) {
 				case STD :
 					Scan stdGetScan = new Scan();
-					for(byte[] f : columns.keySet()) {
+					for(ByteBuffer f : columns.keySet()) {
 						for(byte[] q : columns.get(f)){
-							stdGetScan.addColumn(f, q);
+							stdGetScan.addColumn(f.array(), q);
 						}
 					}
 
@@ -296,9 +297,9 @@ public class CryptoTable extends HTable {
 				case FPE :
 					Get encGet = new Get(this.cryptoProperties.encodeRow(row));
 
-					for(byte[] f : columns.keySet()) {
+					for(ByteBuffer f : columns.keySet()) {
 						for(byte[] q : columns.get(f)){
-							encGet.addColumn(f, q);
+							encGet.addColumn(f.array(), q);
 						}
 					}
 
@@ -332,7 +333,7 @@ public class CryptoTable extends HTable {
 				throw new NullPointerException("Row-Key cannot be null.");
 			}
 
-			Map<byte[],List<byte[]>> columns = this.cryptoProperties.getHColumnDescriptors(g.getFamilyMap());
+			Map<ByteBuffer,List<byte[]>> columns = this.cryptoProperties.getHColumnDescriptors(g.getFamilyMap());
 
 
 //			First phase: Encrypt all get objects
@@ -343,18 +344,18 @@ public class CryptoTable extends HTable {
 				case FPE :
 					Get encGet = new Get(this.cryptoProperties.encodeRow(row));
 
-					for(byte[] f : columns.keySet()) {
+					for(ByteBuffer f : columns.keySet()) {
 						for(byte[] q : columns.get(f)){
-							encGet.addColumn(f, q);
+							encGet.addColumn(f.array(), q);
 						}
 					}
 
 					encryptedGets.add(encGet);
 					break;
 				case STD :
-					for(byte[] f : columns.keySet()) {
+					for(ByteBuffer f : columns.keySet()) {
 						for(byte[] q : columns.get(f)){
-							g.addColumn(f, q);
+							g.addColumn(f.array(), q);
 						}
 					}
 
@@ -421,7 +422,7 @@ public class CryptoTable extends HTable {
 				throw new NullPointerException("Row-Key cannot be null.");
 			}
 
-			Map<byte[], List<byte[]>> cellsToDelete = this.htableUtils.deleteCells(delete.cellScanner());
+			Map<ByteBuffer, List<ByteBuffer>> cellsToDelete = this.htableUtils.deleteCells(delete.cellScanner());
 
 //			Verify the Row-Key CryptoBox
 			switch (this.cryptoProperties.tableSchema.getKey().getCryptoType()) {
@@ -463,7 +464,7 @@ public class CryptoTable extends HTable {
 					throw new NullPointerException("Row-Key cannot be null.");
 				}
 
-				Map<byte[], List<byte[]>> cellsToDelete = this.htableUtils.deleteCells(del.cellScanner());
+				Map<ByteBuffer, List<ByteBuffer>> cellsToDelete = this.htableUtils.deleteCells(del.cellScanner());
 
 //				Verify the Row-Key CryptoBox
 				switch (this.cryptoProperties.tableSchema.getKey().getCryptoType()) {
@@ -552,6 +553,9 @@ public class CryptoTable extends HTable {
 				throw new NullPointerException("Value cannot be null.");
 			}
 
+			ByteBuffer familyBB = ByteBuffer.wrap(family);
+			ByteBuffer qualifierBB = ByteBuffer.wrap(qualifier);
+
 			switch (this.tableSchema.getKey().getCryptoType()) {
 				case STD:
 //						step 1 : get all stored values
@@ -563,7 +567,7 @@ public class CryptoTable extends HTable {
 //								Get the stored value for the specified family and qualifier and check if it's equal to a given value
 							byte[] encryptedValue = r.getValue(family, qualifier);
 							if(encryptedValue != null && encryptedValue.length > 0) {
-								byte[] resultValue = this.cryptoProperties.decodeValue(family, qualifier, encryptedValue);
+								byte[] resultValue = this.cryptoProperties.decodeValue(familyBB, qualifierBB, encryptedValue);
 								if(Arrays.equals(value, resultValue)) {
 //										If the values match, build and encrypted put
 									Put encryptedPut;
@@ -591,7 +595,7 @@ public class CryptoTable extends HTable {
 //						step 1 : encrypt row and value
 					byte[] encryptedRow = this.cryptoProperties.encodeRow(row);
 					byte[] encryptedValue;
-					if(cryptoProperties.tableSchema.getCryptoTypeFromQualifier(family, qualifier) == CryptoTechnique.CryptoType.STD) {
+					if(cryptoProperties.tableSchema.getCryptoTypeFromQualifier(familyBB, qualifierBB) == CryptoTechnique.CryptoType.STD) {
 						Result encryptedResult = super.get(new Get(encryptedRow));
 						Result temp_result = this.cryptoProperties.decodeResult(row, encryptedResult);
 						byte[] temp_val = temp_result.getValue(family, qualifier);
@@ -605,7 +609,7 @@ public class CryptoTable extends HTable {
 						}
 					}
 					else {
-						encryptedValue = this.cryptoProperties.encodeValue(family, qualifier, value);
+						encryptedValue = this.cryptoProperties.encodeValue(familyBB, qualifierBB, value);
 					}
 
 //						step 2 : encrypt put
@@ -642,6 +646,10 @@ public class CryptoTable extends HTable {
 			if(qualifier == null) {
 				throw new NullPointerException("Column qualifier cannot be null.");
 			}
+
+			ByteBuffer familyBB = ByteBuffer.wrap(family);
+			ByteBuffer qualifierBB = ByteBuffer.wrap(qualifier);
+
 //			String temp_family = new String(family);
 //			String temp_qualifier = new String(qualifier);
 
@@ -655,7 +663,7 @@ public class CryptoTable extends HTable {
 //				}
 //			}
 
-			switch (this.tableSchema.getCryptoTypeFromQualifier(family, qualifier)) {
+			switch (this.tableSchema.getCryptoTypeFromQualifier(familyBB, qualifierBB)) {
 				case PLT:
 					if(this.cryptoProperties.tableSchema.getKey().getCryptoType() != CryptoTechnique.CryptoType.STD) {
 						operationValue = super.incrementColumnValue(this.cryptoProperties.encodeRow(row), family, qualifier, amount);

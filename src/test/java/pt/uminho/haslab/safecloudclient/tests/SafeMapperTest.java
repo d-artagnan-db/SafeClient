@@ -4,6 +4,8 @@ import org.junit.Test;
 import pt.uminho.haslab.safecloudclient.schema.SchemaParser;
 import pt.uminho.haslab.safecloudclient.schema.TableSchema;
 
+import java.nio.ByteBuffer;
+
 public class SafeMapperTest {
 
     SchemaParser parser;
@@ -30,7 +32,7 @@ public class SafeMapperTest {
 
         TableSchema ts = parser.getTableSchema(tablename);
         System.out.println("Key Padding: "+ts.getKeyPadding());
-        System.out.println("Column Padding: "+ts.getColumnPadding(family.getBytes(), qualifier.getBytes()));
+        System.out.println("Column Padding: "+ts.getColumnPadding(ByteBuffer.wrap(family.getBytes()), ByteBuffer.wrap(qualifier.getBytes())));
 
     }
 

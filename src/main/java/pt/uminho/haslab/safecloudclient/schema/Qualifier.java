@@ -2,6 +2,7 @@ package pt.uminho.haslab.safecloudclient.schema;
 
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -12,7 +13,7 @@ import java.util.Map;
  */
 public class Qualifier {
 
-	private byte[] qualifierName;
+	private ByteBuffer qualifierName;
 	private CryptoTechnique.CryptoType cryptoType;
 	private int formatSize;
 	private Boolean padding;
@@ -26,16 +27,16 @@ public class Qualifier {
 		this.properties = new HashMap<>();
 	}
 
-	public Qualifier(byte[] name, CryptoTechnique.CryptoType cType, int format, Boolean padding, Map<String, String> properties) {
+	public Qualifier(ByteBuffer name, CryptoTechnique.CryptoType cType, int format, Boolean padding, Map<String, String> properties) {
 //		this.qualifierName = name;
-		this.qualifierName = Arrays.copyOf(name, name.length);
+		this.qualifierName = name.duplicate();
 		this.cryptoType = cType;
 		this.formatSize = format;
 		this.padding = padding;
 		this.properties = properties;
 	}
 
-	public byte[] getName() {
+	public ByteBuffer getName() {
 		return this.qualifierName;
 	}
 
@@ -51,8 +52,9 @@ public class Qualifier {
 		return this.padding;
 	}
 
-	public void setQualifierName(byte[] name) {
-		this.qualifierName = Arrays.copyOf(name, name.length);
+	public void setQualifierName(ByteBuffer name) {
+		this.qualifierName.clear();
+		this.qualifierName = name.duplicate();
 	}
 
 	public void setCryptoType(CryptoTechnique.CryptoType cryptoType) {
@@ -84,7 +86,7 @@ public class Qualifier {
 
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("Qualifier Name: ").append(Arrays.toString(qualifierName)).append("\n");
+		sb.append("Qualifier Name: ").append(new String(qualifierName.array())).append("\n");
 		sb.append("Qualifier CryptoType: ").append(cryptoType).append("\n");
 		sb.append("Qualifier Format Size: ").append(formatSize).append("\n");
 		sb.append("Qualifier Padding: ").append(padding).append("\n");

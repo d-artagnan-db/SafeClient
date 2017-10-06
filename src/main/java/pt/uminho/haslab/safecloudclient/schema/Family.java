@@ -3,6 +3,7 @@ package pt.uminho.haslab.safecloudclient.schema;
 import org.apache.commons.codec.digest.Crypt;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -16,7 +17,7 @@ import static pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties.
  */
 public class Family {
 
-	private byte[] familyName;
+	private ByteBuffer familyName;
 	private CryptoTechnique.CryptoType cryptoType;
 	private int formatSize;
 //	TODO: perhaps this attribute needs to be changed to a Map<byte[],Qualifier> in order to perform a faster search (O(1) vs O(N));
@@ -32,9 +33,9 @@ public class Family {
 	}
 
 //	TEST-ME
-	public Family(byte[] familyName, CryptoTechnique.CryptoType cType, int formatSize, Boolean columnPadding) {
+	public Family(ByteBuffer familyName, CryptoTechnique.CryptoType cType, int formatSize, Boolean columnPadding) {
 //        this.familyName = familyName;
-        this.familyName = Arrays.copyOf(familyName, familyName.length);
+        this.familyName = familyName.duplicate();
 		this.cryptoType = cType;
         this.formatSize = formatSize;
         this.qualifiers = new ArrayList<>();
@@ -42,8 +43,8 @@ public class Family {
     }
 
 //    FIXME: if I am not using this constructor, delete it
-    public Family(byte[] familyName, CryptoTechnique.CryptoType cType, int formatSize, Boolean columnPadding, List<Qualifier> quals) {
-		this.familyName = familyName;
+    public Family(ByteBuffer familyName, CryptoTechnique.CryptoType cType, int formatSize, Boolean columnPadding, List<Qualifier> quals) {
+		this.familyName = familyName.duplicate();
 		this.cryptoType = cType;
 		this.formatSize = formatSize;
 		this.columnPadding = columnPadding;
@@ -51,7 +52,7 @@ public class Family {
 	}
 
 
-	public byte[] getFamilyName() {
+	public ByteBuffer getFamilyName() {
 		return this.familyName;
 	}
 
@@ -75,8 +76,9 @@ public class Family {
 	}
 
 
-	public void setFamilyName(byte[] familyName) {
-		this.familyName = Arrays.copyOf(familyName, familyName.length);
+	public void setFamilyName(ByteBuffer familyName) {
+		this.familyName.clear();
+		this.familyName = familyName.duplicate();
 	}
 
 	public void setCryptoType(CryptoTechnique.CryptoType cType) {
@@ -93,7 +95,7 @@ public class Family {
 
 //	TEST-ME
 	public void setQualifiers(List<Qualifier> qualifiers) {
-		this.qualifiers = new ArrayList<Qualifier>();
+		this.qualifiers = new ArrayList<>();
 		this.qualifiers.addAll(qualifiers);
 	}
 
@@ -106,7 +108,7 @@ public class Family {
 	 * @param cryptoType CryptoBox type
 	 * @param formatSize size of qualifier
 	 */
-	public void addQualifier(byte[] qualifierName, CryptoTechnique.CryptoType cryptoType, int formatSize, Boolean columnPadding, Map<String,String> properties) {
+	public void addQualifier(ByteBuffer qualifierName, CryptoTechnique.CryptoType cryptoType, int formatSize, Boolean columnPadding, Map<String,String> properties) {
 		CryptoTechnique.CryptoType cType;
 		int fSize = 0;
 		Boolean padding = false;
@@ -195,10 +197,10 @@ public class Family {
 	 * @param qualifier column qualifier
 	 * @return true if qualifier exist. Otherwise false.
 	 */
-	public boolean containsQualifier(byte[] qualifier) {
+	public boolean containsQualifier(ByteBuffer qualifier) {
 		boolean contains = false;
 		for (Qualifier q : this.qualifiers) {
-			if (Arrays.equals(q.getName(), qualifier)) {
+			if (q.getName().compareTo(qualifier) == 0) {
 				contains = true;
 				break;
 			}
@@ -208,7 +210,7 @@ public class Family {
 
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("Family Name: ").append(Arrays.toString(this.familyName)).append("\n");
+		sb.append("Family Name: ").append(this.familyName.toString()).append("\n");
 		sb.append("Family CryptoType: ").append(this.cryptoType).append("\n");
 		sb.append("Family FormatSize: ").append(this.formatSize).append("\n");
 		sb.append("Family Padding: ").append(this.columnPadding).append("\n");

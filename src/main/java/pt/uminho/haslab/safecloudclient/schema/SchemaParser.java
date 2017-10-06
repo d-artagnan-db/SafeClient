@@ -10,6 +10,7 @@ import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoTable;
 
 import java.io.File;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -310,7 +311,7 @@ public class SchemaParser {
 
 
 				Family f = new Family(
-						familyName.getBytes(),
+						ByteBuffer.wrap(familyName.getBytes()),
 						switchCryptoType(familyCryptoTechnique),
 						formatSizeIntegerValue(familyFormatSize),
 						paddingBooleanConvertion(familyPadding));
@@ -354,7 +355,7 @@ public class SchemaParser {
 					Qualifier q;
 					if (!cryptotechniqueQualifier.equals("FPE")) {
 						q = new Qualifier(
-								qualifierName.getBytes(),
+								ByteBuffer.wrap(qualifierName.getBytes()),
 								switchCryptoType(cryptotechniqueQualifier),
 								formatSizeIntegerValue(qualifierFormatsize),
 								paddingBooleanConvertion(qualifierPadding),
@@ -362,7 +363,7 @@ public class SchemaParser {
 
 					} else {
 						q = new QualifierFPE(
-								qualifierName.getBytes(),
+								ByteBuffer.wrap(qualifierName.getBytes()),
 								switchCryptoType(cryptotechniqueQualifier),
 								formatSizeIntegerValue(qualifierFormatsize),
 								paddingBooleanConvertion(qualifierPadding),
@@ -373,21 +374,21 @@ public class SchemaParser {
 						);
 					}
 
-					tableSchema.addQualifier(familyName.getBytes(), q);
+					tableSchema.addQualifier(ByteBuffer.wrap(familyName.getBytes()), q);
 
 					if (cryptotechniqueQualifier.equals("OPE")) {
 						String stdQualifierName = qualifierName + "_STD";
 						String stdCType = "STD";
 
 						Qualifier std = new Qualifier(
-								stdQualifierName.getBytes(),
+								ByteBuffer.wrap(stdQualifierName.getBytes()),
 								switchCryptoType(stdCType),
 								formatSizeIntegerValue(qualifierFormatsize),
 								paddingBooleanConvertion(qualifierPadding),
 								properties
 						);
 
-						tableSchema.addQualifier(familyName.getBytes(), std);
+						tableSchema.addQualifier(ByteBuffer.wrap(familyName.getBytes()), std);
 					}
 
 				}

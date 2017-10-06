@@ -86,7 +86,7 @@ public abstract class SimpleHBaseTest {
 			TableName tbname = TableName.valueOf(ts.getTablename());
 			HTableDescriptor table = new HTableDescriptor(tbname);
 			for (Family f : ts.getColumnFamilies()) {
-				HColumnDescriptor family = new HColumnDescriptor(f.getFamilyName());
+				HColumnDescriptor family = new HColumnDescriptor(f.getFamilyName().array());
 				table.addFamily(family);
 			}
 			client.createTestTable(table);
