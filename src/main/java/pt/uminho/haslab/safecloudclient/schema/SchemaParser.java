@@ -10,10 +10,7 @@ import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoTable;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 /**
  * SchemaParser class.
@@ -30,6 +27,8 @@ public class SchemaParser {
 	private int defaultPropertiesKeyFormatSize;
 	private int defaultPropertiesColFormatSize;
 	private boolean hasDefaultDatabaseProperties;
+
+	private Boolean defaultEncryptionMode;
 
 
 	public SchemaParser() {
@@ -57,6 +56,7 @@ public class SchemaParser {
 		properties.put("defaultPropertiesColumnPadding", this.defaultPropertiesColumnPadding);
 		properties.put("defaultPropertiesKeyFormatSize", this.defaultPropertiesKeyFormatSize);
 		properties.put("defaultPropertiesColFormatSize", this.defaultPropertiesColFormatSize);
+		properties.put("defaultPropertiesEncryptionMode", this.defaultEncryptionMode);
 
 		return properties;
 	}
@@ -99,6 +99,7 @@ public class SchemaParser {
 			String colPadding = rootElement.elementText("colpadding");
 			String keySize = rootElement.elementText("keyformatsize");
 			String colSize = rootElement.elementText("colformatsize");
+			String encryptionMode = rootElement.elementText("encryptionmode");
 
 			if (key == null || key.isEmpty()) {
 				throw new NullPointerException("CryptoWorker:SchemaParser:parseDatabaseDefaultProperties:Default Row-Key Cryptographic Type cannot be null nor empty.");
@@ -118,6 +119,9 @@ public class SchemaParser {
 			if (colSize == null || colSize.isEmpty()) {
 				throw new NullPointerException("CryptoWorker:SchemaParser:parseDatabaseDefaultProperties:Default columns format size cannot be null nor empty.");
 			}
+			if (encryptionMode == null || encryptionMode.isEmpty()) {
+				throw new NullPointerException("CryptoWorker:SchemaParser:parseDatabaseDefaultProperties:Default encryption mode cannot be null nor empty.");
+			}
 
 			this.defaultPropertiesKey = switchCryptoType(key);
 			this.defaultPropertiesColumns = switchCryptoType(cols);
@@ -126,6 +130,7 @@ public class SchemaParser {
 			this.defaultPropertiesKeyFormatSize = formatSizeIntegerValue(keySize);
 			this.defaultPropertiesColFormatSize = formatSizeIntegerValue(colSize);
 			this.hasDefaultDatabaseProperties = true;
+			this.defaultEncryptionMode = modeConversion(encryptionMode);
 		}
 		else {
 			throw new NullPointerException("SchemaParser:parseDatabaseDefaultProperties:Default element cannot be null.");
@@ -172,6 +177,7 @@ public class SchemaParser {
 			String colformatsize = defaultElement.elementText("colformatsize");
 			String keypadding = defaultElement.elementText("keypadding");
 			String colpadding = defaultElement.elementText("colpadding");
+			String encryptionMode = defaultElement.elementText("encryptionmode");
 
 			if (key == null || key.isEmpty()) {
 				tableSchema.setDefaultKeyCryptoType(this.defaultPropertiesKey);
@@ -208,6 +214,12 @@ public class SchemaParser {
 			} else {
 				tableSchema.setDefaultColumnPadding(paddingBooleanConvertion(colpadding));
 			}
+
+			if (encryptionMode == null || encryptionMode.isEmpty()) {
+				tableSchema.setEncryptionMode(this.defaultEncryptionMode);
+			} else {
+				tableSchema.setEncryptionMode(modeConversion(encryptionMode));
+			}
 		}
 		else if(this.hasDefaultDatabaseProperties) {
 			tableSchema.setDefaultKeyCryptoType(this.defaultPropertiesKey);
@@ -216,6 +228,7 @@ public class SchemaParser {
 			tableSchema.setDefaultColumnFormatSize(this.defaultPropertiesColFormatSize);
 			tableSchema.setDefaultKeyPadding(this.defaultPropertiesKeyPadding);
 			tableSchema.setDefaultColumnPadding(this.defaultPropertiesColumnPadding);
+			tableSchema.setEncryptionMode(this.defaultEncryptionMode);
 		}
 		else {
 			throw new NullPointerException("CryptoWorker:SchemaParser:parseDefault:Default arguments specification cannot be null nor empty.");
@@ -472,6 +485,16 @@ public class SchemaParser {
 
 		if(tweak == null) {
 			throw new NullPointerException("Format-Preserving Encryption tweak cannot be null.");
+		}
+	}
+
+	public Boolean modeConversion(String mode) {
+		if(mode.equals("enable") || mode.equals("ENABLE")) {
+			return true;
+		} else if (mode.equals("disable") || mode.equals("DISABLE")) {
+			return false;
+		} else {
+			throw new NullPointerException("SchemaParser - Invalid mode conversion");
 		}
 	}
 

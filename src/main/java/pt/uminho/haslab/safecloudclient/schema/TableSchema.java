@@ -33,6 +33,8 @@ public class TableSchema {
 	//	Default values padding
 	private Boolean defaultColumnPadding;
 
+	private Boolean defaultEncryptionMode;
+
 
 //	Key object. Contains CryptoBox, formatSize and other information about the Row-Key
 	private Key key;
@@ -51,6 +53,7 @@ public class TableSchema {
 		this.defaultColumnPadding = false;
 		this.key = new Key();
 		this.columnFamilies = new ArrayList<>();
+		this.defaultEncryptionMode = false;
 
 		this.enabledCryptoTypes = initializeEnabledCryptoTypes();
 	}
@@ -83,6 +86,10 @@ public class TableSchema {
 
 	public Boolean getDefaultColumnPadding() {
 		return this.defaultColumnPadding;
+	}
+
+	public Boolean getEncryptionMode() {
+		return this.defaultEncryptionMode;
 	}
 
 	public Key getKey() {
@@ -120,6 +127,9 @@ public class TableSchema {
 		this.defaultColumnFormatSize = formatSize;
 	}
 
+	public void setEncryptionMode(Boolean mode) {
+		this.defaultEncryptionMode = mode;
+	}
 
 	public void setDefaultKeyPadding(Boolean padding) {
 		this.defaultKeyPadding = padding;
@@ -470,14 +480,11 @@ public class TableSchema {
 		sb.append("Table Schema\n");
 		sb.append("Table Name: ").append(this.tablename).append("\n");
 		sb.append("Default Schema: \n");
-		sb.append("> Default Key CryptoType: " + defaultKeyCryptoType).append(
-				"\n");
-		sb.append("> Default Columns CryptoType: " + defaultColumnsCryptoType)
-				.append("\n");
-		sb.append("> Default Key Format Size CryptoType: " + defaultKeyFormatSize)
-				.append("\n");
-		sb.append("> Default Column Format Size CryptoType: " + defaultColumnFormatSize)
-				.append("\n");
+		sb.append("> Default Key CryptoType: ").append(defaultKeyCryptoType).append("\n");
+		sb.append("> Default Columns CryptoType: ").append(defaultColumnsCryptoType).append("\n");
+		sb.append("> Default Key Format Size CryptoType: ").append(defaultKeyFormatSize).append("\n");
+		sb.append("> Default Column Format Size CryptoType: ").append(defaultColumnFormatSize).append("\n");
+		sb.append("> Default Encryption Mode: ").append(defaultEncryptionMode).append("\n");
 		sb.append("Key CryptoType: ").append(this.key.toString()).append("\n");
 		sb.append("Columns: \n");
 		for (Family family : this.columnFamilies) {
