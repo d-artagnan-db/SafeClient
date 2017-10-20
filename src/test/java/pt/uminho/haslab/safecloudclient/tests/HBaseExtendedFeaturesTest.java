@@ -96,7 +96,7 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
 
     }
 
-//    TODO send results to LOGs
+    //    TODO send results to LOGs
     public void testBatchingPuts(HTableInterface table, byte[] cf, byte[] cq, int batchSize) {
         System.out.println("\n== Test put(List<Put> puts) ::");
         try {
@@ -131,7 +131,7 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
         }
     }
 
-//    TODO send result to LOGs
+    //    TODO send result to LOGs
     public void testBatchingGets(HTableInterface table, byte[] cf, byte[] cq, int batchSize) {
         System.out.println("\n== Test get(List<Get> gets) ::");
         try {
@@ -163,7 +163,7 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
     }
 
 
-//    TODO send results to LOGs
+    //    TODO send results to LOGs
     public void testGet(HTableInterface table, byte[] cf, byte[] cq, byte[] row) {
         System.out.println("\n== Test get(byte[] row) ::");
         Get g = new Get(row);
@@ -177,7 +177,7 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
 
     }
 
-//    TODO send results to LOGs
+    //    TODO send results to LOGs
     public void testDelete(HTableInterface table, byte[] cf, byte[] cq) {
         System.out.println("\n==Test delete(byte[] cf, byte[] cq) ::");
         try {
@@ -201,7 +201,7 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
 
     }
 
-//    TODO send results to LOGs
+    //    TODO send results to LOGs
     public void testBatchingDeletes(HTableInterface table, byte[] cf, byte[] cq, int batchSize) {
         System.out.println("\n ==Test delete(List<Delete> deletes) ::");
         List<Delete> deletes = new ArrayList<>(batchSize);
@@ -217,7 +217,7 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
         }
     }
 
-//    TODO test for all CryptoTypes (specially STD)
+    //    TODO test for all CryptoTypes (specially STD)
     public void testCheckAndPut(HTableInterface table, byte[] cf, byte[] cq, byte[] value) {
         System.out.println("\n== Test checkAndPut(byte[] cf, byte[] cq, byte[] value) ::");
         Put p = new Put(String.valueOf(2).getBytes());
@@ -241,7 +241,7 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
         }
     }
 
-//    TODO send results to LOGs
+    //    TODO send results to LOGs
     public void testGetRegionLocation(HTable table, byte[] row) {
         System.out.println("\n== Test getRegionLocation(byte[] row) ::");
         try {
@@ -254,7 +254,7 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
         }
     }
 
-//    TODO send results to LOGs
+    //    TODO send results to LOGs
     public void testGetRegionLocations(HTable table) {
         System.out.println("\n== Test getRegionLocations() ::");
         try {
@@ -268,7 +268,7 @@ public class HBaseExtendedFeaturesTest extends SimpleHBaseTest {
         }
     }
 
-//    TODO send results to LOGs
+    //    TODO send results to LOGs
     public void testGetRowOrBefore(HTableInterface table, byte[] row, byte[] cf) {
         System.out.println("\n== test getRowOrBefore(byte[] row, byte[] cf) ::");
         try {

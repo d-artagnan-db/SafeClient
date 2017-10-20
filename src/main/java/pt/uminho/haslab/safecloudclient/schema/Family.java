@@ -30,14 +30,14 @@ public class Family {
 	}
 
 	public Family(String familyName, CryptoTechnique.CryptoType cType, int formatSize, Boolean columnPadding) {
-        this.familyName = familyName;
-        this.cryptoType = cType;
-        this.formatSize = formatSize;
-        this.qualifiers = new ArrayList<>();
-        this.columnPadding = columnPadding;
-    }
+		this.familyName = familyName;
+		this.cryptoType = cType;
+		this.formatSize = formatSize;
+		this.qualifiers = new ArrayList<>();
+		this.columnPadding = columnPadding;
+	}
 
-    public Family(String familyName, CryptoTechnique.CryptoType cType, int formatSize, Boolean columnPadding, List<Qualifier> quals) {
+	public Family(String familyName, CryptoTechnique.CryptoType cType, int formatSize, Boolean columnPadding, List<Qualifier> quals) {
 		this.familyName = familyName;
 		this.cryptoType = cType;
 		this.formatSize = formatSize;

@@ -27,18 +27,18 @@ public class CryptoProperties {
 	//	TableSchema object, used to trace the database composition
 	public TableSchema tableSchema;
 
-//	For each CryptoBox a new CryptoHandler object must be instantiated
+	//	For each CryptoBox a new CryptoHandler object must be instantiated
 	public CryptoHandler stdHandler;
 	public CryptoHandler detHandler;
-//	This object handles the Row-Keys protected with the OPE CryptoBox
+	//	This object handles the Row-Keys protected with the OPE CryptoBox
 	public CryptoHandler opeHandler;
-//	Since the OPE CryptoBox need to be initialized with the plaintext size and ciphertext size, each value protected with OPE must have an individual CryptoHandler
+	//	Since the OPE CryptoBox need to be initialized with the plaintext size and ciphertext size, each value protected with OPE must have an individual CryptoHandler
 	public Map<String, Map<String, CryptoHandler>> opeValueHandler;
 
 	public CryptoHandler fpeHandler;
 	public Map<String, Map<String, CryptoHandler>> fpeValueHandler;
 
-//	Cryptographic Keys stored in byte[] format
+	//	Cryptographic Keys stored in byte[] format
 	public byte[] stdKey;
 	public byte[] detKey;
 	public byte[] opeKey;
@@ -471,11 +471,11 @@ public class CryptoProperties {
 							stdCell.getTimestamp(),
 							stdCell.getTypeByte(),
 							this.decodeValue(
-								cf,
-								CellUtil.cloneQualifier(stdCell),
-								CellUtil.cloneValue(stdCell))
+									cf,
+									CellUtil.cloneQualifier(stdCell),
+									CellUtil.cloneValue(stdCell))
 
-							);
+					);
 
 				} else {
 					decCell = CellUtil.createCell(
@@ -539,7 +539,7 @@ public class CryptoProperties {
 
 
 
-//	TODO support more Comparators
+	//	TODO support more Comparators
 	public ByteArrayComparable checkComparatorType(ByteArrayComparable comparable, byte[] encoded_content, CryptoTechnique.CryptoType cType) {
 		String comparator_name = comparable.getClass().getSimpleName();
 

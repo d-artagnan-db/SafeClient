@@ -95,7 +95,7 @@ public abstract class SimpleHBaseTest {
 	}
 
 	protected void createAndFillTable(TestClient client, HTableInterface table,
-			byte[] cf, byte[] cq) throws IOException, InvalidNumberOfBits,
+									  byte[] cf, byte[] cq) throws IOException, InvalidNumberOfBits,
 			Exception {
 		/*
 		 * Test that the creation of the table where the values are going to be

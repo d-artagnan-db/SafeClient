@@ -422,7 +422,7 @@ public class SchemaParser {
 		return result;
 	}
 
-//	FIXME: read cType with Enum.valueOf()
+	//	FIXME: read cType with Enum.valueOf()
 	private CryptoTechnique.CryptoType switchCryptoType(String cType) {
 		if (cType == null)
 			return null;

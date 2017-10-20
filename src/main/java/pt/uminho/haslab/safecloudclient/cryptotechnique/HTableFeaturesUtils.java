@@ -35,7 +35,7 @@ public class HTableFeaturesUtils {
     }
 
 
-//    TODO: tentar passar o cellScanner apara um array e fazer o processamento da informação em paralelo
+    //    TODO: tentar passar o cellScanner apara um array e fazer o processamento da informação em paralelo
     public void encryptCells(CellScanner cs, TableSchema tableSchema, Put destination, CryptoProperties cryptoProperties) {
         try {
             while (cs.advance()) {

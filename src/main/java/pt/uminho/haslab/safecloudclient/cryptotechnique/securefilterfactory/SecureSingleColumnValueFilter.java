@@ -46,9 +46,9 @@ public class SecureSingleColumnValueFilter implements SecureFilterProperties {
             case OPE:
                 byte[] encryptedValue =
                         this.cryptoProperties.encodeValue(
-                            singleFilter.getFamily(),
-                            singleFilter.getQualifier(),
-                            singleFilter.getComparator().getValue());
+                                singleFilter.getFamily(),
+                                singleFilter.getQualifier(),
+                                singleFilter.getComparator().getValue());
 
                 return new SingleColumnValueFilter(
                         singleFilter.getFamily(),

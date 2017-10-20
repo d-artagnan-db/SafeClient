@@ -162,9 +162,9 @@ public class CryptoTable extends HTable {
 //		FIXME: does not contemplate FPE
 		temp.setKey(
 				new Key(
-					(CryptoTechnique.CryptoType) databaseDefaultProperties.get("defaultPropertiesKey"),
-					(Integer) databaseDefaultProperties.get("defaultPropertiesKeyFormatSize"),
-					(Boolean) databaseDefaultProperties.get("defaultPropertiesKeyPadding")));
+						(CryptoTechnique.CryptoType) databaseDefaultProperties.get("defaultPropertiesKey"),
+						(Integer) databaseDefaultProperties.get("defaultPropertiesKeyFormatSize"),
+						(Boolean) databaseDefaultProperties.get("defaultPropertiesKeyPadding")));
 
 
 //		FIXME: does not contemplate FPE
@@ -208,7 +208,7 @@ public class CryptoTable extends HTable {
 	 * Before the insertion both key and values are encrypted, following the database schema specifications.
 	 * In case of OPE CryptoBox, an additional qualifier is created and stores the respective value encrypted with the STD CryptoBox
 	 * @param put original put object that contains the key, values, qualifiers, ...
-//	 */
+	//	 */
 	@Override
 	public void put(Put put) {
 		try {
@@ -536,7 +536,7 @@ public class CryptoTable extends HTable {
 	 * and compare value.
 	 * @param scan scan object that provides the necessary filter and scan parameters.
 	 * @return resulting values that pass the filter parameters. The values are still encrypted.
-//	 */
+	//	 */
 	@Override
 	public ResultScanner getScanner(Scan scan) {
 		try {
@@ -809,5 +809,5 @@ public class CryptoTable extends HTable {
 		}
 		return null;
 	}
-	
+
 }

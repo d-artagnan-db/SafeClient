@@ -20,9 +20,9 @@ import static pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties.
 public class TableSchema {
 	static final Log LOG = LogFactory.getLog(CryptoTable.class.getName());
 	private String tablename;
-//	Default Row-Key CryptoBox
+	//	Default Row-Key CryptoBox
 	private CryptoTechnique.CryptoType defaultKeyCryptoType;
-//	Default Qualifiers CryptoBox
+	//	Default Qualifiers CryptoBox
 	private CryptoTechnique.CryptoType defaultColumnsCryptoType;
 	//	Default Row-Key format size
 	private int defaultKeyFormatSize;
@@ -36,9 +36,9 @@ public class TableSchema {
 	private Boolean defaultEncryptionMode;
 
 
-//	Key object. Contains CryptoBox, formatSize and other information about the Row-Key
+	//	Key object. Contains CryptoBox, formatSize and other information about the Row-Key
 	private Key key;
-//  Collection of the database column families (and qualifiers)
+	//  Collection of the database column families (and qualifiers)
 	private List<Family> columnFamilies;
 
 	private Map<CryptoTechnique.CryptoType, Boolean> enabledCryptoTypes;
@@ -428,7 +428,7 @@ public class TableSchema {
 		return this.key.getKeyPadding();
 	}
 
-//	TODO: profile
+	//	TODO: profile
 	public Boolean getColumnPadding(String family, String qualifier) {
 		Boolean columnPadding = null;
 		for (Family f : this.columnFamilies) {
@@ -474,7 +474,7 @@ public class TableSchema {
 	public void printEnabledCryptoTypes() {
 		System.out.println(this.enabledCryptoTypes.toString());
 	}
-	
+
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Table Schema\n");
