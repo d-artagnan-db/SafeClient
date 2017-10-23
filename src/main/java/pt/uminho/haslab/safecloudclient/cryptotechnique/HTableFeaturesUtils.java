@@ -48,12 +48,12 @@ public class HTableFeaturesUtils {
                 String qualifierString = new String(qualifier, Charset.forName("UTF-8"));
                 String opeValues = "_STD";
 
-                //				Verify if the actual qualifier corresponds to the supporting qualifier (<qualifier>_STD)
+//				Verify if the actual qualifier corresponds to the supporting qualifier (<qualifier>_STD)
                 if (qualifierString.length() >= opeValues.length()) {
                     verifyProperty = qualifierString.substring(qualifierString.length() - opeValues.length(), qualifierString.length()).equals(opeValues);
                 }
                 if (!verifyProperty) {
-                    //					Encode the original value with the corresponding CryptoBox
+//					Encode the original value with the corresponding CryptoBox
                     destination.add(
                             family,
                             qualifier,
@@ -62,7 +62,7 @@ public class HTableFeaturesUtils {
                                     qualifier,
                                     value));
 
-                    //					If the actual qualifier CryptoType is equal to OPE, encode the same value with STD CryptoBox
+//					If the actual qualifier CryptoType is equal to OPE, encode the same value with STD CryptoBox
                     if (tableSchema.getCryptoTypeFromQualifier(new String(family, Charset.forName("UTF-8")), qualifierString) == CryptoTechnique.CryptoType.OPE) {
                         destination.add(
                                 family,
@@ -76,7 +76,7 @@ public class HTableFeaturesUtils {
 
                 }
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOG.error("Exception in cell scanner. " + e.getMessage());
         }
     }
