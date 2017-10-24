@@ -1,10 +1,13 @@
 package pt.uminho.haslab.safecloudclient.cryptotechnique.resultscanner;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties;
+import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoTable;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -12,6 +15,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public abstract class ResultScannerAbstratClass implements ResultScanner {
+    static final Log LOG = LogFactory.getLog(CryptoTable.class.getName());
 
     public CryptoProperties cryptoProperties;
     public ResultScanner scanner;
@@ -105,16 +109,60 @@ public abstract class ResultScannerAbstratClass implements ResultScanner {
         return digest;
     }
 
-    @Override
-    public abstract Result next() throws IOException;
+    public abstract boolean digestor(byte[] content);
 
     @Override
-    public abstract Result[] next(int i) throws IOException;
+    public Result next() throws IOException {
+        Result encryptedResult = this.scanner.next();
+        Result result = Result.EMPTY_RESULT;
+
+        if (encryptedResult != null) {
+            byte[] row = this.cryptoProperties.decodeRow(encryptedResult.getRow());
+
+            boolean digest = this.digestor(row);
+            if (digest) {
+                result = this.cryptoProperties.decodeResult(row, encryptedResult);
+            }
+
+            return result;
+        }
+        else {
+            return null;
+        }
+    }
 
     @Override
-    public abstract void close();
+    public Result[] next(int i) throws IOException {
+        return this.scanner.next(i);
+    }
 
     @Override
-    public abstract Iterator<Result> iterator();
+    public void close() {
+        this.scanner.close();
+    }
+
+    @Override
+    public Iterator<Result> iterator() {
+        try {
+            List<Result> rs = new ArrayList<>();
+            for(Result r = scanner.next(); r != null; r = scanner.next()) {
+                Result iteratorResult = Result.EMPTY_RESULT;
+                byte[] row = this.cryptoProperties.decodeRow(r.getRow());
+
+                boolean digest = this.digestor(row);
+                if (digest) {
+                    iteratorResult = this.cryptoProperties.decodeResult(row, r);
+                }
+
+                rs.add(iteratorResult);
+            }
+
+            return rs.iterator();
+
+        } catch (Exception e) {
+            LOG.error("PlaintextResultScanner Iterator Exception: "+e.getMessage());
+        }
+        return null;
+    }
 
 }
