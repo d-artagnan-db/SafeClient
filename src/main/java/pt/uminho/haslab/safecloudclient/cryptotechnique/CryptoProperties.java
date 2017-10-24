@@ -437,9 +437,6 @@ public class CryptoProperties {
 	 * @return decrypted HBase Result
 	 */
 	public Result decodeResult(byte[] row, Result res) {
-//		TODO remove me
-//		byte[] decodedRow = this.decodeRow(row);
-//		row = Utils.removePadding(row);
 		String opeValues = "_STD";
 		List<Cell> cellList = new ArrayList<>();
 
@@ -453,16 +450,19 @@ public class CryptoProperties {
 
 			Cell decCell;
 			String qualifier = new String(cq, Charset.forName("UTF-8"));
+			CryptoTechnique.CryptoType cellCryptoType = this.tableSchema.getCryptoTypeFromQualifier(new String(cf, Charset.forName("UTF-8")), qualifier);
 
 //			Verify if the actual qualifier is equal to <qualifier>_STD
 			boolean verifyProperty = false;
-			if(qualifier.length() >= opeValues.length()) {
-				verifyProperty = qualifier.substring(qualifier.length()-opeValues.length(), qualifier.length()).equals(opeValues);
+			if (cellCryptoType == CryptoTechnique.CryptoType.STD) {
+				if (qualifier.length() >= opeValues.length()) {
+					verifyProperty = qualifier.substring(qualifier.length() - opeValues.length(), qualifier.length()).equals(opeValues);
+				}
 			}
 
-			if(!verifyProperty && cf.length > 0) {
+			if (!verifyProperty && cf.length > 0) {
 //				If the qualifier's CryptoType equal to OPE, decrypt the auxiliary qualifier (<qualifier_STD>)
-				if (tableSchema.getCryptoTypeFromQualifier(new String(cf, Charset.forName("UTF-8")), qualifier) == CryptoTechnique.CryptoType.OPE) {
+				if (cellCryptoType == CryptoTechnique.CryptoType.OPE) {
 					Cell stdCell = res.getColumnLatestCell(cf, (qualifier + opeValues).getBytes(Charset.forName("UTF-8")));
 					decCell = CellUtil.createCell(
 							row,
@@ -489,8 +489,7 @@ public class CryptoProperties {
 
 				cellList.add(decCell);
 
-			}
-			else if(cf.length == 0) {
+			} else if (cf.length == 0) {
 				decCell = CellUtil.createCell(
 						row,
 						cf,
