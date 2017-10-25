@@ -470,34 +470,18 @@ public class CryptoProperties {
 							cq,
 							stdCell.getTimestamp(),
 							stdCell.getTypeByte(),
-							this.decodeValue(
-									cf,
-									CellUtil.cloneQualifier(stdCell),
-									CellUtil.cloneValue(stdCell))
+							this.decodeValue(cf, CellUtil.cloneQualifier(stdCell), CellUtil.cloneValue(stdCell))
 
 					);
 
 				} else {
-					decCell = CellUtil.createCell(
-							row,
-							cf,
-							cq,
-							timestamp,
-							type,
-							this.decodeValue(cf, cq, value));
+					decCell = CellUtil.createCell(row, cf, cq, timestamp, type, this.decodeValue(cf, cq, value));
 				}
 
 				cellList.add(decCell);
 
 			} else if (cf.length == 0) {
-				decCell = CellUtil.createCell(
-						row,
-						cf,
-						cq,
-						timestamp,
-						type,
-						value);
-
+				decCell = CellUtil.createCell(row, cf, cq, timestamp, type, value);
 				cellList.add(decCell);
 			}
 		}

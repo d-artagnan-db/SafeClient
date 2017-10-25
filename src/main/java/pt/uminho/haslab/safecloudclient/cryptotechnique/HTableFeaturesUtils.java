@@ -5,9 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellScanner;
 import org.apache.hadoop.hbase.CellUtil;
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
@@ -17,6 +15,7 @@ import pt.uminho.haslab.safecloudclient.schema.TableSchema;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -113,9 +112,8 @@ public class HTableFeaturesUtils {
      * @param scan scan object used to check the instance
      * @return the Scan's CryptoType (Row-Key CryptoType in case of Scan or RowFilter, Qualifier CryptoType in case of SingleColumnValueFilter)
      */
-    public CryptoTechnique.CryptoType isScanOrFilter(Scan scan) {
+    private CryptoTechnique.CryptoType getScanObjectCryptoType(Scan scan) {
         if (scan.hasFilter()) {
-//            WARNING: First modification
             return secureFilterConverter.getFilterCryptoType(scan.getFilter());
         } else {
             return cp.tableSchema.getKey().getCryptoType();
@@ -130,7 +128,7 @@ public class HTableFeaturesUtils {
      * @param stopRow  original stop row
      * @return an encrypted scan with the respective start and stop row, both encrypted with the Row-Key CryptoBox
      */
-    public Scan encodeDelimitingRows(Scan encScan, byte[] startRow, byte[] stopRow) {
+    private Scan encodeDelimitingRows(Scan encScan, byte[] startRow, byte[] stopRow) {
         if (startRow != null && startRow.length > 0 && stopRow != null && stopRow.length > 0) {
             encScan.setStartRow(cp.encodeRow(startRow));
             encScan.setStopRow(cp.encodeRow(stopRow));
@@ -151,99 +149,57 @@ public class HTableFeaturesUtils {
     public Scan buildEncryptedScan(Scan s) {
         byte[] startRow = s.getStartRow();
         byte[] stopRow = s.getStopRow();
-        Scan encScan = null;
+        Scan encryptedScan = null;
 
 
         if (s.hasFilter() && (s.getFilter() instanceof FilterList)) {
             Filter encryptedFilter = secureFilterConverter.buildEncryptedFilter(s.getFilter(), this.cp.tableSchema.getKey().getCryptoType());
-            encScan = new Scan();
-            Map<byte[], List<byte[]>> cols = cp.getHColumnDescriptors(s.getFamilyMap());
-            for (Map.Entry<byte[], List<byte[]>> entry : cols.entrySet()) {
-                for (byte[] qualifier : entry.getValue()) {
-                    encScan.addColumn(entry.getKey(), qualifier);
-                }
-            }
+            encryptedScan = new Scan();
+            Map<byte[], List<byte[]>> cols = this.cp.getHColumnDescriptors(s.getFamilyMap());
+
+            this.wrapHColumnDescriptors(encryptedScan, cols);
 
             switch (this.cp.tableSchema.getKey().getCryptoType()) {
                 case PLT:
                 case OPE:
-                    encScan = encodeDelimitingRows(encScan, s.getStartRow(), s.getStopRow());
-                    encScan.setFilter(encryptedFilter);
+                    encryptedScan = encodeDelimitingRows(encryptedScan, s.getStartRow(), s.getStopRow());
                     break;
                 case STD:
                 case DET:
                 case FPE:
-                    encScan.setFilter(encryptedFilter);
-                    break;
                 default:
                     break;
             }
+
+            encryptedScan.setFilter(encryptedFilter);
 
         } else {
 
-//		get the CryptoType of the Scan/Filter operation
-            CryptoTechnique.CryptoType scanCryptoType = isScanOrFilter(s);
-//		Map the database column families and qualifiers into a collection
-            Map<byte[], List<byte[]>> hColumnDescriptors = cp.getHColumnDescriptors(s.getFamilyMap());
+//		    get the CryptoType of the Scan/Filter operation
+            CryptoTechnique.CryptoType scanCryptoType = this.getScanObjectCryptoType(s);
+//		    Map the database column families and qualifiers into a collection
+            Map<byte[], List<byte[]>> hColumnDescriptors = this.cp.getHColumnDescriptors(s.getFamilyMap());
 
-            switch (scanCryptoType) {
-//			In case of standard or deterministic encryption, since no order is preserved a full table scan must be performed.
-//			In case of Filter, the compare value must be encrypted.
-                case STD:
-                case DET:
-                case FPE:
-                    encScan = new Scan();
-//				Add only the specified qualifiers in the original scan (s), instead of retrieve all (unnecessary) values).
-                    for (Map.Entry<byte[], List<byte[]>> cols : hColumnDescriptors.entrySet()) {
-                        for (byte[] qualifier : cols.getValue()) {
-                            encScan.addColumn(cols.getKey(), qualifier);
-                        }
-                    }
-//				Since the scanCryptoType defines the CryptoType of the scan or filter operaion, in case of SingleColumnValueFilter,
-// 				the start and stop row must be encoded with the respective Row-Key CryptoBox
-                    if ((cp.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.PLT) ||
-                            (cp.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.OPE)) {
-                        encScan = encodeDelimitingRows(encScan, startRow, stopRow);
-                    }
+            encryptedScan = new Scan();
+//			Add only the specified qualifiers in the original scan (s), instead of retrieve all (unnecessary) values).
+            this.wrapHColumnDescriptors(encryptedScan, hColumnDescriptors);
 
-//				In case of filter, the compare value must be encrypted
-                    if (s.hasFilter()) {
-//                    Warning: second modification
-                        Filter encryptedFilter = this.secureFilterConverter.buildEncryptedFilter(s.getFilter(), scanCryptoType);
-                        if (encryptedFilter != null) {
-                            encScan.setFilter(encryptedFilter);
-                        }
-                    }
-
-                    break;
-                case PLT:
-                case OPE:
-                    encScan = new Scan();
-//				Add only the specified qualifiers in the original scan (s), instead of retrieve all (unnecessary) values).
-                    for (Map.Entry<byte[], List<byte[]>> cols : hColumnDescriptors.entrySet()) {
-                        for (byte[] qualifier : cols.getValue()) {
-                            encScan.addColumn(cols.getKey(), qualifier);
-                        }
-                    }
-//				Since the scanCryptoType defines the CryptoType of the scan or filter operaion, in case of SingleColumnValueFilter,
-// 				the start and stop row must be encoded with the respective Row-Key CryptoBox
-                    if ((cp.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.PLT) ||
-                            (cp.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.OPE)) {
-                        encScan = encodeDelimitingRows(encScan, startRow, stopRow);
-                    }
-                    if (s.hasFilter()) {
-//                    Warning: second modification
-                        Filter encryptedFilter = this.secureFilterConverter.buildEncryptedFilter(s.getFilter(), scanCryptoType);
-                        if (encryptedFilter != null) {
-                            encScan.setFilter(encryptedFilter);
-                        }
-                    }
-                    break;
-                default:
-                    break;
+//	    	Since the scanCryptoType defines the CryptoType of the scan or filter operaion, in case of SingleColumnValueFilter,
+//		    the start and stop row must be encoded with the respective Row-Key CryptoBox
+            if ((this.cp.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.PLT) ||
+                    (this.cp.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.OPE)) {
+                encryptedScan = encodeDelimitingRows(encryptedScan, startRow, stopRow);
             }
+
+            if (s.hasFilter()) {
+                Filter encryptedFilter = this.secureFilterConverter.buildEncryptedFilter(s.getFilter(), scanCryptoType);
+                if (encryptedFilter != null) {
+                    encryptedScan.setFilter(encryptedFilter);
+                }
+            }
+
         }
-        return encScan;
+        return encryptedScan;
     }
 
     /**
@@ -252,7 +208,7 @@ public class HTableFeaturesUtils {
      * @param filter Filter object
      * @return provide an encrypted Filter, with the respective operator and compare value.
      */
-    public Object parseFilter(Filter filter) {
+    Object parseFilter(Filter filter) {
         Object returnValue = null;
 
         if (filter != null) {
@@ -268,13 +224,42 @@ public class HTableFeaturesUtils {
      * @param scan scan/filter object
      * @return the respective CryptoType
      */
-    public CryptoTechnique.CryptoType verifyFilterCryptoType(Scan scan) {
+    CryptoTechnique.CryptoType verifyFilterCryptoType(Scan scan) {
 
         CryptoTechnique.CryptoType cryptoType = cp.tableSchema.getKey().getCryptoType();
         if (scan.hasFilter()) {
             cryptoType = this.secureFilterConverter.getFilterCryptoType(scan.getFilter());
         }
         return cryptoType;
+    }
+
+    void wrapHColumnDescriptors(Get object, Map<byte[], List<byte[]>> columns) {
+        for (byte[] f : columns.keySet()) {
+            for (byte[] q : columns.get(f)) {
+                object.addColumn(f, q);
+            }
+        }
+    }
+
+    void wrapHColumnDescriptors(Scan object, Map<byte[], List<byte[]>> columns) {
+        for (byte[] f : columns.keySet()) {
+            for (byte[] q : columns.get(f)) {
+                object.addColumn(f, q);
+            }
+        }
+    }
+
+    byte[] getObjectRow(Row object) {
+        byte[] row = object.getRow();
+        this.verifyNullableByteArray(row);
+
+        return row;
+    }
+
+    void verifyNullableByteArray(byte[] content) {
+        if (content.length == 0) {
+            throw new NullPointerException("Byte[] cannot be null.");
+        }
     }
 
 }

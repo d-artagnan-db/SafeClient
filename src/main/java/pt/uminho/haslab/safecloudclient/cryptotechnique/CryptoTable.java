@@ -271,8 +271,7 @@ public class CryptoTable extends HTable {
 		Result getResult = Result.EMPTY_RESULT;
 		try {
 			if (this.tableSchema.getEncryptionMode()) {
-				byte[] row = this.getObjectRow(get);
-
+				byte[] row = this.htableUtils.getObjectRow(get);
 				Map<byte[], List<byte[]>> columns = this.cryptoProperties.getHColumnDescriptors(get.getFamilyMap());
 
 				Object encodedGet = this.encodeGet(row, columns);
@@ -310,7 +309,7 @@ public class CryptoTable extends HTable {
 				List<Get> encryptedGets = new ArrayList<>(gets.size());
 
 				for (Get g : gets) {
-					byte[] row = this.getObjectRow(g);
+					byte[] row = this.htableUtils.getObjectRow(g);
 					Map<byte[], List<byte[]>> columns = this.cryptoProperties.getHColumnDescriptors(g.getFamilyMap());
 
 //					First phase: Encrypt all get objects
@@ -320,7 +319,7 @@ public class CryptoTable extends HTable {
 						case OPE:
 						case FPE:
 							Get encGet = new Get(this.cryptoProperties.encodeRow(row));
-							this.wrapHColumnDescriptors(encGet, columns);
+							this.htableUtils.wrapHColumnDescriptors(encGet, columns);
 							encryptedGets.add(encGet);
 
 							break;
@@ -340,7 +339,7 @@ public class CryptoTable extends HTable {
 							if (noMoreGetObjects != gets.size()) {
 								byte[] resultRow = this.cryptoProperties.decodeRow(r.getRow());
 								for (Get get : gets) {
-									if (Arrays.equals(resultRow, this.getObjectRow(get))) {
+									if (Arrays.equals(resultRow, this.htableUtils.getObjectRow(get))) {
 										results[gets.indexOf(get)] = this.cryptoProperties.decodeResult(resultRow, r);
 										noMoreGetObjects++;
 										break;
@@ -385,7 +384,7 @@ public class CryptoTable extends HTable {
 	public void delete(Delete delete) {
 		try {
 			if (this.tableSchema.getEncryptionMode()) {
-				byte[] row = this.getObjectRow(delete);
+				byte[] row = this.htableUtils.getObjectRow(delete);
 				List<String> hcolumnsToDelete = this.htableUtils.deleteCells(delete.cellScanner());
 
 //				Verify the Row-Key CryptoBox
@@ -432,7 +431,7 @@ public class CryptoTable extends HTable {
 						if (noMoreDeleteObjects != deletes.size()) {
 							byte[] resultRow = this.cryptoProperties.decodeRow(r.getRow());
 							for (Delete delete : deletes) {
-								if (Arrays.equals(resultRow, this.getObjectRow(delete))) {
+								if (Arrays.equals(resultRow, this.htableUtils.getObjectRow(delete))) {
 									encryptedDeletes.add(this.encodeDeleteObject(delete.getRow(), this.htableUtils.deleteCells(delete.cellScanner())));
 									noMoreDeleteObjects++;
 									break;
@@ -444,7 +443,7 @@ public class CryptoTable extends HTable {
 					}
 				} else {
 					for (Delete del : deletes) {
-						byte[] row = this.getObjectRow(del);
+						byte[] row = this.htableUtils.getObjectRow(del);
 						List<String> hcolumnsToDelete = this.htableUtils.deleteCells(del.cellScanner());
 						encryptedDeletes.add(this.encodeDeleteObject(row, hcolumnsToDelete));
 					}
@@ -504,10 +503,10 @@ public class CryptoTable extends HTable {
 
 		try {
 			if (this.tableSchema.getEncryptionMode()) {
-				this.verifyNullableByteArray(row);
-				this.verifyNullableByteArray(family);
-				this.verifyNullableByteArray(qualifier);
-				this.verifyNullableByteArray(value);
+				this.htableUtils.verifyNullableByteArray(row);
+				this.htableUtils.verifyNullableByteArray(family);
+				this.htableUtils.verifyNullableByteArray(qualifier);
+				this.htableUtils.verifyNullableByteArray(value);
 
 				switch (this.tableSchema.getKey().getCryptoType()) {
 					case STD:
@@ -589,9 +588,9 @@ public class CryptoTable extends HTable {
 		long operationValue = 0;
 		try {
 			if (this.tableSchema.getEncryptionMode()) {
-				this.verifyNullableByteArray(row);
-				this.verifyNullableByteArray(family);
-				this.verifyNullableByteArray(qualifier);
+				this.htableUtils.verifyNullableByteArray(row);
+				this.htableUtils.verifyNullableByteArray(family);
+				this.htableUtils.verifyNullableByteArray(qualifier);
 
 				String temp_family = new String(family);
 				String temp_qualifier = new String(qualifier);
@@ -675,8 +674,8 @@ public class CryptoTable extends HTable {
 		Result result = Result.EMPTY_RESULT;
 		try {
 			if (this.tableSchema.getEncryptionMode()) {
-				this.verifyNullableByteArray(row);
-				this.verifyNullableByteArray(family);
+				this.htableUtils.verifyNullableByteArray(row);
+				this.htableUtils.verifyNullableByteArray(family);
 
 				switch (this.tableSchema.getKey().getCryptoType()) {
 					case STD:
@@ -731,25 +730,12 @@ public class CryptoTable extends HTable {
 //----------------------------------------------------------------------------------------------------------------------
 
 	private Put encodePutObject(Put p) {
-		byte[] row = this.getObjectRow(p);
+		byte[] row = this.htableUtils.getObjectRow(p);
 
 //		Encode the Row-Key
 		Put encryptedObject = new Put(this.cryptoProperties.encodeRow(row));
 		this.htableUtils.encryptCells(p.cellScanner(), this.tableSchema, encryptedObject, this.cryptoProperties);
 		return encryptedObject;
-	}
-
-	private byte[] getObjectRow(Row object) {
-		byte[] row = object.getRow();
-		this.verifyNullableByteArray(row);
-
-		return row;
-	}
-
-	private void verifyNullableByteArray(byte[] content) {
-		if (content.length == 0) {
-			throw new NullPointerException("Byte[] cannot be null.");
-		}
 	}
 
 	private Object encodeGet(byte[] row,  Map<byte[], List<byte[]>> columns) {
@@ -759,7 +745,7 @@ public class CryptoTable extends HTable {
 			switch (this.cryptoProperties.tableSchema.getKey().getCryptoType()) {
 				case STD:
 					Scan stdGetScan = new Scan();
-					this.wrapHColumnDescriptors(stdGetScan, columns);
+					this.htableUtils.wrapHColumnDescriptors(stdGetScan, columns);
 
 					result = super.getScanner(stdGetScan);
 
@@ -769,7 +755,7 @@ public class CryptoTable extends HTable {
 				case OPE:
 				case FPE:
 					Get encGet = new Get(this.cryptoProperties.encodeRow(row));
-					this.wrapHColumnDescriptors(encGet, columns);
+					this.htableUtils.wrapHColumnDescriptors(encGet, columns);
 
 					result = encGet;
 
@@ -839,22 +825,6 @@ public class CryptoTable extends HTable {
 		}
 
 		return getResult;
-	}
-
-	private void wrapHColumnDescriptors(Get object, Map<byte[], List<byte[]>> columns) {
-		for (byte[] f : columns.keySet()) {
-			for (byte[] q : columns.get(f)) {
-				object.addColumn(f, q);
-			}
-		}
-	}
-
-	private void wrapHColumnDescriptors(Scan object, Map<byte[], List<byte[]>> columns) {
-		for (byte[] f : columns.keySet()) {
-			for (byte[] q : columns.get(f)) {
-				object.addColumn(f, q);
-			}
-		}
 	}
 
 	private Delete encodeDeleteObject(byte[] row, List<String> hcolumnsToDelete) {
