@@ -235,16 +235,26 @@ public class HTableFeaturesUtils {
 
     void wrapHColumnDescriptors(Get object, Map<byte[], List<byte[]>> columns) {
         for (byte[] f : columns.keySet()) {
-            for (byte[] q : columns.get(f)) {
-                object.addColumn(f, q);
+            if (columns.get(f) == null) {
+                object.addFamily(f);
+            } else {
+                for (byte[] q : columns.get(f)) {
+                    object.addColumn(f, q);
+                }
+                object.addFamily(f);
             }
         }
     }
 
     void wrapHColumnDescriptors(Scan object, Map<byte[], List<byte[]>> columns) {
         for (byte[] f : columns.keySet()) {
-            for (byte[] q : columns.get(f)) {
-                object.addColumn(f, q);
+            if (columns.get(f) == null) {
+                object.addFamily(f);
+            } else {
+                for (byte[] q : columns.get(f)) {
+                    object.addColumn(f, q);
+                }
+                object.addFamily(f);
             }
         }
     }
