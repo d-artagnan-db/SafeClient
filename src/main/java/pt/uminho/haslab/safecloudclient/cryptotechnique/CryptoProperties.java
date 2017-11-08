@@ -500,14 +500,13 @@ public class CryptoProperties {
 		for(byte[] family : familiesAndQualifiers.keySet()) {
 			NavigableSet<byte[]> q = familiesAndQualifiers.get(family);
 			if(q==null) {
-				LOG.info("CryptoProperties:getHColumnDescriptors:"+ familiesAndQualifiers.toString());
-
+//				LOG.info("CryptoProperties:getHColumnDescriptors:"+ familiesAndQualifiers.toString());
 				if (this.tableSchema.containsFamily(new String(family))) {
 					List<byte[]> q_list = new ArrayList<>();
 					for (Qualifier q_temp : this.tableSchema.getFamily(new String(family)).getQualifiers()) {
 						q_list.add(q_temp.getName().getBytes());
 					}
-//					q_list.add("ADD_FAMILY".getBytes());
+
 					result.put(family, q_list);
 
 				} else {
@@ -535,7 +534,7 @@ public class CryptoProperties {
 
 
 
-	//	TODO support more Comparators
+//	TODO support more Comparators
 	public ByteArrayComparable checkComparatorType(ByteArrayComparable comparable, byte[] encoded_content, CryptoTechnique.CryptoType cType) {
 		String comparator_name = comparable.getClass().getSimpleName();
 
