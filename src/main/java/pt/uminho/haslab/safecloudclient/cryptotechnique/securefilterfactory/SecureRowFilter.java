@@ -2,17 +2,13 @@ package pt.uminho.haslab.safecloudclient.cryptotechnique.securefilterfactory;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.ByteArrayComparable;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.RowFilter;
-import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoTable;
+import pt.uminho.haslab.safemapper.DatabaseSchema.CryptoType;
 
-/**
- * Created by rgmacedo on 5/23/17.
- */
 public class SecureRowFilter implements SecureFilterProperties {
     static final Log LOG = LogFactory.getLog(CryptoTable.class.getName());
     public CryptoProperties cryptoProperties;
@@ -22,7 +18,7 @@ public class SecureRowFilter implements SecureFilterProperties {
     }
 
     @Override
-    public Filter buildEncryptedFilter(Filter plaintextFilter, CryptoTechnique.CryptoType cryptoType) {
+    public Filter buildEncryptedFilter(Filter plaintextFilter, CryptoType cryptoType) {
         RowFilter plainRowFilter = (RowFilter) plaintextFilter;
 //      In the RowFilter case, the CryptoType is protecting the Row-Key
         switch (cryptoType) {
@@ -42,7 +38,7 @@ public class SecureRowFilter implements SecureFilterProperties {
     }
 
     @Override
-    public Object parseFilter(Filter plaintextFilter, CryptoTechnique.CryptoType cryptoType) {
+    public Object parseFilter(Filter plaintextFilter, CryptoType cryptoType) {
         RowFilter plainRowFilter = (RowFilter) plaintextFilter;
 
         switch (cryptoType) {
@@ -66,7 +62,7 @@ public class SecureRowFilter implements SecureFilterProperties {
     }
 
     @Override
-    public CryptoTechnique.CryptoType getFilterCryptoType(Filter plaintextFilter) {
+    public CryptoType getFilterCryptoType(Filter plaintextFilter) {
         return this.cryptoProperties.tableSchema.getKey().getCryptoType();
     }
 

@@ -57,7 +57,7 @@ public class ShareClient implements TestClient {
 			resources.add("hbase-site-" + i + ".xml");
 		}
 		// Boot the clusters
-		clusters = new ShareCluster(resources);
+		clusters = new ShareCluster(resources, 1);
 		Configuration conf = new Configuration();
 		conf.addResource("hbase-client.xml");
 		admin = new SharedAdmin(conf);

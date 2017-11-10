@@ -5,8 +5,6 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTableInterface;
-import pt.uminho.haslab.cryptoenv.CryptoTechnique.CryptoType;
-import pt.uminho.haslab.cryptoenv.Utils;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoTable;
 import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
 
@@ -18,7 +16,7 @@ public class CryptoClient implements TestClient {
 	private String schemaFile;
 
 	public CryptoClient(String schemaFileName)
-			throws ZooKeeperConnectionException, IOException {
+			throws IOException {
 		Configuration conf = new Configuration();
 		conf.addResource("conf.xml");
 		admin = new HBaseAdmin(conf);

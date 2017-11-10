@@ -1,15 +1,14 @@
 package pt.uminho.haslab.safecloudclient.cryptotechnique.securefilterfactory;
 
-import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties;
+import pt.uminho.haslab.safemapper.DatabaseSchema.CryptoType;
+import pt.uminho.haslab.safemapper.DatabaseSchema.CryptoType;
 
-/**
- * Created by rgmacedo on 5/23/17.
- */
+
 public class SecureSingleColumnValueFilter implements SecureFilterProperties {
     public CryptoProperties cryptoProperties;
 
@@ -18,7 +17,7 @@ public class SecureSingleColumnValueFilter implements SecureFilterProperties {
     }
 
     @Override
-    public Filter buildEncryptedFilter(Filter plaintextFilter, CryptoTechnique.CryptoType cryptoType) {
+    public Filter buildEncryptedFilter(Filter plaintextFilter, CryptoType cryptoType) {
         SingleColumnValueFilter singleFilter = (SingleColumnValueFilter) plaintextFilter;
 
         switch (cryptoType) {
@@ -61,7 +60,7 @@ public class SecureSingleColumnValueFilter implements SecureFilterProperties {
     }
 
     @Override
-    public Object parseFilter(Filter plaintextFilter, CryptoTechnique.CryptoType cryptoType) {
+    public Object parseFilter(Filter plaintextFilter, CryptoType cryptoType) {
         SingleColumnValueFilter singleFilter = (SingleColumnValueFilter) plaintextFilter;
 
         switch (cryptoType) {
@@ -88,7 +87,7 @@ public class SecureSingleColumnValueFilter implements SecureFilterProperties {
     }
 
     @Override
-    public CryptoTechnique.CryptoType getFilterCryptoType(Filter plaintextFilter) {
+    public CryptoType getFilterCryptoType(Filter plaintextFilter) {
         SingleColumnValueFilter singleFilter = (SingleColumnValueFilter) plaintextFilter;
         return this.cryptoProperties.tableSchema.getCryptoTypeFromQualifier(new String(singleFilter.getFamily()), new String(singleFilter.getQualifier()));
     }

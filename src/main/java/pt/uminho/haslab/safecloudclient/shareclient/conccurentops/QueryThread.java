@@ -14,17 +14,10 @@ public abstract class QueryThread extends Thread {
 
 	protected Result res;
 
-	protected final long requestID;
-
-	protected final int targetPlayer;
-
 	protected SharedClientConfiguration conf;
 
-	public QueryThread(SharedClientConfiguration conf, HTable table,
-			long requestID, int targetPlayer) {
+	public QueryThread(SharedClientConfiguration conf, HTable table) {
 		this.table = table;
-		this.requestID = requestID;
-		this.targetPlayer = targetPlayer;
 		this.conf = conf;
 	}
 

@@ -2,6 +2,7 @@ package pt.uminho.haslab.safecloudclient.shareclient.conccurentops;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -13,6 +14,9 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
 import pt.uminho.haslab.safecloudclient.shareclient.SharedClientConfiguration;
 import static pt.uminho.haslab.safecloudclient.shareclient.conccurentops.OneTimePad.oneTimeDecode;
+
+import pt.uminho.haslab.safemapper.DatabaseSchema;
+import pt.uminho.haslab.safemapper.TableSchema;
 import pt.uminho.haslab.smhbase.sharemindImp.SharemindSharedSecret;
 
 public abstract class MultiOP {
@@ -20,19 +24,15 @@ public abstract class MultiOP {
 	static final org.apache.commons.logging.Log LOG = LogFactory
 			.getLog(MultiOP.class.getName());
 
-	protected final long requestID;
-	protected final int targetPlayer;
 	protected final List<HTable> connections;
 	protected final SharedClientConfiguration config;
-
+	protected final TableSchema schema;
 	protected Long uniqueRowId;
 
-	public MultiOP(SharedClientConfiguration config, List<HTable> connections,
-			long requestID, int targetPlayer) {
-		this.requestID = requestID;
-		this.targetPlayer = targetPlayer;
+	public MultiOP(SharedClientConfiguration config, List<HTable> connections, TableSchema schema) {
 		this.connections = connections;
 		this.config = config;
+		this.schema = schema;
 	}
 
 	protected abstract Thread queryThread(SharedClientConfiguration config,
@@ -42,26 +42,15 @@ public abstract class MultiOP {
 			throws IOException;
 
 	protected Result decodeResult(List<Result> results) throws IOException {
-		byte[] secretColFam = config.getShareKeyColumnFamily().getBytes();
-		byte[] secretColQual = config.getShareKeyColumnQualifier().getBytes();
+
 
 		Result resOne = results.get(0);
 		Result resTwo = results.get(1);
 		Result resThree = results.get(2);
+
 		LOG.debug("Row of match result is " + new String(resOne.getRow()));
 		this.uniqueRowId = Long.valueOf(new String(resOne.getRow()));
 
-		byte[] rowSecretOne = resOne.getValue(secretColFam, secretColQual);
-		byte[] rowSecretTwo = resTwo.getValue(secretColFam, secretColQual);
-		byte[] rowSecretThree = resThree.getValue(secretColFam, secretColQual);
-
-		BigInteger firstSecret = new BigInteger(rowSecretOne);
-		BigInteger secondSecret = new BigInteger(rowSecretTwo);
-		BigInteger thirdSecret = new BigInteger(rowSecretThree);
-
-		SharemindSharedSecret secret = new SharemindSharedSecret(
-				config.getNBits(), firstSecret, secondSecret, thirdSecret);
-		byte[] resRow = secret.unshare().toByteArray();
 
 		CellScanner firstScanner = resOne.cellScanner();
 		CellScanner secondScanner = resTwo.cellScanner();
@@ -75,19 +64,26 @@ public abstract class MultiOP {
 			Cell thirdCell = thirdScanner.current();
 			byte[] cf = CellUtil.cloneFamily(firstCell);
 			byte[] cq = CellUtil.cloneQualifier(secondCell);
+			String family = new String(cf, Charset.forName("UTF-8"));
+			String qualifier = new String(cq, Charset.forName("UTF-8"));
+			// Revert secrets back to original value
+			if (schema.getCryptoTypeFromQualifier(family, qualifier) == DatabaseSchema.CryptoType.SMPC) {
+			    //FormatSize defines the size of the ring in which the shares generated
 
-			// Filter columns holding secrets
-			if (!(Arrays
-					.equals(cf, config.getShareKeyColumnFamily().getBytes()) && Arrays
-					.equals(cq, config.getShareKeyColumnQualifier().getBytes()))) {
+				int formatSize = schema.getFormatSizeFromQualifier(family, qualifier);
+                byte[] fSecret = CellUtil.cloneValue(firstCell);
+                byte[] sSecret = CellUtil.cloneValue(secondCell);
+                byte[] tSecret = CellUtil.cloneValue(thirdCell);
+
+                BigInteger firstSecret = new BigInteger(fSecret);
+                BigInteger secondSecret = new BigInteger(sSecret);
+                BigInteger thirdSecret = new BigInteger(tSecret);
+
+                SharemindSharedSecret secret = new SharemindSharedSecret(formatSize, firstSecret, secondSecret, thirdSecret);
 				List<byte[]> values = new ArrayList<byte[]>();
-				byte[] fValue = CellUtil.cloneValue(firstCell);
-				byte[] sValue = CellUtil.cloneValue(secondCell);
-				byte[] tValue = CellUtil.cloneValue(thirdCell);
-				values.add(fValue);
-				values.add(sValue);
-				values.add(tValue);
-				byte[] value = oneTimeDecode(values);
+
+
+
 
 				byte type = firstCell.getTypeByte();
 				long timestamp = firstCell.getTimestamp();
@@ -100,6 +96,7 @@ public abstract class MultiOP {
 
 		return Result.create(cells);
 	}
+
 
 	public void doOperation() throws InterruptedException, IOException {
 		List<Thread> calls = new ArrayList<Thread>();

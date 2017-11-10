@@ -7,10 +7,9 @@ import org.apache.hadoop.hbase.filter.WhileMatchFilter;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoTable;
+import pt.uminho.haslab.safemapper.DatabaseSchema.CryptoType;
 
-/**
- * Created by rgmacedo on 6/12/17.
- */
+
 public class SecureWhileMatchFilter implements SecureFilterProperties {
     static final Log LOG = LogFactory.getLog(CryptoTable.class.getName());
     public CryptoProperties cryptoProperties;
@@ -21,7 +20,7 @@ public class SecureWhileMatchFilter implements SecureFilterProperties {
 
 
     @Override
-    public Filter buildEncryptedFilter(Filter plaintextFilter, CryptoTechnique.CryptoType cryptoType) {
+    public Filter buildEncryptedFilter(Filter plaintextFilter, CryptoType cryptoType) {
         WhileMatchFilter whileFilter = (WhileMatchFilter) plaintextFilter;
         Filter insideFilter = whileFilter.getFilter();
         Filter tempFilter;
@@ -44,7 +43,7 @@ public class SecureWhileMatchFilter implements SecureFilterProperties {
     }
 
     @Override
-    public Object parseFilter(Filter plaintextFilter, CryptoTechnique.CryptoType cryptoType) {
+    public Object parseFilter(Filter plaintextFilter, CryptoType cryptoType) {
         WhileMatchFilter whileFilter = (WhileMatchFilter) plaintextFilter;
         Filter insideFilter = whileFilter.getFilter();
         switch(SecureFilterConverter.getFilterType(insideFilter)) {
@@ -61,7 +60,7 @@ public class SecureWhileMatchFilter implements SecureFilterProperties {
     }
 
     @Override
-    public CryptoTechnique.CryptoType getFilterCryptoType(Filter plaintextFilter) {
+    public CryptoType getFilterCryptoType(Filter plaintextFilter) {
         WhileMatchFilter whileFilter = (WhileMatchFilter) plaintextFilter;
         Filter f = whileFilter.getFilter();
 

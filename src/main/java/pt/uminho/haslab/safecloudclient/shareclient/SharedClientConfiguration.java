@@ -29,20 +29,4 @@ public class SharedClientConfiguration {
 		}
 		return cluster;
 	}
-	public String getShareKeyColumnFamily() {
-		return conf.get("smhbase.column.family");
-	}
-
-	public String getShareKeyColumnQualifier() {
-		return conf.get("smhbase.column.qualifier");
-	}
-
-	public int getNBits() {
-		return conf.getInt("smhbase.nbits", -1);
-	}
-
-	public int getCacheSize() {
-		return conf.getInt("smhbase.client.cache.size", 100);
-	}
-
 }

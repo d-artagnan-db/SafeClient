@@ -7,15 +7,18 @@ import com.google.protobuf.ServiceException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
+import pt.uminho.haslab.safecloudclient.ExtendedHTable;
 import pt.uminho.haslab.safecloudclient.shareclient.conccurentops.MultiGet;
 import pt.uminho.haslab.safecloudclient.shareclient.conccurentops.MultiPut;
 import pt.uminho.haslab.safecloudclient.shareclient.conccurentops.MultiScan;
+import pt.uminho.haslab.safemapper.TableSchema;
 import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
 import pt.uminho.haslab.smhbase.exceptions.InvalidSecretValue;
 import pt.uminho.haslab.smhbase.interfaces.Dealer;
@@ -31,32 +34,30 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 
 /**
- * Current implementation only works with a single regionServer or standalone.
+ * Current implementation assumes that tables identifiers are not protected with secret sharing and only columns
+ * can be protected. Thus, any necessary processing over those columns is only triggered by Filters.
+ * This version supports distributed clusters with multiple region servers.
  */
-public class SharedTable implements HTableInterface {
+public class SharedTable implements ExtendedHTable {
 
 	static final Log LOG = LogFactory.getLog(SharedTable.class.getName());
 
 	private static final AtomicLong lastMaxKey = new AtomicLong();
 	private static final AtomicLong identifierGenerator = new AtomicLong();
 	private static ResultPlayerLoadBalancer LB = new ResultPlayerLoadBalancerImpl();
-	private static ClientCache CACHE;
-	private static final TableLock TABLE_LOCKS = new TableLockImpl();
-       
+
         
 	public static void initializeLoadBalancer(
 			ResultPlayerLoadBalancer loadBalancer) {
 		LB = loadBalancer;
 	}
 
-	public static void initalizeCache(ClientCache cache) {
-		CACHE = cache;
-	}
-
 	private final List<HTable> connections;
 	private final Dealer dealer;
 	private SharedClientConfiguration sharedConfig;
 	private final String tableName;
+
+	private TableSchema schema;
 
 	private long getNextRowIdentifier() throws IOException {
 		return lastMaxKey.getAndAdd(1);
@@ -70,11 +71,11 @@ public class SharedTable implements HTableInterface {
 		return identifierGenerator.getAndAdd(1);
 	}
 
-	public SharedTable(Configuration conf, String tableName)
+	public SharedTable(Configuration conf, String tableName, TableSchema schema)
 			throws IOException, InvalidNumberOfBits {
 
-		if (LB == null || CACHE == null) {
-			String error = "SharedTable static variables not initialized";
+		if (LB == null) {
+			String error = "Player Load Balancer is not initialized";
 			LOG.error(error);
 			throw new IllegalStateException(error);
 		}
@@ -92,88 +93,26 @@ public class SharedTable implements HTableInterface {
 
 		dealer = new SharemindDealer(sharedConfig.getNBits());
 		this.tableName = tableName;
+		this.schema = schema;
 	}
 
 	/**
-	 * TODO:The put has to check if there is a key with the same value
-	 * 
+	 *
 	 * @param put
 	 * @throws java.io.InterruptedIOException
 	 * @throws RetriesExhaustedWithDetailsException
 	 */
 	public void put(final Put put) throws IOException {
-		LOG.debug("Going to do put operation");
-		byte[] row = put.getRow();
-		Lock writeLock = TABLE_LOCKS.writeLock(tableName);
-		writeLock.lock();
-		LOG.debug(Thread.currentThread().getId() + " Put after Lock");
-		try {
-
-			LOG.debug("Checking if cache contains value for row " + row
-					+ " in table " + tableName);
-			boolean rowInCache = CACHE.containsKey(tableName, row);
-			LOG.debug("Row in cache is " + rowInCache);
-
-			byte[] putRow;
-			if (rowInCache) {
-				Long longID = CACHE.get(tableName, row);
-				LOG.debug("Found unique id on CACHE " + longID);
-				putRow = convKey(longID);
-			} else {
-				Get get = new Get(row);
-
-				MultiGet mGet = handleGet(get, false, null);
-				Result res = mGet.getResult();
-				Long rowID;
-
-				if (res.isEmpty()) {
-					LOG.debug("No value stored on the database");
-					rowID = getNextRowIdentifier();
-					putRow = convKey(rowID);
-					LOG.debug("Storing unique id " + rowID
-							+ " on cache with key " + row + " for table"
-							+ tableName);
-					/**
-					 * The row as not been inserted on HBase yet, so insert in
-					 * the cache before storing in the db.
-					 */
-					CACHE.put(tableName, row, rowID);
-				} else {
-					LOG.debug("An identifier already exists " + res.getRow()
-							+ " with unique key " + mGet.getUniqueRowId());
-					/**
-					 * Row is already inserted in the cache on the handleGet
-					 * function if the result is not empty.
-					 */
-					putRow = convKey(mGet.getUniqueRowId());
-				}
-			}
-			LOG.debug("Going to handlePut");
-			handlePut(putRow, put);
-		} finally {
-			LOG.debug("Exiting put function");
-			writeLock.unlock();
+		try{
+            new MultiPut(this.sharedConfig, connections, put, schema).doOperation();
+        } catch (InvalidSecretValue | InterruptedException | InvalidNumberOfBits ex) {
+            LOG.error(ex);
+            throw new IllegalStateException(ex);
 		}
+    }
 
-	}
 
-	private void handlePut(byte[] rowID, final Put put) throws IOException {
-		try {
 
-			List<byte[]> secrets = getSecretKey(put.getRow());
-			Long requestID = getRequestId();
-			MultiPut mput = new MultiPut(this.sharedConfig, connections,
-					secrets, requestID, 1, put, rowID);
-			mput.doOperation();
-		} catch (InvalidSecretValue ex) {
-			LOG.error(ex);
-			throw new IllegalStateException(ex);
-		} catch (InterruptedException ex) {
-			LOG.error(ex);
-			throw new IllegalStateException(ex);
-
-		}
-	}
 
 	public void scanAndPrint(int id) throws IOException {
 		Scan scan = new Scan();
@@ -193,29 +132,7 @@ public class SharedTable implements HTableInterface {
 	}
 
 	public Result get(Get get) throws IOException {
-		LOG.debug("Going to do get operation");
-		byte[] row = get.getRow();
-		Lock readLock = TABLE_LOCKS.readLock(tableName);
-		readLock.lock();
-		Result res;
 
-		try {
-			boolean rowInCache = CACHE.containsKey(tableName, row);
-
-			if (rowInCache) {
-				Long rowID = CACHE.get(tableName, row);
-				LOG.debug(Thread.currentThread().getId()
-						+ " Retrieved unique id on cache " + rowID);
-				res = handleGet(get, true, convKey(rowID)).getResult();
-			} else {
-				LOG.debug(Thread.currentThread().getId()
-						+ " Key not stored on cache");
-				res = handleGet(get, false, null).getResult();
-			}
-		} finally {
-			readLock.unlock();
-		}
-		return res;
 	}
 
 	private MultiGet handleGet(Get get, boolean isCached, byte[] cachedID) {
@@ -546,4 +463,8 @@ public class SharedTable implements HTableInterface {
 
 	}
 
+	@Override
+	public HRegionLocation getRegionLocation(byte[] row) throws IOException {
+		return null;
+	}
 }

@@ -4,13 +4,12 @@ import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties;
+import pt.uminho.haslab.safemapper.DatabaseSchema.CryptoType;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by rgmacedo on 5/23/17.
- */
+
 public class SecureFilterList implements SecureFilterProperties {
     CryptoProperties cryptoProperties;
 
@@ -19,7 +18,7 @@ public class SecureFilterList implements SecureFilterProperties {
     }
 
     @Override
-    public Filter buildEncryptedFilter(Filter plaintextFilter, CryptoTechnique.CryptoType cryptoType) {
+    public Filter buildEncryptedFilter(Filter plaintextFilter, CryptoType cryptoType) {
         FilterList plaintextFilterList = (FilterList) plaintextFilter;
         List<Filter> fList = plaintextFilterList.getFilters();
         List<Filter> encryptedFList = new ArrayList<>(fList.size());
@@ -28,7 +27,7 @@ public class SecureFilterList implements SecureFilterProperties {
             Filter eFilter;
             switch(SecureFilterConverter.getFilterType(f)) {
                 case RowFilter:
-                    CryptoTechnique.CryptoType rfCryptoType = new SecureRowFilter(this.cryptoProperties).getFilterCryptoType(f);
+                    CryptoType rfCryptoType = new SecureRowFilter(this.cryptoProperties).getFilterCryptoType(f);
                     eFilter = new SecureRowFilter(this.cryptoProperties).buildEncryptedFilter(f, rfCryptoType);
                     if(eFilter == null) {
                         throw new UnsupportedOperationException("Filter operation not supported for the Cryptographic Techniques specified.");
@@ -37,7 +36,7 @@ public class SecureFilterList implements SecureFilterProperties {
                     }
                     break;
                 case SingleColumnValueFilter:
-                    CryptoTechnique.CryptoType scvCryptoType = new SecureSingleColumnValueFilter(this.cryptoProperties).getFilterCryptoType(f);
+                    CryptoType scvCryptoType = new SecureSingleColumnValueFilter(this.cryptoProperties).getFilterCryptoType(f);
                     eFilter = new SecureSingleColumnValueFilter(this.cryptoProperties).buildEncryptedFilter(f, scvCryptoType);
                     if(eFilter == null) {
                         throw new UnsupportedOperationException("Filter operation not supported for the Cryptographic Techniques specified.");
@@ -56,12 +55,12 @@ public class SecureFilterList implements SecureFilterProperties {
     }
 
     @Override
-    public Object parseFilter(Filter plaintextFilter, CryptoTechnique.CryptoType cryptoType) {
+    public Object parseFilter(Filter plaintextFilter, CryptoType cryptoType) {
         return null;
     }
 
     @Override
-    public CryptoTechnique.CryptoType getFilterCryptoType(Filter plaintextFilter) {
+    public CryptoType getFilterCryptoType(Filter plaintextFilter) {
 //        throw new NullPointerException("getFilterCryptoType: PORQUE É QUE EU FUI CHAMADO?????");
         return this.cryptoProperties.tableSchema.getKey().getCryptoType();
     }

@@ -56,7 +56,7 @@ public class ShareBenchTest implements BenchClient {
 		}
 		System.out.println("Resources added");
 		// Boot the clusters
-		clusters = new ShareCluster(resources);
+		clusters = new ShareCluster(resources,1);
 		Configuration conf = new Configuration();
 		conf.addResource("hbase-client.xml");
 		admin = new SharedAdmin(conf);

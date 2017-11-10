@@ -3,32 +3,28 @@ package pt.uminho.haslab.safecloudclient.shareclient.conccurentops;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
 import pt.uminho.haslab.safecloudclient.shareclient.SharedClientConfiguration;
+import pt.uminho.haslab.safemapper.TableSchema;
 
 public class MultiGet extends MultiOP {
 
-	private final List<byte[]> secrets;
 	private Result result;
-	private final boolean isCached;
-	private final byte[] cachedID;
+	private Get originalGet;
 
-	public MultiGet(SharedClientConfiguration config, List<HTable> connections,
-			List<byte[]> secrets, long requestID, int targetPlayer,
-			boolean isCached, byte[] cachedID) {
-		super(config, connections, requestID, targetPlayer);
-		this.secrets = secrets;
+	public MultiGet(SharedClientConfiguration config, List<HTable> connections, TableSchema schema, Get get) {
+		super(config, connections, schema);
 		result = Result.EMPTY_RESULT;
-		this.isCached = isCached;
-		this.cachedID = cachedID;
+		this.originalGet = get;
 	}
 
 	@Override
 	protected Thread queryThread(SharedClientConfiguration config,
 			HTable table, int index) {
-		return new GetThread(config, table, secrets.get(index), requestID,
-				targetPlayer, isCached, cachedID);
+		return new GetThread(config, table, originalGet);
 	}
 
 	public Result getResult() {

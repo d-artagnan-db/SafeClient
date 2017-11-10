@@ -59,7 +59,7 @@ public class DefaultHBaseClient implements TestClient {
 		 * as a default HBase minicluster.
 		 * 
 		 */
-		clusters = new ShareCluster(resources);
+		clusters = new ShareCluster(resources, 1);
 	}
 
 	public void stopCluster() throws IOException {

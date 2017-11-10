@@ -1,14 +1,9 @@
 package pt.uminho.haslab.safecloudclient.cryptotechnique.securefilterfactory;
 
 import org.apache.hadoop.hbase.filter.*;
-import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.CryptoProperties;
+import pt.uminho.haslab.safemapper.DatabaseSchema.CryptoType;
 
-import java.util.List;
-
-/**
- * Created by rgmacedo on 5/23/17.
- */
 public class SecureFilterConverter implements SecureFilterProperties{
 
     CryptoProperties cryptoProperties;
@@ -28,7 +23,7 @@ public class SecureFilterConverter implements SecureFilterProperties{
 
 
     @Override
-    public Filter buildEncryptedFilter(Filter plaintextFilter, CryptoTechnique.CryptoType cType) {
+    public Filter buildEncryptedFilter(Filter plaintextFilter, CryptoType cType) {
         FilterType fType = getFilterType(plaintextFilter);
         if(fType != null) {
             switch (fType) {
@@ -50,7 +45,7 @@ public class SecureFilterConverter implements SecureFilterProperties{
     }
 
     @Override
-    public Object parseFilter(Filter plaintextFilter, CryptoTechnique.CryptoType cryptoType) {
+    public Object parseFilter(Filter plaintextFilter, CryptoType cryptoType) {
         FilterType fType = getFilterType(plaintextFilter);
         if(fType != null) {
             switch (fType) {
@@ -72,7 +67,7 @@ public class SecureFilterConverter implements SecureFilterProperties{
     }
 
     @Override
-    public CryptoTechnique.CryptoType getFilterCryptoType(Filter plaintextFilter) {
+    public CryptoType getFilterCryptoType(Filter plaintextFilter) {
         FilterType filterType = getFilterType(plaintextFilter);
         if(filterType != null) {
             switch (filterType) {

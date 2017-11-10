@@ -1,24 +1,35 @@
 package pt.uminho.haslab.safecloudclient.cryptotechnique;
 
+import com.google.protobuf.Descriptors;
+import com.google.protobuf.Message;
+import com.google.protobuf.Service;
+import com.google.protobuf.ServiceException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.client.coprocessor.Batch;
+import org.apache.hadoop.hbase.filter.CompareFilter;
+import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
 import org.apache.hadoop.hbase.util.Bytes;
-import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 import pt.uminho.haslab.cryptoenv.Utils;
+import pt.uminho.haslab.safecloudclient.ExtendedHTable;
+import pt.uminho.haslab.safecloudclient.ExtendedHTableImpl;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.resultscanner.ResultScannerFactory;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.securefilterfactory.SecureFilterConverter;
-import pt.uminho.haslab.safecloudclient.schema.Family;
-import pt.uminho.haslab.safecloudclient.schema.Key;
-import pt.uminho.haslab.safecloudclient.schema.SchemaParser;
-import pt.uminho.haslab.safecloudclient.schema.TableSchema;
+import pt.uminho.haslab.safecloudclient.shareclient.SharedTable;
+import pt.uminho.haslab.safemapper.DatabaseSchema;
+import pt.uminho.haslab.safemapper.Family;
+import pt.uminho.haslab.safemapper.Key;
+import pt.uminho.haslab.safemapper.TableSchema;
+import pt.uminho.haslab.safemapper.DatabaseSchema.CryptoType;
+import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InterruptedIOException;
+import java.io.UnsupportedEncodingException;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -27,36 +38,43 @@ import java.util.concurrent.locks.ReentrantLock;
  * CryptoTable class.
  * Provides a secure extended version of an HBase HTable
  */
-public class CryptoTable extends HTable {
+public class CryptoTable implements HTableInterface {
 	static final Log LOG = LogFactory.getLog(CryptoTable.class.getName());
 
-	public CryptoProperties cryptoProperties;
-	public ResultScannerFactory resultScannerFactory;
-	public HTableFeaturesUtils htableUtils;
-	public SecureFilterConverter secureFilterConverter;
+	private CryptoProperties cryptoProperties;
+	private ResultScannerFactory resultScannerFactory;
+	private  HTableFeaturesUtils htableUtils;
+	private SecureFilterConverter secureFilterConverter;
+	private TableSchema tableSchema;
+	private ExtendedHTable htable;
 
 	private static Map<String, Object> databaseDefaultProperties;
-	private static Map<String,TableSchema> databaseSchema;
+	private static DatabaseSchema databaseSchema;
 	private static final Lock lock = new ReentrantLock();
 	private static boolean parsingComplete = false;
 
 	private static boolean keyAcknowledgement = false;
 	private static byte[] cryptographicKey;
 
-	public TableSchema tableSchema;
 
 
-	public CryptoTable(Configuration conf, String tableName) throws IOException {
-		super(conf, TableName.valueOf(tableName));
+	public CryptoTable(Configuration conf, String tableName) throws IOException, InvalidNumberOfBits {
+		//super(conf, TableName.valueOf(tableName));
+		String tableType = conf.get("baseTable");
 		String schemaProperty = conf.get("schema");
 
+		if(tableType.equals("HTable")){
+		    htable = new ExtendedHTableImpl(conf, tableName);
+        }else if(tableType.equals("SharedTable")){
+		    htable = new SharedTable(conf, tableName);
+        }
 		this.setSchema(conf, schemaProperty, tableName);
 
 //		While the cryptographic keys management is not defined, read keys from specific files
 //		arrange cryptographic keys properties
 		this.setCryptographicKey(conf);
 
-		for(CryptoTechnique.CryptoType cryptoType : this.tableSchema.getEnabledCryptoTypes()) {
+		for(CryptoType cryptoType : this.tableSchema.getEnabledCryptoTypes()) {
 			this.cryptoProperties.setKey(cryptoType, cryptographicKey);
 		}
 
@@ -64,18 +82,21 @@ public class CryptoTable extends HTable {
 		this.resultScannerFactory = new ResultScannerFactory();
 		this.secureFilterConverter = new SecureFilterConverter(this.cryptoProperties);
 		this.htableUtils = new HTableFeaturesUtils(this.cryptoProperties, this.secureFilterConverter);
+
+
 	}
 
-	private void setSchema(Configuration conf, String schemaProperty, String tableName) throws FileNotFoundException {
+	private void setSchema(Configuration conf, String schemaProperty, String tableName) throws FileNotFoundException, UnsupportedEncodingException {
 		if(schemaProperty != null && !schemaProperty.isEmpty()) {
 			while(!parsingComplete) {
 				try {
 					lock.lock();
 					if (!parsingComplete) {
 						File file = new File(schemaProperty);
-						LOG.debug("Thread-"+Thread.currentThread().getId() + ":build database schema.");
 //						TODO: jtpaulo - Qual era o problema c/ a leitura da chave e do configuration file.
-						this.buildDatabaseSchema(file.getPath());
+                        databaseSchema = new DatabaseSchema(file.getPath());
+                        databaseDefaultProperties = new HashMap<>();
+                        databaseDefaultProperties = databaseSchema.getDatabaseDefaultProperties();
 						parsingComplete = true;
 					}
 
@@ -131,36 +152,16 @@ public class CryptoTable extends HTable {
 
 	}
 
-	/**
-	 * init(String filename) method : read and creates a database secure schema
-	 * @param filename path to the database schema
-	 * @return TableSchema object
-	 */
-	private void buildDatabaseSchema(String filename) {
-		if (filename == null) {
-			throw new NullPointerException("Schema file name cannot be null.");
-		}
-
-		SchemaParser schemaParser = new SchemaParser();
-		schemaParser.parseDatabaseTables(filename);
-
-		databaseSchema = new HashMap<>();
-		databaseSchema = schemaParser.getSchemas();
-
-		databaseDefaultProperties = new HashMap<>();
-		databaseDefaultProperties = schemaParser.getDatabaseDefaultProperties();
-
-	}
 
 	private TableSchema getTableSchema(String tablename) {
-		return databaseSchema.get(tablename);
+		return databaseSchema.getTableSchema(tablename);
 	}
 
 	private TableSchema generateDefaultTableSchema(String tablename, Configuration conf) {
 		TableSchema temp = new TableSchema();
 		temp.setTablename(tablename);
-		temp.setDefaultKeyCryptoType((CryptoTechnique.CryptoType) databaseDefaultProperties.get("defaultPropertiesKey"));
-		temp.setDefaultColumnsCryptoType((CryptoTechnique.CryptoType) databaseDefaultProperties.get("defaultPropertiesColumns"));
+		temp.setDefaultKeyCryptoType((CryptoType) databaseDefaultProperties.get("defaultPropertiesKey"));
+		temp.setDefaultColumnsCryptoType((CryptoType) databaseDefaultProperties.get("defaultPropertiesColumns"));
 		temp.setDefaultKeyFormatSize((Integer) databaseDefaultProperties.get("defaultPropertiesKeyFormatSize"));
 		temp.setDefaultColumnFormatSize((Integer) databaseDefaultProperties.get("defaultPropertiesColFormatSize"));
 		temp.setDefaultKeyPadding((Boolean) databaseDefaultProperties.get("defaultPropertiesKeyPadding"));
@@ -170,7 +171,7 @@ public class CryptoTable extends HTable {
 //		FIXME: does not contemplate FPE
 		temp.setKey(
 				new Key(
-						(CryptoTechnique.CryptoType) databaseDefaultProperties.get("defaultPropertiesKey"),
+						(CryptoType) databaseDefaultProperties.get("defaultPropertiesKey"),
 						(Integer) databaseDefaultProperties.get("defaultPropertiesKeyFormatSize"),
 						(Boolean) databaseDefaultProperties.get("defaultPropertiesKeyPadding")));
 
@@ -196,7 +197,7 @@ public class CryptoTable extends HTable {
 				for(HColumnDescriptor hcol :columnDescriptors) {
 					Family tempFamily = new Family(
 							hcol.getNameAsString(),
-							(CryptoTechnique.CryptoType) databaseDefaultProperties.get("defaultPropertiesColumns"),
+							(CryptoType) databaseDefaultProperties.get("defaultPropertiesColumns"),
 							(Integer) databaseDefaultProperties.get("defaultPropertiesColFormatSize"),
 							(Boolean) databaseDefaultProperties.get("defaultPropertiesColumnPadding"));
 					temp.addFamily(tempFamily);
@@ -231,7 +232,7 @@ public class CryptoTable extends HTable {
 				finalPut = put;
 			}
 
-			super.put(finalPut);
+			htable.put(finalPut);
 
 		} catch (Exception e) {
 			LOG.error("Exception in put method. " + e.getMessage());
@@ -251,7 +252,7 @@ public class CryptoTable extends HTable {
 				finalPutList = puts;
 			}
 
-			super.put(finalPutList);
+			htable.put(finalPutList);
 
 		} catch (Exception e) {
 			LOG.error("Exception in put (batch) method. " + e.getMessage());
@@ -284,7 +285,7 @@ public class CryptoTable extends HTable {
 					case DET:
 					case OPE:
 					case FPE:
-						Result encryptedResult = super.get((Get) encodedGet);
+						Result encryptedResult = htable.get((Get) encodedGet);
 						getResult = this.decodeGetObject(encryptedResult, row);
 						break;
 					default:
@@ -292,7 +293,7 @@ public class CryptoTable extends HTable {
 				}
 
 			} else {
-				getResult = super.get(get);
+				getResult = htable.get(get);
 			}
 		} catch (Exception e) {
 			LOG.error("Exception in get method. " + e.getMessage());
@@ -332,7 +333,7 @@ public class CryptoTable extends HTable {
 //				Second phase: call super() to batch the Get's List
 				switch (this.cryptoProperties.tableSchema.getKey().getCryptoType()) {
 					case STD:
-						ResultScanner encryptedScan = super.getScanner(new Scan());
+						ResultScanner encryptedScan = htable.getScanner(new Scan());
 						int noMoreGetObjects = 0;
 
 						for (Result r = encryptedScan.next(); r != null; r = encryptedScan.next()) {
@@ -355,7 +356,7 @@ public class CryptoTable extends HTable {
 					case DET:
 					case OPE:
 					case FPE:
-						Result[] encryptedResults = super.get(encryptedGets);
+						Result[] encryptedResults = htable.get(encryptedGets);
 						for (int i = 0; i < encryptedResults.length; i++) {
 	//						Third phase: decode result
 							results[i] = this.decodeGetObject(encryptedResults[i]);
@@ -365,7 +366,7 @@ public class CryptoTable extends HTable {
 						break;
 				}
 			} else {
-				results = super.get(gets);
+				results = htable.get(gets);
 			}
 		} catch (Exception e) {
 			LOG.error("Exception in get method. " + e.getMessage());
@@ -390,11 +391,11 @@ public class CryptoTable extends HTable {
 //				Verify the Row-Key CryptoBox
 				switch (this.cryptoProperties.tableSchema.getKey().getCryptoType()) {
 					case STD:
-						ResultScanner encScan = super.getScanner(new Scan());
+						ResultScanner encScan = htable.getScanner(new Scan());
 						for (Result r = encScan.next(); r != null; r = encScan.next()) {
 							byte[] resultRowKey = this.cryptoProperties.decodeRow(r.getRow());
 							if (Arrays.equals(row, resultRowKey)) {
-								super.delete(this.encodeDeleteObject(row, hcolumnsToDelete));
+								htable.delete(this.encodeDeleteObject(row, hcolumnsToDelete));
 								break;
 							}
 						}
@@ -403,13 +404,13 @@ public class CryptoTable extends HTable {
 					case DET:
 					case OPE:
 					case FPE:
-						super.delete(this.encodeDeleteObject(row, hcolumnsToDelete));
+						htable.delete(this.encodeDeleteObject(row, hcolumnsToDelete));
 						break;
 					default:
 						break;
 				}
 			} else {
-				super.delete(delete);
+				htable.delete(delete);
 			}
 		} catch (Exception e) {
 			LOG.error("Exception in delete method. " + e.getMessage());
@@ -421,11 +422,11 @@ public class CryptoTable extends HTable {
 		try {
 			if (this.tableSchema.getEncryptionMode()) {
 				List<Delete> encryptedDeletes = new ArrayList<>(deletes.size());
-				CryptoTechnique.CryptoType cType = this.cryptoProperties.tableSchema.getKey().getCryptoType();
+				CryptoType cType = this.cryptoProperties.tableSchema.getKey().getCryptoType();
 
-				if (cType == CryptoTechnique.CryptoType.STD) {
+				if (cType == CryptoType.STD) {
 					int noMoreDeleteObjects = 0;
-					ResultScanner encryptedScanner = super.getScanner(new Scan());
+					ResultScanner encryptedScanner = htable.getScanner(new Scan());
 
 					for (Result r = encryptedScanner.next(); r != null; r = encryptedScanner.next()) {
 						if (noMoreDeleteObjects != deletes.size()) {
@@ -449,9 +450,9 @@ public class CryptoTable extends HTable {
 					}
 				}
 
-				super.delete(encryptedDeletes);
+				htable.delete(encryptedDeletes);
 			} else {
-				super.delete(deletes);
+				htable.delete(deletes);
 			}
 
 		} catch(Exception e) {
@@ -478,7 +479,7 @@ public class CryptoTable extends HTable {
 				Scan encScan = this.htableUtils.buildEncryptedScan(scan);
 				encScan.setCaching(scan.getCaching());
 
-				ResultScanner encryptedResultScanner = super.getScanner(encScan);
+				ResultScanner encryptedResultScanner = htable.getScanner(encScan);
 //				Return the corresponding result scanner to decrypt the resulting set of values
 				result = this.resultScannerFactory.getResultScanner(
 						this.htableUtils.verifyFilterCryptoType(scan),
@@ -489,7 +490,7 @@ public class CryptoTable extends HTable {
 						this.htableUtils.parseFilter(scan.getFilter()));
 
 			} else {
-				result = super.getScanner(scan);
+				result = htable.getScanner(scan);
 			}
 		} catch (Exception e) {
 			LOG.error("Exception in scan method. " + e.getMessage());
@@ -498,9 +499,18 @@ public class CryptoTable extends HTable {
 	}
 
 	@Override
+	public ResultScanner getScanner(byte[] bytes) throws IOException {
+		return null;
+	}
+
+	@Override
+	public ResultScanner getScanner(byte[] bytes, byte[] bytes1) throws IOException {
+		return null;
+	}
+
+	@Override
 	public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier, byte[] value, Put put) {
 		boolean operationPerformed = false;
-
 		try {
 			if (this.tableSchema.getEncryptionMode()) {
 				this.htableUtils.verifyNullableByteArray(row);
@@ -511,7 +521,7 @@ public class CryptoTable extends HTable {
 				switch (this.tableSchema.getKey().getCryptoType()) {
 					case STD:
 //						step 1 : get all stored values
-						ResultScanner rs = super.getScanner(new Scan());
+						ResultScanner rs = htable.getScanner(new Scan());
 //						step 2 : check if specified row exists
 						for (Result r = rs.next(); r != null; r = rs.next()) {
 							byte[] resultRow = this.cryptoProperties.decodeRow(r.getRow());
@@ -530,7 +540,7 @@ public class CryptoTable extends HTable {
 											throw new NullPointerException("Put object cannot be null");
 										}
 //										Call super
-										operationPerformed = super.checkAndPut(r.getRow(), family, qualifier, encryptedValue, encryptedPut);
+										operationPerformed = htable.checkAndPut(r.getRow(), family, qualifier, encryptedValue, encryptedPut);
 									}
 								} else {
 									throw new NullPointerException("No matching Cell for the family and qualifier specified.");
@@ -546,8 +556,8 @@ public class CryptoTable extends HTable {
 //						step 1 : encrypt row and value
 						byte[] encryptedRow = this.cryptoProperties.encodeRow(row);
 						byte[] encryptedValue;
-						if (cryptoProperties.tableSchema.getCryptoTypeFromQualifier(new String(family), new String(qualifier)) == CryptoTechnique.CryptoType.STD) {
-							Result encryptedResult = super.get(new Get(encryptedRow));
+						if (cryptoProperties.tableSchema.getCryptoTypeFromQualifier(new String(family), new String(qualifier)) == CryptoType.STD) {
+							Result encryptedResult = htable.get(new Get(encryptedRow));
 							Result temp_result = this.cryptoProperties.decodeResult(row, encryptedResult);
 							byte[] temp_val = temp_result.getValue(family, qualifier);
 
@@ -569,13 +579,13 @@ public class CryptoTable extends HTable {
 							throw new NullPointerException("Put object cannot be null");
 						}
 //						step 3 : call super
-						operationPerformed = super.checkAndPut(encryptedRow, family, qualifier, encryptedValue, encryptedPut);
+						operationPerformed = htable.checkAndPut(encryptedRow, family, qualifier, encryptedValue, encryptedPut);
 						break;
 					default:
 						break;
 				}
 			} else {
-				operationPerformed = super.checkAndPut(row, family, qualifier, value, put);
+				operationPerformed = htable.checkAndPut(row, family, qualifier, value, put);
 			}
 		} catch (Exception e) {
 			LOG.error("Exception in checkAndPut method. "+e.getMessage());
@@ -597,14 +607,14 @@ public class CryptoTable extends HTable {
 
 				switch (this.tableSchema.getCryptoTypeFromQualifier(temp_family, temp_qualifier)) {
 					case PLT:
-						if (this.cryptoProperties.tableSchema.getKey().getCryptoType() != CryptoTechnique.CryptoType.STD) {
-							operationValue = super.incrementColumnValue(this.cryptoProperties.encodeRow(row), family, qualifier, amount);
+						if (this.cryptoProperties.tableSchema.getKey().getCryptoType() != CryptoType.STD) {
+							operationValue = htable.incrementColumnValue(this.cryptoProperties.encodeRow(row), family, qualifier, amount);
 						} else {
-							ResultScanner stdScanner = super.getScanner(new Scan());
+							ResultScanner stdScanner = htable.getScanner(new Scan());
 							for (Result r = stdScanner.next(); r != null; r = stdScanner.next()) {
 								byte[] aux = this.cryptoProperties.decodeRow(r.getRow());
 								if (Arrays.equals(row, aux)) {
-									operationValue = super.incrementColumnValue(r.getRow(), family, qualifier, amount);
+									operationValue = htable.incrementColumnValue(r.getRow(), family, qualifier, amount);
 									break;
 								}
 							}
@@ -619,7 +629,7 @@ public class CryptoTable extends HTable {
 						break;
 				}
 			} else {
-				operationValue = super.incrementColumnValue(row, family, qualifier, amount);
+				operationValue = htable.incrementColumnValue(row, family, qualifier, amount);
 			}
 		} catch (IOException e) {
 			LOG.error("Exception in incrementColumnValue method. "+e.getMessage());
@@ -627,7 +637,6 @@ public class CryptoTable extends HTable {
 		return operationValue;
 	}
 
-	@Override
 	public HRegionLocation getRegionLocation(byte[] row) {
 		HRegionLocation hRegionLocation = null;
 		try {
@@ -639,12 +648,12 @@ public class CryptoTable extends HTable {
 				switch (this.tableSchema.getKey().getCryptoType()) {
 					case STD:
 						HRegionLocation stdHRegionLocation = null;
-						ResultScanner rs = super.getScanner(new Scan());
+						ResultScanner rs = htable.getScanner(new Scan());
 						for (Result r = rs.next(); r != null; r = rs.next()) {
 							if (!r.isEmpty()) {
 								byte[] temp_row = this.cryptoProperties.decodeRow(r.getRow());
 								if (Arrays.equals(temp_row, row)) {
-									stdHRegionLocation = super.getRegionLocation(r.getRow());
+									stdHRegionLocation = htable.getRegionLocation(r.getRow());
 									break;
 								}
 							}
@@ -655,13 +664,13 @@ public class CryptoTable extends HTable {
 					case DET:
 					case OPE:
 					case FPE:
-						hRegionLocation = super.getRegionLocation(this.cryptoProperties.encodeRow(row));
+						hRegionLocation = htable.getRegionLocation(this.cryptoProperties.encodeRow(row));
 						break;
 					default:
 						break;
 				}
 			} else {
-				hRegionLocation = super.getRegionLocation(row);
+				hRegionLocation = htable.getRegionLocation(row);
 			}
 		} catch (Exception e) {
 			LOG.error("Exception in getRegionLocation method. "+e.getMessage());
@@ -681,7 +690,7 @@ public class CryptoTable extends HTable {
 					case STD:
 					case DET:
 					case FPE:
-						ResultScanner rs = super.getScanner(new Scan());
+						ResultScanner rs = htable.getScanner(new Scan());
 						byte[] encryptedRowBefore = null;
 						byte[] plaintextRowBefore = null;
 						byte[] decodedRow;
@@ -690,7 +699,7 @@ public class CryptoTable extends HTable {
 						for (Result r = rs.next(); r != null; r = rs.next()) {
 							decodedRow = this.cryptoProperties.decodeRow(r.getRow());
 							if (Arrays.equals(decodedRow, row)) {
-								encResult = super.getRowOrBefore(r.getRow(), family);
+								encResult = htable.getRowOrBefore(r.getRow(), family);
 								break;
 							} else {
 								if (plaintextRowBefore == null) {
@@ -704,21 +713,21 @@ public class CryptoTable extends HTable {
 						}
 
 						if (encResult == null) {
-							encResult = super.getRowOrBefore(encryptedRowBefore, family);
+							encResult = htable.getRowOrBefore(encryptedRowBefore, family);
 						}
 
 						result = this.cryptoProperties.decodeResult(this.cryptoProperties.decodeRow(encResult.getRow()), encResult);
 						break;
 					case PLT:
 					case OPE:
-						Result encryptedResult = super.getRowOrBefore(this.cryptoProperties.encodeRow(row), family);
+						Result encryptedResult = htable.getRowOrBefore(this.cryptoProperties.encodeRow(row), family);
 						result = this.cryptoProperties.decodeResult(this.cryptoProperties.decodeRow(encryptedResult.getRow()), encryptedResult);
 						break;
 					default:
 						break;
 				}
 			} else {
-				result = super.getRowOrBefore(row, family);
+				result = htable.getRowOrBefore(row, family);
 			}
 		} catch (Exception e) {
 			LOG.error("Exception in getRowOrBefore method. " + e.getMessage());
@@ -747,7 +756,7 @@ public class CryptoTable extends HTable {
 					Scan stdGetScan = new Scan();
 					this.htableUtils.wrapHColumnDescriptors(stdGetScan, columns);
 
-					result = super.getScanner(stdGetScan);
+					result = htable.getScanner(stdGetScan);
 
 					break;
 				case PLT:
@@ -832,5 +841,156 @@ public class CryptoTable extends HTable {
 		this.htableUtils.wrapDeletedCells(hcolumnsToDelete, encryptedObject);
 		return encryptedObject;
 	}
+
+
+    @Override
+    public byte[] getTableName() {
+        return htable.getTableName();
+    }
+
+    @Override
+    public TableName getName() {
+        return htable.getName();
+    }
+
+    @Override
+    public Configuration getConfiguration() {
+        return htable.getConfiguration();
+    }
+
+    @Override
+    public HTableDescriptor getTableDescriptor() throws IOException {
+        return htable.getTableDescriptor();
+    }
+
+    @Override
+    public boolean exists(Get get) throws IOException {
+        return htable.exists(get);
+    }
+
+    @Override
+    public Boolean[] exists(List<Get> list) throws IOException {
+        return htable.exists(list);
+    }
+
+    @Override
+    public void batch(List<? extends Row> list, Object[] objects) throws IOException, InterruptedException {
+        htable.batch(list, objects);
+    }
+
+    @Override
+    public Object[] batch(List<? extends Row> list) throws IOException, InterruptedException {
+        return htable.batch(list);
+    }
+
+    @Override
+    public <R> void batchCallback(List<? extends Row> list, Object[] objects, Batch.Callback<R> callback) throws IOException, InterruptedException {
+        htable.batchCallback(list, objects, callback);
+    }
+
+    @Override
+    public <R> Object[] batchCallback(List<? extends Row> list, Batch.Callback<R> callback) throws IOException, InterruptedException {
+        return htable.batchCallback(list, callback);
+    }
+
+    @Override
+    public boolean checkAndDelete(byte[] bytes, byte[] bytes1, byte[] bytes2, byte[] bytes3, Delete delete) throws IOException {
+        return htable.checkAndDelete(bytes, bytes1, bytes2, bytes3, delete);
+    }
+
+    @Override
+    public void mutateRow(RowMutations rowMutations) throws IOException {
+        htable.mutateRow(rowMutations);
+    }
+
+    @Override
+    public Result append(Append append) throws IOException {
+        return htable.append(append);
+    }
+
+    @Override
+    public Result increment(Increment increment) throws IOException {
+        return htable.increment(increment);
+    }
+
+    @Override
+    public long incrementColumnValue(byte[] bytes, byte[] bytes1, byte[] bytes2, long l, Durability durability) throws IOException {
+        return htable.incrementColumnValue(bytes, bytes1, bytes2, l, durability);
+    }
+
+    @Override
+    public long incrementColumnValue(byte[] bytes, byte[] bytes1, byte[] bytes2, long l, boolean b) throws IOException {
+        return htable.incrementColumnValue(bytes, bytes1, bytes2, l, b);
+    }
+
+    @Override
+    public boolean isAutoFlush() {
+        return htable.isAutoFlush();
+    }
+
+    @Override
+    public void flushCommits() throws IOException {
+         htable.flushCommits();
+    }
+
+    @Override
+    public void close() throws IOException {
+        htable.close();
+    }
+
+    @Override
+    public CoprocessorRpcChannel coprocessorService(byte[] bytes) {
+        return htable.coprocessorService(bytes);
+    }
+
+    @Override
+    public <T extends Service, R> Map<byte[], R> coprocessorService(Class<T> aClass, byte[] bytes, byte[] bytes1, Batch.Call<T, R> call) throws ServiceException, Throwable {
+        return htable.coprocessorService(aClass, bytes, bytes1, call);
+    }
+
+    @Override
+    public <T extends Service, R> void coprocessorService(Class<T> aClass, byte[] bytes, byte[] bytes1, Batch.Call<T, R> call, Batch.Callback<R> callback) throws ServiceException, Throwable {
+        htable.coprocessorService(aClass, bytes, bytes1, call, callback);
+    }
+
+    @Override
+    public void setAutoFlush(boolean b) {
+        htable.setAutoFlush(b);
+    }
+
+    @Override
+    public void setAutoFlush(boolean b, boolean b1) {
+        htable.setAutoFlush(b, b1);
+    }
+
+    @Override
+    public void setAutoFlushTo(boolean b) {
+        htable.setAutoFlush(b);
+    }
+
+    @Override
+    public long getWriteBufferSize() {
+        return htable.getWriteBufferSize();
+    }
+
+    @Override
+    public void setWriteBufferSize(long l) throws IOException {
+        htable.setWriteBufferSize(l);
+    }
+
+    @Override
+    public <R extends Message> Map<byte[], R> batchCoprocessorService(Descriptors.MethodDescriptor methodDescriptor, Message message, byte[] bytes, byte[] bytes1, R r) throws ServiceException, Throwable {
+        return htable.batchCoprocessorService(methodDescriptor, message, bytes, bytes1, r);
+    }
+
+    @Override
+    public <R extends Message> void batchCoprocessorService(Descriptors.MethodDescriptor methodDescriptor, Message message, byte[] bytes, byte[] bytes1, R r, Batch.Callback<R> callback) throws ServiceException, Throwable {
+        htable.batchCoprocessorService(methodDescriptor, message, bytes, bytes1, r, callback);
+    }
+
+    @Override
+    public boolean checkAndMutate(byte[] bytes, byte[] bytes1, byte[] bytes2, CompareFilter.CompareOp compareOp, byte[] bytes3, RowMutations rowMutations) throws IOException {
+        return  htable.checkAndMutate(bytes, bytes1, bytes2, compareOp, bytes3, rowMutations);
+    }
 
 }

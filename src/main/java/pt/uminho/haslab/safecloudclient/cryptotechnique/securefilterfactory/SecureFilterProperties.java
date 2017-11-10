@@ -1,17 +1,15 @@
 package pt.uminho.haslab.safecloudclient.cryptotechnique.securefilterfactory;
 
 import org.apache.hadoop.hbase.filter.Filter;
-import pt.uminho.haslab.cryptoenv.CryptoTechnique;
+import pt.uminho.haslab.safemapper.DatabaseSchema.CryptoType;
 
-/**
- * Created by rgmacedo on 5/23/17.
- */
+
 public interface SecureFilterProperties {
 
-    public Filter buildEncryptedFilter(Filter plaintextFilter, CryptoTechnique.CryptoType cryptoType);
+    Filter buildEncryptedFilter(Filter plaintextFilter, CryptoType cryptoType);
 
-    public Object parseFilter(Filter plaintextFilter, CryptoTechnique.CryptoType cryptoType);
+    Object parseFilter(Filter plaintextFilter, CryptoType cryptoType);
 
-    public CryptoTechnique.CryptoType getFilterCryptoType(Filter plaintextFilter);
+    CryptoType getFilterCryptoType(Filter plaintextFilter);
 
 }

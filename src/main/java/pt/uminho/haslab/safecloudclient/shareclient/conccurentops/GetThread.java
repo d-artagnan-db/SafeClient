@@ -7,27 +7,15 @@ import pt.uminho.haslab.safecloudclient.shareclient.SharedClientConfiguration;
 
 public class GetThread extends QueryThread {
 
-	private final byte[] secretRow;
-	private final boolean isCached;
-	private final byte[] cachedValue;
+	private Get originalGet;
 
-	public GetThread(SharedClientConfiguration conf, HTable table,
-			byte[] secretRow, long requestID, int targetPlayer,
-			boolean isCached, byte[] cachedValue) {
-		super(conf, table, requestID, targetPlayer);
-		this.secretRow = secretRow;
-		this.isCached = isCached;
-		this.cachedValue = cachedValue;
+	public GetThread(SharedClientConfiguration conf, HTable table, Get get){
+		super(conf, table);
+		this.originalGet = get;
 	}
 
 	@Override
 	protected void query() throws IOException {
-		Get get = new Get(secretRow);
-		get.setAttribute("requestID", ("" + requestID).getBytes());
-		get.setAttribute("targetPlayer", ("" + targetPlayer).getBytes());
-		if (isCached) {
-			get.setAttribute("cachedID", cachedValue);
-		}
-		res = table.get(get);
+		res = table.get(originalGet);
 	}
 }

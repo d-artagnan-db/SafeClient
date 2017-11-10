@@ -10,12 +10,12 @@ import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import pt.uminho.haslab.cryptoenv.CryptoTechnique;
 import pt.uminho.haslab.safecloudclient.cryptotechnique.securefilterfactory.SecureFilterConverter;
-import pt.uminho.haslab.safecloudclient.schema.TableSchema;
+import pt.uminho.haslab.safemapper.TableSchema;
+import pt.uminho.haslab.safemapper.DatabaseSchema.CryptoType;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -49,7 +49,7 @@ public class HTableFeaturesUtils {
                 destination.add(family, qualifier, cryptoProperties.encodeValue(family, qualifier, value));
 
 //				If the actual qualifier CryptoType is equal to OPE, encode the same value with STD CryptoBox
-                if (tableSchema.getCryptoTypeFromQualifier(new String(family, Charset.forName("UTF-8")), qualifierString) == CryptoTechnique.CryptoType.OPE) {
+                if (tableSchema.getCryptoTypeFromQualifier(new String(family, Charset.forName("UTF-8")), qualifierString) == CryptoType.OPE) {
                     destination.add(
                             family,
                             (qualifierString + opeValues).getBytes(Charset.forName("UTF-8")),
@@ -75,7 +75,7 @@ public class HTableFeaturesUtils {
                 byte[] qualifier = CellUtil.cloneQualifier(cell);
 
                 if (family.length != 0 && qualifier.length != 0) {
-                    if (this.cp.tableSchema.getCryptoTypeFromQualifier(new String(family), new String(qualifier)) == CryptoTechnique.CryptoType.OPE) {
+                    if (this.cp.tableSchema.getCryptoTypeFromQualifier(new String(family), new String(qualifier)) == CryptoType.OPE) {
                         cellsToDelete.add(new String(family) + "#" + new String(qualifier));
                         cellsToDelete.add(new String(family) + "#" + new String(qualifier) + "_STD");
                     } else {
@@ -112,7 +112,7 @@ public class HTableFeaturesUtils {
      * @param scan scan object used to check the instance
      * @return the Scan's CryptoType (Row-Key CryptoType in case of Scan or RowFilter, Qualifier CryptoType in case of SingleColumnValueFilter)
      */
-    private CryptoTechnique.CryptoType getScanObjectCryptoType(Scan scan) {
+    private CryptoType getScanObjectCryptoType(Scan scan) {
         if (scan.hasFilter()) {
             return secureFilterConverter.getFilterCryptoType(scan.getFilter());
         } else {
@@ -176,7 +176,7 @@ public class HTableFeaturesUtils {
         } else {
 
 //		    get the CryptoType of the Scan/Filter operation
-            CryptoTechnique.CryptoType scanCryptoType = this.getScanObjectCryptoType(s);
+            CryptoType scanCryptoType = this.getScanObjectCryptoType(s);
 //		    Map the database column families and qualifiers into a collection
             Map<byte[], List<byte[]>> hColumnDescriptors = this.cp.getHColumnDescriptors(s.getFamilyMap());
 
@@ -186,8 +186,8 @@ public class HTableFeaturesUtils {
 
 //	    	Since the scanCryptoType defines the CryptoType of the scan or filter operaion, in case of SingleColumnValueFilter,
 //		    the start and stop row must be encoded with the respective Row-Key CryptoBox
-            if ((this.cp.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.PLT) ||
-                    (this.cp.tableSchema.getKey().getCryptoType() == CryptoTechnique.CryptoType.OPE)) {
+            if ((this.cp.tableSchema.getKey().getCryptoType() == CryptoType.PLT) ||
+                    (this.cp.tableSchema.getKey().getCryptoType() == CryptoType.OPE)) {
                 encryptedScan = encodeDelimitingRows(encryptedScan, startRow, stopRow);
             }
 
@@ -212,7 +212,7 @@ public class HTableFeaturesUtils {
         Object returnValue = null;
 
         if (filter != null) {
-            CryptoTechnique.CryptoType cType = this.secureFilterConverter.getFilterCryptoType(filter);
+            CryptoType cType = this.secureFilterConverter.getFilterCryptoType(filter);
             returnValue = this.secureFilterConverter.parseFilter(filter, cType);
         }
 
@@ -224,9 +224,9 @@ public class HTableFeaturesUtils {
      * @param scan scan/filter object
      * @return the respective CryptoType
      */
-    CryptoTechnique.CryptoType verifyFilterCryptoType(Scan scan) {
+    CryptoType verifyFilterCryptoType(Scan scan) {
 
-        CryptoTechnique.CryptoType cryptoType = cp.tableSchema.getKey().getCryptoType();
+        CryptoType cryptoType = cp.tableSchema.getKey().getCryptoType();
         if (scan.hasFilter()) {
             cryptoType = this.secureFilterConverter.getFilterCryptoType(scan.getFilter());
         }
