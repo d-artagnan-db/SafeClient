@@ -2,9 +2,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>pt.uminho.haslab</groupId>
-    <artifactId>safecloudclient</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <name>safecloudclient</name>
+    <artifactId>safeclient</artifactId>
+    <version>1.0.0</version>
+    <name>safeclient</name>
     <packaging>jar</packaging>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -13,6 +13,7 @@
         <saferegions.version>1.1.0</saferegions.version>
         <safemapper.version>1.0.0</safemapper.version>
         <cryptoEnv.version>1.0.0</cryptoEnv.version>
+        <redis.version>2.9.0</redis.version>
         <relativePath>..</relativePath>
     </properties>
     <dependencies>
@@ -25,7 +26,6 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>saferegions</artifactId>
             <version>${saferegions.version}</version>
-            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
@@ -35,7 +35,7 @@
         <dependency>
             <groupId>pt.uminho.haslab</groupId>
             <artifactId>smpc</artifactId>
-            <version>1.1.0-SNAPSHOT</version>
+            <version>${smpc.version}</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
@@ -43,14 +43,10 @@
             <version>${safemapper.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.ehcache</groupId>
-            <artifactId>ehcache</artifactId>
-            <version>3.2.0</version>
-        </dependency>
-        <dependency>
-            <groupId>dom4j</groupId>
-            <artifactId>dom4j</artifactId>
-            <version>1.6.1</version>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <version>${redis.version}</version>
+            <type>jar</type>
         </dependency>
     </dependencies>
 <build>
@@ -63,37 +59,6 @@
                 <source>1.7</source>
                 <target>1.7</target>
             </configuration>
-        </plugin>
-        <plugin>
-          <groupId>com.spotify</groupId>
-          <artifactId>docker-maven-plugin</artifactId>
-          <version>0.4.5</version>
-          <configuration>
-            <imageName>safecloudclient</imageName>
-            <dockerDirectory>docker</dockerDirectory>
-            <resources>
-               <resource>
-                 <targetPath>/</targetPath>
-                 <directory>${project.build.directory}</directory>
-                 <include>${project.build.finalName}.jar</include>
-               </resource>
-               <resource>
-                 <targetPath>/</targetPath>
-                 <directory>target/dependency</directory>
-                 <include>smpc-1.0.0-SNAPSHOT.jar</include>       
-               </resource>
-               <resource>
-                 <targetPath>/</targetPath>
-                 <directory>target/dependency</directory>
-                 <include>protocommunication-1.0-SNAPSHOT.jar</include>       
-               </resource>
-               <resource>
-                 <targetPath>/</targetPath>
-                 <directory>target/dependency</directory>
-                 <include>testingutilities-1.0-SNAPSHOT.jar</include>       
-               </resource>
-            </resources>
-          </configuration>
         </plugin>
     </plugins>
 </build>

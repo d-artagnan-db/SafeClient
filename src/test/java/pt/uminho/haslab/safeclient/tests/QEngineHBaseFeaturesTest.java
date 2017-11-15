@@ -1,0 +1,150 @@
+package pt.uminho.haslab.safeclient.tests;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.*;
+import pt.uminho.haslab.cryptoenv.Utils;
+import pt.uminho.haslab.safemapper.TableSchema;
+
+import java.io.IOException;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+/**
+ * Created by rgmacedo on 5/10/17.
+ */
+/*
+public class QEngineHBaseFeaturesTest extends QEngineTest {
+
+    public Utils utils;
+    public List<String> families;
+    public String[] qualifiers;
+    public Random random;
+    HBaseAdmin admin;
+
+//    TODO put - all fields
+//    TODO put - just some fields
+//    TODO get - all fields
+//    TODO get - just some fields
+//    TODO delete - all fields
+//    TODO delete - just some fields
+//    TODO scan - all fields
+//    TODO scan - just some fields
+//    TODO scan - with/without start row
+//    TODO scan - with/without stop row
+//    TODO filter - with filters (single column value filter)
+//    TODO Other constructors
+//    TODO Scan setCaching()
+
+    public TableSchema generateTableSchema() {
+        throw new IllegalStateException();
+    }
+
+    public QEngineHBaseFeaturesTest(int maxBits, List<BigInteger> values) throws Exception {
+        super(maxBits, values);
+        this.utils = new Utils();
+        this.qualifiers = new String[]{"qal1","qal2","qal3","qal4","qal5","qal6","qal7","qal8","qal9"};
+        this.families = new ArrayList<>();
+        this.random = new Random(1024);
+
+        Configuration conf = new Configuration();
+        conf.addResource("conf.xml");
+        this.admin = new HBaseAdmin(conf);
+    }
+
+    @Override
+    protected void testExecution(TestClient client, String tableName) throws Exception {
+        HTableInterface table;
+        int time = 10000;
+        table = client.createTableInterface(tableName, generateTableSchema());
+        LOG.debug("Test Execution [" + tableName + "]\n");
+
+        getColumnFamilies(tableName);
+
+//        testPut(table, 10);
+//        testGet(table, 10);
+        testScan(table);
+    }
+
+    public void testPut(HTableInterface table, int totalOperations) {
+        for(int i = 0; i < totalOperations; i++) {
+            Put p = new Put(String.valueOf(i).getBytes());
+            for(String family : this.families) {
+                for(String qualifier : this.qualifiers) {
+                    p.add(family.getBytes(), qualifier.getBytes(), "hello world".getBytes());
+                }
+//                p.add(family.getBytes(), chooseRandomQualifier().getBytes(), buildRandomValue().getBytes());
+            }
+            try {
+                System.out.println("Put<"+i+","+p.toString()+">");
+                table.put(p);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void testGet(HTableInterface table, int totalOperations) {
+        for(int i = 0; i < totalOperations; i++) {
+            Get g = new Get(String.valueOf(i).getBytes());
+            for(String family : this.families) {
+                for( String qualifier : this.qualifiers) {
+                    g.addColumn(family.getBytes(), qualifier.getBytes());
+                }
+//                g.addColumn(family.getBytes(), chooseRandomQualifier().getBytes());
+            }
+            try {
+                System.out.println("Get<"+i+","+g.toString()+">");
+                Result res = table.get(g);
+                System.out.println("Result("+i+"): "+new String(res.getRow()));
+                for(String family : this.families) {
+                    for (String qualifier : this.qualifiers) {
+                        System.out.println("<"+family+","+qualifier+">="+new String(res.getValue(family.getBytes(), qualifier.getBytes())));
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void testScan(HTableInterface table) {
+        Scan s = new Scan();
+        for(String family : this.families) {
+            for (String qualifier : this.qualifiers) {
+                s.addColumn(family.getBytes(), qualifier.getBytes());
+            }
+        }
+
+        try {
+            ResultScanner resultScanner = table.getScanner(s);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
+    public void getColumnFamilies(String tableName) throws IOException {
+        HTableDescriptor tableDescriptor = admin.getTableDescriptor(TableName.valueOf(tableName));
+        HColumnDescriptor[] hColumnDescriptors = tableDescriptor.getColumnFamilies();
+        for(int i = 0; i < hColumnDescriptors.length; i++) {
+            System.out.println("Column Descriptor: "+hColumnDescriptors[i].toString());
+            this.families.add(hColumnDescriptors[i].getNameAsString());
+        }
+    }
+
+    public String chooseRandomQualifier() {
+        return this.qualifiers[this.random.nextInt(qualifiers.length-1)];
+    }
+
+    public String buildRandomValue() {
+        return String.valueOf(this.random.nextInt(500000));
+    }
+}
+*/

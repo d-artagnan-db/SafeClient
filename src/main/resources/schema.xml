@@ -16,16 +16,16 @@
     </default>
     <key>
       <!--<formatsize>10</formatsize>-->
-      <!--<cryptotechnique>PLT</cryptotechnique>-->
+        <!--<secureTable>PLT</secureTable>-->
     </key>
     <columns>
       <family>
         <name>Physician</name>
-        <!--<cryptotechnique>OPE</cryptotechnique>-->
+          <!--<secureTable>OPE</secureTable>-->
         <!--<formatsize>10</formatsize>-->
         <qualifier>
           <name>Physician ID</name>
-          <!--<cryptotechnique>OPE</cryptotechnique>-->
+            <!--<secureTable>OPE</secureTable>-->
           <!--<formatsize>10</formatsize>-->
           <misc>
             <property>GENERATOR</property>
@@ -37,7 +37,7 @@
         <name>Patient</name>
         <qualifier>
           <name>Patient ID</name>
-          <!--<cryptotechnique>OPE</cryptotechnique>-->
+            <!--<secureTable>OPE</secureTable>-->
           <!--<formatsize>16</formatsize>-->
           <misc>
             <property>GENERATOR</property>
@@ -49,7 +49,7 @@
         <name>Appointment</name>
         <qualifier>
           <name>Date</name>
-          <!--<cryptotechnique>OPE</cryptotechnique>-->
+            <!--<secureTable>OPE</secureTable>-->
           <!--<formatsize>14</formatsize>-->
           <misc>
             <property>GENERATOR</property>
@@ -58,7 +58,7 @@
         </qualifier>
         <qualifier>
           <name>Type</name>
-          <!--<cryptotechnique>OPE</cryptotechnique>-->
+            <!--<secureTable>OPE</secureTable>-->
           <!--<formatsize>64</formatsize>-->
           <misc>
             <property>GENERATOR</property>
@@ -67,7 +67,7 @@
         </qualifier>
         <qualifier>
           <name>Obs</name>
-          <!--<cryptotechnique>OPE</cryptotechnique>-->
+            <!--<secureTable>OPE</secureTable>-->
           <!--<formatsize>1024</formatsize>-->
           <misc>
             <property>GENERATOR</property>
@@ -79,7 +79,7 @@
         <name>Institution</name>
         <qualifier>
           <name>Name</name>
-          <!--<cryptotechnique>OPE</cryptotechnique>-->
+            <!--<secureTable>OPE</secureTable>-->
           <!--<formatsize>128</formatsize>-->
           <misc>
             <property>GENERATOR</property>
@@ -88,7 +88,7 @@
         </qualifier>
         <qualifier>
           <name>Address</name>
-          <!--<cryptotechnique>OPE</cryptotechnique>-->
+            <!--<secureTable>OPE</secureTable>-->
           <!--<formatsize>256</formatsize>-->
           <misc>
             <property>GENERATOR</property>
@@ -107,7 +107,7 @@
     <!--</default>-->
     <!--<key>-->
       <!--<formatsize>10</formatsize>-->
-      <!--<cryptotechnique>FPE</cryptotechnique>-->
+    <!--<secureTable>FPE</secureTable>-->
       <!--<instance>FF3</instance>-->
       <!--<radix>10</radix>-->
       <!--<tweak>hello world</tweak>-->
@@ -115,7 +115,7 @@
     <!--<columns>-->
       <!--<family>-->
         <!--<name>Hello</name>-->
-        <!--<cryptotechnique>PLT</cryptotechnique>-->
+    <!--<secureTable>PLT</secureTable>-->
       <!--</family>-->
       <!--<family>-->
         <!--<name>World</name>-->
@@ -137,7 +137,7 @@
     <!--</default>-->
     <!--<key>-->
       <!--<formatsize>10</formatsize>-->
-      <!--<cryptotechnique>FPE</cryptotechnique>-->
+    <!--<secureTable>FPE</secureTable>-->
       <!--<instance>FF3</instance>-->
       <!--<radix>10</radix>-->
       <!--<tweak>hello world</tweak>-->
@@ -145,7 +145,7 @@
     <!--<columns>-->
       <!--<family>-->
         <!--<name>Hello</name>-->
-        <!--<cryptotechnique>PLT</cryptotechnique>-->
+    <!--<secureTable>PLT</secureTable>-->
       <!--</family>-->
       <!--<family>-->
         <!--<name>World</name>-->
@@ -167,7 +167,7 @@
     <!--</default>-->
     <!--<key>-->
       <!--<formatsize>10</formatsize>-->
-      <!--<cryptotechnique>FPE</cryptotechnique>-->
+    <!--<secureTable>FPE</secureTable>-->
       <!--<instance>FF3</instance>-->
       <!--<radix>10</radix>-->
       <!--<tweak>hello world</tweak>-->
@@ -175,7 +175,7 @@
     <!--<columns>-->
       <!--<family>-->
         <!--<name>Hello</name>-->
-        <!--<cryptotechnique>PLT</cryptotechnique>-->
+    <!--<secureTable>PLT</secureTable>-->
       <!--</family>-->
       <!--<family>-->
         <!--<name>World</name>-->
@@ -197,7 +197,7 @@
     <!--</default>-->
     <!--<key>-->
       <!--<formatsize>10</formatsize>-->
-      <!--<cryptotechnique>FPE</cryptotechnique>-->
+    <!--<secureTable>FPE</secureTable>-->
       <!--<instance>FF3</instance>-->
       <!--<radix>10</radix>-->
       <!--<tweak>hello world</tweak>-->
@@ -205,7 +205,7 @@
     <!--<columns>-->
       <!--<family>-->
         <!--<name>Hello</name>-->
-        <!--<cryptotechnique>PLT</cryptotechnique>-->
+    <!--<secureTable>PLT</secureTable>-->
       <!--</family>-->
       <!--<family>-->
         <!--<name>World</name>-->

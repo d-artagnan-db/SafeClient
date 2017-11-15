@@ -27,7 +27,7 @@
     </property>
     <property>
         <name>hbase.master.info.port</name>
-        <value>-1</value>
+        <value>60010</value>
     </property>
     <property>
         <name>hbase.rootdir</name>
@@ -52,43 +52,16 @@
     <property>
         <name>hbase.coprocessor.region.classes</name>
         <value>
-            pt.uminho.haslab.smcoprocessors.SmpcCoprocessor
+            pt.uminho.haslab.saferegions.SmpcCoprocessor
         </value>
-    </property>
-    <property>
-        <name>smhbase.column.family</name>
-        <value>columns</value>
-    </property>
-    <property>
-        <name>smhbase.column.qualifier</name>
-        <value>shareKey</value>
     </property>
     <property>
         <name>smhbase.player.id</name>
         <value>0</value>
     </property>
     <property>
-        <name>smhbase.nbits</name>
-        <value>63</value>
-        <description> 
-            On the client the values are being
-            generated with a parameter of 63 bits. On the
-            reality the SharemindDealer uses 64 bits. 
-            All of the values encrypted in SharemindSecret sharing
-            must be between 0 and 2^(63)-1. But since the values
-            generated use 64 bits, each server will also create a 
-            SharemindSharedSecret with the parameter of 64bits. 
-            Because every computation of the mod must be made on
-            64 bits.
-        </description>
-    </property>
-    <property>
         <name>hbase.coprocessor.development</name>
         <value>True</value>
-    </property>
-    <property>
-        <name>smhbase.relay.wait.time</name>
-        <value>22000</value>
     </property>
     <property>
         <name>smhbase.relay.host</name>
@@ -99,33 +72,34 @@
         <value>6262</value>
     </property>
     <property>
-        <name>smhbase.relay.target.first.address</name>
-        <value>localhost</value>
-    </property>
-    <property>
-        <name>smhbase.relay.target.first.port</name>
-        <value>6263</value>
-    </property>
-    <property>
-        <name>smhbase.relay.target.second.address</name>
-        <value>localhost</value>
-    </property>
-    <property>
-        <name>smhbase.relay.target.second.port</name>
-        <value>6264</value>
-    </property>
-    <property>
         <name>hbase.rpc.timeout</name>
         <value>6000000</value>
     </property>
     <property>
-        <name>hbase.client.operation.timeout</name>
-        <value>600000000</value>
-        <description>Operation timeout is a top-level restriction (millisecond) that makes sure a
-            blocking operation in Table will not be blocked more than this. In each operation, if rpc
-            request fails because of timeout or other reason, it will retry until success or throw
-            RetriesExhaustedException. But if the total time being blocking reach the operation timeout
-            before retries exhausted, it will break early and throw SocketTimeoutException.
-        </description>
-  </property>
+        <name>smhbase.batch.size</name>
+        <value>200</value>
+    </property>
+    <property>
+        <name>smhbase.discovery.location</name>
+        <value>redis</value>
+    </property>
+    <property>
+        <name>smhbase.discovery.sleepTime</name>
+        <value>200</value>
+    </property>
+    <property>
+        <name>smhbase.discovery.incTime</name>
+        <value>100</value>
+    </property>
+    <property>
+        <name>smhbase.discovery.retries</name>
+        <value>5</value>
+    </property>
+
+    <!-- This property is defined by the tests as each tests can have a different schema.
+    <property>
+        <name>smhbase.schema</name>
+        <value>protected-schema.xml</value>
+    </property>
+    -->
 </configuration>
