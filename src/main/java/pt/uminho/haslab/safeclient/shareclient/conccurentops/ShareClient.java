@@ -35,8 +35,8 @@ public class ShareClient implements TestClient {
 
 	@Override
 	public boolean checkTableExists(String tableName) throws IOException {
-		return admin.tableExits(tableName);
-	}
+        return admin.tableExists(tableName);
+    }
 
 	@After
 	public void tearDown() throws IOException {

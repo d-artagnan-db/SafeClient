@@ -14,6 +14,7 @@
         <safemapper.version>1.0.0</safemapper.version>
         <cryptoEnv.version>1.0.0</cryptoEnv.version>
         <redis.version>2.9.0</redis.version>
+        <hbaseinterfaces.version>1.0.0</hbaseinterfaces.version>
         <relativePath>..</relativePath>
     </properties>
     <dependencies>
@@ -47,6 +48,11 @@
             <artifactId>jedis</artifactId>
             <version>${redis.version}</version>
             <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>HBaseInterfaces</artifactId>
+            <version>${hbaseinterfaces.version}</version>
         </dependency>
     </dependencies>
 <build>

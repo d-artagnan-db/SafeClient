@@ -36,11 +36,8 @@ public class MultiColumnDETTest extends  MultiColumnCTypeTest{
         Random r = new Random();
         int index = r.nextInt(rowIdentifiers.size());
 
-        //DET
         byte[] valueAge1 = generatedValues.get("Teste").get("Age1").get(index);
-        //OPE
         byte[] valueAge2 = generatedValues.get("Teste").get("Age2").get(index);
-        //SMPC
         byte[] valueAge3 = generatedValues.get("Teste").get("Age3").get(index);
 
         Scan s = new Scan();

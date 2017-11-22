@@ -1,7 +1,10 @@
 package pt.uminho.haslab.safeclient.tests.BaseTests;
 
 import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.Scan;
 import pt.uminho.haslab.safeclient.ExtendedHTable;
 import pt.uminho.haslab.safeclient.helpers.AbstractTableGenerator;
 import pt.uminho.haslab.safeclient.helpers.AdminProxy;
@@ -71,7 +74,7 @@ public abstract class SingleColumnProtectedTest extends AbstractTableGenerator {
 
     @Override
     protected int getNumberOfRecords() {
-        return 100;
+        return 1000;
     }
 
     @Override
@@ -85,7 +88,7 @@ public abstract class SingleColumnProtectedTest extends AbstractTableGenerator {
     }
 
     @Override
-    protected void put(ExtendedHTable table, List<Put> puts) throws IOException {
+    protected void put(ExtendedHTable table, List<Put> puts) throws Exception {
 
         for(Put p: puts){
             table.put(p);

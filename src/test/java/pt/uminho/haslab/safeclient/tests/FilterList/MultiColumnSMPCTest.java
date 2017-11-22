@@ -5,7 +5,6 @@ import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import pt.uminho.haslab.safeclient.helpers.AdminProxy;
-import pt.uminho.haslab.safeclient.helpers.CryptoClient;
 import pt.uminho.haslab.safeclient.helpers.ShareClient;
 import pt.uminho.haslab.safemapper.DatabaseSchema;
 
@@ -37,11 +36,8 @@ public class MultiColumnSMPCTest extends MultiColumnCTypeTest{
         Random r = new Random();
         int index = r.nextInt(rowIdentifiers.size());
 
-        //DET
         byte[] valueAge1 = generatedValues.get("Teste").get("Age1").get(index);
-        //OPE
         byte[] valueAge2 = generatedValues.get("Teste").get("Age2").get(index);
-        //SMPC
         byte[] valueAge3 = generatedValues.get("Teste").get("Age3").get(index);
 
         Scan s = new Scan();

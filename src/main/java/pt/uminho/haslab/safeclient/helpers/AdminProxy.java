@@ -13,7 +13,7 @@ public interface AdminProxy {
 
     void stopCluster() throws IOException;
 
-    ExtendedHTable createTableInterface(String tableName,  TableSchema schema)
+    ExtendedHTable createTableInterface(String tableName, TableSchema schema)
             throws IOException, InvalidNumberOfBits;
 
     void createTable(final HTableDescriptor tableDescriptor) throws IOException, InterruptedException;

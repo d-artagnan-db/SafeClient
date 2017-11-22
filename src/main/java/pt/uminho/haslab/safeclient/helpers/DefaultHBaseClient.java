@@ -2,13 +2,9 @@ package pt.uminho.haslab.safeclient.helpers;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.HTableInterface;
 import pt.uminho.haslab.safeclient.ExtendedHTable;
 import pt.uminho.haslab.safeclient.ExtendedHTableImpl;
-import pt.uminho.haslab.safeclient.helpers.AdminProxy;
 import pt.uminho.haslab.safemapper.TableSchema;
 import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
 import pt.uminho.haslab.testingutils.ShareCluster;

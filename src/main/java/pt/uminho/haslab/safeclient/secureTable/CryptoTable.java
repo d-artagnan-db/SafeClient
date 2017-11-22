@@ -83,9 +83,11 @@ public class CryptoTable implements ExtendedHTable {
         }
 
         if(tableType.equals("HTable")){
-            htable = new ExtendedHTableImpl(conf, tableName);
+			System.out.println("HTable create");
+			htable = new ExtendedHTableImpl(conf, tableName);
         }else if(tableType.equals("SharedTable")){
-            htable = new SharedTable(conf, tableName, tableSchema);
+			System.out.println("SharedTable create");
+			htable = new SharedTable(conf, tableName, tableSchema);
         }
 
         /* While the cryptographic keys management is not defined, read keys from specific files
@@ -172,8 +174,8 @@ public class CryptoTable implements ExtendedHTable {
 	}
 
 
-	private TableSchema getTableSchema(String tablename) {
-		return databaseSchema.getTableSchema(tablename);
+	private TableSchema getTableSchema(String tableName) {
+		return databaseSchema.getTableSchema(tableName);
 	}
 
 	private TableSchema generateDefaultTableSchema(String tablename, Configuration conf) {
@@ -638,7 +640,6 @@ public class CryptoTable implements ExtendedHTable {
 				String temp_qualifier = new String(qualifier);
 
 				switch (this.tableSchema.getCryptoTypeFromQualifier(temp_family, temp_qualifier)) {
-                    case SMPC:
 					case PLT:
 						if (this.cryptoProperties.tableSchema.getKey().getCryptoType() != CryptoType.STD) {
 							operationValue = htable.incrementColumnValue(this.cryptoProperties.encodeRow(row), family, qualifier, amount);
@@ -653,6 +654,7 @@ public class CryptoTable implements ExtendedHTable {
 							}
 						}
 						break;
+					case SMPC:
 					case STD:
 					case DET:
 					case OPE:
@@ -943,8 +945,9 @@ public class CryptoTable implements ExtendedHTable {
 
     @Override
     public boolean checkAndDelete(byte[] bytes, byte[] bytes1, byte[] bytes2, byte[] bytes3, Delete delete) throws IOException {
-        return htable.checkAndDelete(bytes, bytes1, bytes2, bytes3, delete);
-    }
+		throw new UnsupportedOperationException("Not supported yet.");
+
+	}
 
     @Override
     public void mutateRow(RowMutations rowMutations) throws IOException {
@@ -963,13 +966,13 @@ public class CryptoTable implements ExtendedHTable {
 
     @Override
     public long incrementColumnValue(byte[] bytes, byte[] bytes1, byte[] bytes2, long l, Durability durability) throws IOException {
-        return htable.incrementColumnValue(bytes, bytes1, bytes2, l, durability);
-    }
+		throw new UnsupportedOperationException("Not supported yet.");
+	}
 
     @Override
     public long incrementColumnValue(byte[] bytes, byte[] bytes1, byte[] bytes2, long l, boolean b) throws IOException {
-        return htable.incrementColumnValue(bytes, bytes1, bytes2, l, b);
-    }
+		throw new UnsupportedOperationException("Not supported yet.");
+	}
 
     @Override
     public boolean isAutoFlush() {

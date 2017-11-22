@@ -5,12 +5,13 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import pt.uminho.haslab.safeclient.CHBaseAdmin;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SharedAdmin {
+public class SharedAdmin implements CHBaseAdmin {
 
 	static final Log LOG = LogFactory.getLog(SharedAdmin.class.getName());
 
@@ -80,7 +81,7 @@ public class SharedAdmin {
 
 	}
 
-	public boolean tableExits(String tableName) throws IOException {
+	public boolean tableExists(String tableName) throws IOException {
 
 		boolean tablesExist = true;
 

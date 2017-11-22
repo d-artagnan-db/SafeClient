@@ -213,6 +213,12 @@ public class MultiScan extends MultiOP implements ResultScanner {
 
     public void close() {
         for (Thread t : scans) {
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                LOG.debug(e);
+                throw new IllegalStateException(e);
+            }
             ((ResultScannerThread) t).close();
         }
     }

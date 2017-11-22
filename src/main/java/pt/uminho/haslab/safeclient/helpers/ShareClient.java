@@ -60,7 +60,7 @@ public class ShareClient implements AdminProxy {
 
 	@Override
 	public boolean tableExists(String tableName) throws IOException {
-		return admin.tableExits(tableName);
+		return admin.tableExists(tableName);
 	}
 
 	@Override

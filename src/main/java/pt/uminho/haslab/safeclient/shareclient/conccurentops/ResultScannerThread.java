@@ -27,7 +27,8 @@ public class ResultScannerThread extends QueryThread implements ResultScanner {
 		try {
 			return results.take();
 		} catch (InterruptedException ex) {
-			throw new IllegalStateException(ex);
+            LOG.debug(ex);
+            throw new IllegalStateException(ex);
 		}
 	}
 
@@ -49,7 +50,7 @@ public class ResultScannerThread extends QueryThread implements ResultScanner {
 				.next()) {
 			results.add(result);
 		}
-		results.add(Result.EMPTY_RESULT);
+        results.add(Result.EMPTY_RESULT);
 
 	}
 

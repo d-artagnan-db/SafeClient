@@ -134,8 +134,8 @@ public abstract class AbstractTableGenerator {
             for (Qualifier qual : fam.getQualifiers()) {
                 byte[] normalVal = vanillaResult.getValue(fam.getFamilyName().getBytes(), qual.getName().getBytes());
                 byte[] safeVal = protectedResult.getValue(fam.getFamilyName().getBytes(), qual.getName().getBytes());
-                LOG.debug("Comparing value of column " + fam.getFamilyName() + ":" + qual.getName());
-                LOG.debug("Comparing value " + new BigInteger(normalVal) + " : " + new BigInteger(safeVal));
+                //LOG.debug("Comparing value of column " + fam.getFamilyName() + ":" + qual.getName());
+                //LOG.debug("Comparing value " + new BigInteger(normalVal) + " : " + new BigInteger(safeVal));
                 assertArrayEquals(normalVal, safeVal);
             }
         }
@@ -163,6 +163,15 @@ public abstract class AbstractTableGenerator {
                 throw new IllegalStateException(ex);
             }
         }
+    }
+
+
+    protected ExtendedHTable getNewProtectedTableInstance() throws Exception {
+        return getProtectedHBaseAdmin().createTableInterface(schema.getTablename(), schema);
+    }
+
+    protected ExtendedHTable getNewVanillaTableInstance() throws Exception {
+        return getVanillaAdmin().createTableInterface(schema.getTablename() + VANILLA, schema);
     }
 
     @Test
@@ -204,7 +213,6 @@ public abstract class AbstractTableGenerator {
         put(vanillaTable, puts);
 
         // Custom test execution
-
         LOG.info("Additional test execution");
         additionalTestExecution(vanillaTableDesc, tableDesc);
 
@@ -228,7 +236,7 @@ public abstract class AbstractTableGenerator {
 
     protected abstract void testExecution(List<Put> puts) throws IOException;
 
-    protected abstract void put(ExtendedHTable table, List<Put> puts) throws IOException;
+    protected abstract void put(ExtendedHTable table, List<Put> puts) throws Exception;
 
     protected abstract void additionalTestExecution(HTableDescriptor vanillaTableDescriptor, HTableDescriptor protectedTableDescriptor) throws Exception;
 
