@@ -4,7 +4,7 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.*;
-import pt.uminho.haslab.safeclient.ExtendedHTable;
+import pt.uminho.haslab.hbaseInterfaces.ExtendedHTable;
 import pt.uminho.haslab.safeclient.tests.BaseTests.MultiColumnProtectedTest;
 import pt.uminho.haslab.safeclient.tests.Helpers.ScanClient;
 

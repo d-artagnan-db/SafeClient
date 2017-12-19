@@ -10,7 +10,7 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.junit.Test;
-import pt.uminho.haslab.safeclient.ExtendedHTable;
+import pt.uminho.haslab.hbaseInterfaces.ExtendedHTable;
 import pt.uminho.haslab.safemapper.Family;
 import pt.uminho.haslab.safemapper.Qualifier;
 import pt.uminho.haslab.safemapper.TableSchema;

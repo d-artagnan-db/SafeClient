@@ -7,7 +7,7 @@ import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.filter.WhileMatchFilter;
-import pt.uminho.haslab.safeclient.ExtendedHTable;
+import pt.uminho.haslab.hbaseInterfaces.ExtendedHTable;
 import pt.uminho.haslab.safeclient.tests.BaseTests.MultiColumnProtectedTest;
 import pt.uminho.haslab.safeclient.tests.Helpers.NOpsClient;
 

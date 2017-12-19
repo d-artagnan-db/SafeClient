@@ -7,7 +7,7 @@ import org.junit.After;
 import pt.uminho.haslab.safeclient.shareclient.SharedAdmin;
 import pt.uminho.haslab.safeclient.shareclient.SharedTable;
 import pt.uminho.haslab.safemapper.TableSchema;
-import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
+import pt.uminho.haslab.smpc.exceptions.InvalidNumberOfBits;
 import pt.uminho.haslab.testingutils.ShareCluster;
 
 import java.io.IOException;
@@ -45,7 +45,7 @@ public class ShareClient implements TestClient {
 
 	@Override
     public HTableInterface createTableInterface(String tableName, TableSchema schema)
-            throws IOException, InvalidNumberOfBits {
+			throws IOException, InvalidNumberOfBits {
         Configuration conf = new Configuration();
 		conf.addResource("hbase-client.xml");
         return new SharedTable(conf, tableName, schema);

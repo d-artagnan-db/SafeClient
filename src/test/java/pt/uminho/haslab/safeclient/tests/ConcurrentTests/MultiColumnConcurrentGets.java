@@ -3,7 +3,7 @@ package pt.uminho.haslab.safeclient.tests.ConcurrentTests;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Result;
-import pt.uminho.haslab.safeclient.ExtendedHTable;
+import pt.uminho.haslab.hbaseInterfaces.ExtendedHTable;
 import pt.uminho.haslab.safeclient.tests.BaseTests.MultiColumnProtectedTest;
 import pt.uminho.haslab.safeclient.tests.Helpers.GetClient;
 

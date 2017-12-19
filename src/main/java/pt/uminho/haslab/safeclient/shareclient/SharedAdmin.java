@@ -3,9 +3,10 @@ package pt.uminho.haslab.safeclient.shareclient;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
-import pt.uminho.haslab.safeclient.CHBaseAdmin;
+import pt.uminho.haslab.hbaseInterfaces.CHBaseAdmin;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,33 +40,14 @@ public class SharedAdmin implements CHBaseAdmin {
 
 	public void createTable(final HTableDescriptor descriptor)
 			throws IOException, InterruptedException {
-
-		List<Thread> threads = new ArrayList<Thread>();
+        LOG.debug("Create table " + descriptor.getNameAsString());
 		for (final HBaseAdmin admin : admins) {
-			Thread t = new Thread() {
-
-				@Override
-				public void run() {
-					try {
-						admin.createTable(descriptor);
-					} catch (IOException ex) {
-						System.out.println(ex);
-					}
-				}
-			};
-
-			threads.add(t);
-			t.start();
+            admin.createTable(descriptor);
 		}
-
-		for (Thread t : threads) {
-			t.join();
-		}
-
 	}
 
 	public void deleteTable(String tableName) throws IOException {
-
+        LOG.debug("Delete table "+tableName);
 		for (HBaseAdmin admin : admins) {
 
 			admin.deleteTable(tableName);
@@ -74,7 +56,7 @@ public class SharedAdmin implements CHBaseAdmin {
 	}
 
 	public void disableTable(String tableName) throws IOException {
-
+        LOG.debug("DisableTable " + tableName);
 		for (HBaseAdmin admin : admins) {
 			admin.disableTable(tableName);
 		}
@@ -82,15 +64,29 @@ public class SharedAdmin implements CHBaseAdmin {
 	}
 
 	public boolean tableExists(String tableName) throws IOException {
+        LOG.debug("tableExists " + tableName + " - " + admins.get(0).tableExists(tableName));
+		return admins.get(0).tableExists(tableName);
 
-		boolean tablesExist = true;
+	}
 
-		for (HBaseAdmin admin : admins) {
-			tablesExist &= admin.tableExists(tableName);
-		}
+	@Override
+	public boolean isTableAvailable(String s) throws IOException {
+        LOG.debug("isTableAvailable "+s + " - " + admins.get(0).isTableAvailable(s));
+		return admins.get(0).isTableAvailable(s);
+	}
 
-		return tablesExist;
+	@Override
+	public void createTableAsync(HTableDescriptor hTableDescriptor, byte[][] bytes) throws IOException {
+		LOG.debug("CreateTableAsync "+ hTableDescriptor.getNameAsString());
+        for(HBaseAdmin admin: admins){
+            admin.createTable(hTableDescriptor, bytes);
+        }
+	}
 
+	@Override
+	public ClusterStatus getClusterStatus() throws IOException {
+        LOG.debug("GetClusterStatus");
+		return admins.get(0).getClusterStatus();
 	}
 
 	public void close() throws IOException {

@@ -14,16 +14,18 @@ import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
-import pt.uminho.haslab.safeclient.ExtendedHTable;
+import org.apache.hadoop.hbase.util.Pair;
+import pt.uminho.haslab.hbaseInterfaces.ExtendedHTable;
 import pt.uminho.haslab.safeclient.shareclient.conccurentops.*;
 import pt.uminho.haslab.safemapper.TableSchema;
-import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
-import pt.uminho.haslab.smhbase.exceptions.InvalidSecretValue;
+import pt.uminho.haslab.smpc.exceptions.InvalidNumberOfBits;
+import pt.uminho.haslab.smpc.exceptions.InvalidSecretValue;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 
@@ -92,7 +94,7 @@ public class SharedTable implements ExtendedHTable {
             writeLock.lock();
             new MultiPut(this.sharedConfig, connections, schema, put).doOperation();
             writeLock.unlock();
-        } catch (InvalidSecretValue | InterruptedException | InvalidNumberOfBits ex) {
+        } catch (InterruptedException | InvalidNumberOfBits | InvalidSecretValue ex) {
             LOG.error(ex);
             throw new IllegalStateException(ex);
 		}
@@ -126,7 +128,7 @@ public class SharedTable implements ExtendedHTable {
 
         long requestID = getRequestId();
         int targetPlayer = LB.getResultPlayer();
-        LOG.debug("Ids generated are " + requestID);
+        LOG.debug("Id generated is " + requestID);
         MultiScan mScan = new MultiScan(sharedConfig, connections, schema, requestID, targetPlayer, scan);
         mScan.startScan();
 
@@ -441,5 +443,25 @@ public class SharedTable implements ExtendedHTable {
 	@Override
 	public HRegionLocation getRegionLocation(byte[] row) throws IOException {
         throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public byte[][] getStartKeys() throws IOException {
+        return this.connections.get(0).getStartKeys();
+    }
+
+    @Override
+    public Pair getStartEndKeys() throws IOException {
+        return this.connections.get(0).getStartEndKeys();
+    }
+
+    @Override
+    public List getRegionsInRange(byte[] bytes, byte[] bytes1) throws IOException {
+        return this.connections.get(0).getRegionsInRange(bytes, bytes1);
+    }
+
+    @Override
+    public NavigableMap getRegionLocations() throws IOException {
+        return this.connections.get(0).getRegionLocations();
     }
 }

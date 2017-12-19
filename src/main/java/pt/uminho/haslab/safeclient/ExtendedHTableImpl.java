@@ -12,10 +12,13 @@ import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
+import org.apache.hadoop.hbase.util.Pair;
+import pt.uminho.haslab.hbaseInterfaces.ExtendedHTable;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 
 public class ExtendedHTableImpl implements ExtendedHTable {
 
@@ -28,6 +31,26 @@ public class ExtendedHTableImpl implements ExtendedHTable {
     @Override
     public HRegionLocation getRegionLocation(byte[] row) throws IOException {
         return table.getRegionLocation(row);
+    }
+
+    @Override
+    public byte[][] getStartKeys() throws IOException {
+        return table.getStartKeys();
+    }
+
+    @Override
+    public Pair getStartEndKeys() throws IOException {
+        return table.getStartEndKeys();
+    }
+
+    @Override
+    public List getRegionsInRange(byte[] bytes, byte[] bytes1) throws IOException {
+        return this.table.getRegionsInRange(bytes, bytes1);
+    }
+
+    @Override
+    public NavigableMap getRegionLocations() throws IOException {
+        return this.table.getRegionLocations();
     }
 
     @Override

@@ -5,7 +5,7 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
-import pt.uminho.haslab.safeclient.ExtendedHTable;
+import pt.uminho.haslab.hbaseInterfaces.ExtendedHTable;
 import pt.uminho.haslab.safeclient.helpers.AbstractTableGenerator;
 import pt.uminho.haslab.safeclient.helpers.AdminProxy;
 import pt.uminho.haslab.safeclient.helpers.DefaultHBaseClient;
@@ -99,7 +99,7 @@ public abstract class SingleColumnProtectedTest extends AbstractTableGenerator {
     protected void additionalTestExecution(HTableDescriptor vanillaTableDescriptor, HTableDescriptor protectedTableDescriptor) throws Exception {
 
        ExtendedHTable vanillaTable = getVanillaAdmin().createTableInterface(vanillaTableDescriptor.getNameAsString(), schema);
-        ExtendedHTable protectedTable = getProtectedHBaseAdmin().createTableInterface(protectedTableDescriptor.getNameAsString(), schema);
+       ExtendedHTable protectedTable = getProtectedHBaseAdmin().createTableInterface(protectedTableDescriptor.getNameAsString(), schema);
 
         for(byte[] rowID: rowIdentifiers){
             Get get = new Get(rowID);

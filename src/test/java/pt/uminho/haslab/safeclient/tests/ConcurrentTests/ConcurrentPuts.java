@@ -1,7 +1,7 @@
 package pt.uminho.haslab.safeclient.tests.ConcurrentTests;
 
 import org.apache.hadoop.hbase.client.Put;
-import pt.uminho.haslab.safeclient.ExtendedHTable;
+import pt.uminho.haslab.hbaseInterfaces.ExtendedHTable;
 import pt.uminho.haslab.safeclient.tests.BaseTests.SingleColumnProtectedTest;
 import pt.uminho.haslab.safeclient.tests.Helpers.PutClient;
 

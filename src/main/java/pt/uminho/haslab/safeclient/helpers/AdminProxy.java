@@ -1,9 +1,9 @@
 package pt.uminho.haslab.safeclient.helpers;
 
 import org.apache.hadoop.hbase.HTableDescriptor;
-import pt.uminho.haslab.safeclient.ExtendedHTable;
+import pt.uminho.haslab.hbaseInterfaces.ExtendedHTable;
 import pt.uminho.haslab.safemapper.TableSchema;
-import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
+import pt.uminho.haslab.smpc.exceptions.InvalidNumberOfBits;
 
 import java.io.IOException;
 
@@ -14,7 +14,7 @@ public interface AdminProxy {
     void stopCluster() throws IOException;
 
     ExtendedHTable createTableInterface(String tableName, TableSchema schema)
-            throws IOException, InvalidNumberOfBits;
+            throws IOException, InvalidNumberOfBits, InvalidNumberOfBits;
 
     void createTable(final HTableDescriptor tableDescriptor) throws IOException, InterruptedException;
 

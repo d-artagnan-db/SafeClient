@@ -11,11 +11,11 @@ import pt.uminho.haslab.safeclient.shareclient.SharedClientConfiguration;
 import pt.uminho.haslab.safemapper.DatabaseSchema;
 import pt.uminho.haslab.safemapper.TableSchema;
 import pt.uminho.haslab.saferegions.OperationAttributesIdentifiers;
-import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
-import pt.uminho.haslab.smhbase.exceptions.InvalidSecretValue;
-import pt.uminho.haslab.smhbase.interfaces.Dealer;
-import pt.uminho.haslab.smhbase.sharemindImp.SharemindDealer;
-import pt.uminho.haslab.smhbase.sharemindImp.SharemindSharedSecret;
+import pt.uminho.haslab.smpc.exceptions.InvalidNumberOfBits;
+import pt.uminho.haslab.smpc.exceptions.InvalidSecretValue;
+import pt.uminho.haslab.smpc.interfaces.Dealer;
+import pt.uminho.haslab.smpc.sharemindImp.SharemindDealer;
+import pt.uminho.haslab.smpc.sharemindImp.SharemindSharedSecret;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -83,15 +83,18 @@ public class MultiScan extends MultiOP implements ResultScanner {
     }
 
     private List<Filter> handleFilterWithProtectedColumns(Filter original) {
-
+        LOG.debug("Original filter " + original);
         if (original instanceof SingleColumnValueFilter) {
             return handleSingleColumnValueFilter((SingleColumnValueFilter) original);
         } else if (original instanceof FilterList) {
             return handleFilterList((FilterList) original);
         } else if (original instanceof WhileMatchFilter) {
             return handleWhileMatchFilter((WhileMatchFilter) original);
+        }else if(original instanceof RowFilter){
+            return handleRowFilter((RowFilter) original);
+        }else {
+            throw new IllegalStateException("Filter not supported " + original.getClass().getName());
         }
-        return null;
     }
 
     private List<Filter> handleWhileMatchFilter(WhileMatchFilter original) {
@@ -106,6 +109,14 @@ public class MultiScan extends MultiOP implements ResultScanner {
         }
 
         return resFilters;
+    }
+
+    private List<Filter> handleRowFilter(RowFilter filter){
+        List<Filter> result = new ArrayList<>();
+        result.add(filter);
+        result.add(filter);
+        result.add(filter);
+        return result;
     }
 
 
@@ -138,7 +149,7 @@ public class MultiScan extends MultiOP implements ResultScanner {
         byte[] value = filter.getComparator().getValue();
         CompareFilter.CompareOp operator = filter.getOperator();
         List<Filter> fList = new ArrayList<Filter>();
-        LOG.debug("Comapring column " + family + ":" + qualifier);
+        LOG.debug("Comparing column " + family + ":" + qualifier);
         LOG.debug(DatabaseSchema.isProtectedColumn(schema, family, qualifier));
         if (DatabaseSchema.isProtectedColumn(schema, family, qualifier)) {
             String sFamily = new String(family);
@@ -195,6 +206,7 @@ public class MultiScan extends MultiOP implements ResultScanner {
     }
 
     public Result next() throws IOException {
+        LOG.debug("Requesting next value");
         List<Result> results = new ArrayList<Result>();
         for (Thread t : scans) {
             Result rst = ((ResultScannerThread) t).next();
@@ -224,7 +236,35 @@ public class MultiScan extends MultiOP implements ResultScanner {
     }
 
     public Iterator<Result> iterator() {
-        throw new UnsupportedOperationException("Not supported yet."); // Templates.
+        LOG.debug("Iterating over records");
+        List<Result> resultIterator = new ArrayList<Result>();
+        try {
+
+            for(Thread t: scans){
+                t.join();
+            }
+            boolean stop = false;
+            while(!stop){
+
+                List<Result> results = new ArrayList<Result>();
+                for (Thread t : scans) {
+                    Result rst = ((ResultScannerThread) t).next();
+                        results.add(rst);
+                }
+                if(!results.get(0).isEmpty()){
+                    resultIterator.add(decodeResult(results));
+                }else{
+                    stop = true;
+                }
+            }
+        }
+        catch (InterruptedException | IOException e) {
+                LOG.error(e);
+                throw new IllegalStateException(e);
+        }
+
+
+        return resultIterator.iterator();
     }
 
 }

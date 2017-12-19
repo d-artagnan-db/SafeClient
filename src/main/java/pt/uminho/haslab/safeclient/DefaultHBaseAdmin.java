@@ -1,8 +1,10 @@
 package pt.uminho.haslab.safeclient;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import pt.uminho.haslab.hbaseInterfaces.CHBaseAdmin;
 
 import java.io.IOException;
 
@@ -12,7 +14,6 @@ public class DefaultHBaseAdmin implements CHBaseAdmin {
     private HBaseAdmin admin;
 
     public DefaultHBaseAdmin(Configuration conf) throws IOException {
-        System.out.println("Create default HBase admin");
         admin = new HBaseAdmin(conf);
         this.conf = conf;
     }
@@ -38,7 +39,23 @@ public class DefaultHBaseAdmin implements CHBaseAdmin {
     }
 
     @Override
+    public boolean isTableAvailable(String s) throws IOException {
+        return admin.isTableAvailable(s);
+    }
+
+    @Override
+    public void createTableAsync(HTableDescriptor hTableDescriptor, byte[][] bytes) throws IOException {
+        admin.createTableAsync(hTableDescriptor, bytes);
+    }
+
+    @Override
+    public ClusterStatus getClusterStatus() throws IOException {
+       return admin.getClusterStatus();
+    }
+
+    @Override
     public void close() throws IOException {
         admin.close();
     }
+
 }

@@ -1,10 +1,10 @@
 package pt.uminho.haslab.safeclient.helpers;
 
 import org.apache.hadoop.conf.Configuration;
-import pt.uminho.haslab.safeclient.ExtendedHTable;
+import pt.uminho.haslab.hbaseInterfaces.ExtendedHTable;
 import pt.uminho.haslab.safeclient.secureTable.CryptoTable;
 import pt.uminho.haslab.safemapper.TableSchema;
-import pt.uminho.haslab.smhbase.exceptions.InvalidNumberOfBits;
+import pt.uminho.haslab.smpc.exceptions.InvalidNumberOfBits;
 
 import java.io.IOException;
 

@@ -3,7 +3,7 @@ package pt.uminho.haslab.safeclient.tests.Helpers;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
-import pt.uminho.haslab.safeclient.ExtendedHTable;
+import pt.uminho.haslab.hbaseInterfaces.ExtendedHTable;
 
 import java.io.IOException;
 import java.util.ArrayList;
