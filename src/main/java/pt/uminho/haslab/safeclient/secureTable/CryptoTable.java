@@ -72,8 +72,12 @@ public class CryptoTable implements ExtendedHTable {
 	public void initializeResources(Configuration conf, String tableName, TableSchema schema) throws IOException, InvalidNumberOfBits {
         String tableType = conf.get("baseTable");
         String schemaProperty = conf.get("schema");
-		LOG.debug("Schema is "+schemaProperty);
-		LOG.debug("Base table is " + tableType);
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Schema is " + schemaProperty);
+            LOG.debug("Base table is " + tableType);
+        }
+
         if(schema != null){
             this.tableSchema = schema;
             this.cryptoProperties = new CryptoProperties(this.tableSchema);

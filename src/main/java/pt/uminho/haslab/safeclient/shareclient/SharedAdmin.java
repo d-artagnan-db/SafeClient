@@ -46,7 +46,15 @@ public class SharedAdmin implements CHBaseAdmin {
 		}
 	}
 
-	public void deleteTable(String tableName) throws IOException {
+    @Override
+    public void createTable(HTableDescriptor hTableDescriptor, byte[][] bytes) throws IOException, InterruptedException {
+        LOG.debug("Create table splitKeys " + hTableDescriptor.getNameAsString());
+        for (final HBaseAdmin admin : admins) {
+            admin.createTable(hTableDescriptor, bytes);
+        }
+    }
+
+    public void deleteTable(String tableName) throws IOException {
         LOG.debug("Delete table "+tableName);
 		for (HBaseAdmin admin : admins) {
 

@@ -24,6 +24,11 @@ public class DefaultHBaseAdmin implements CHBaseAdmin {
     }
 
     @Override
+    public void createTable(HTableDescriptor hTableDescriptor, byte[][] bytes) throws IOException, InterruptedException {
+        this.admin.createTable(hTableDescriptor, bytes);
+    }
+
+    @Override
     public void deleteTable(String tableName) throws IOException {
         this.admin.deleteTable(tableName);
     }
