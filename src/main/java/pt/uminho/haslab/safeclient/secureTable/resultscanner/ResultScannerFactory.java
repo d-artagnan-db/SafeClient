@@ -13,6 +13,7 @@ public class ResultScannerFactory {
 	public ResultScanner getResultScanner(CryptoType cType, CryptoProperties cp, byte[] startRow, byte[] stopRow, ResultScanner rs, Object filterResult) {
 		switch (cType) {
 			case SMPC:
+			case ISMPC:
 			case PLT :
 				return new PlaintextResultScanner(cp, rs);
 			case STD :

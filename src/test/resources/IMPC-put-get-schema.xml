@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<schema>
+    <default>
+        <key>PLT</key>
+        <columns>PLT</columns>
+        <keypadding>false</keypadding>
+        <colpadding>false</colpadding>
+        <keyformatsize>10</keyformatsize>
+        <colformatsize>10</colformatsize>
+        <encryptionmode>disable</encryptionmode>
+    </default>
+    <table>
+        <name>Teste</name>
+        <default>
+            <encryptionmode>enable</encryptionmode>
+        </default>
+        <columns>
+            <family>
+                <name>Teste</name>
+                <cryptotechnique>PLT</cryptotechnique>
+                <qualifier>
+                    <name>Name</name>
+                </qualifier>
+                <qualifier>
+                    <name>Age</name>
+                    <cryptotechnique>ISMPC</cryptotechnique>
+                </qualifier>
+            </family>
+        </columns>
+    </table>
+</schema>

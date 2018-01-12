@@ -14,11 +14,14 @@ import pt.uminho.haslab.saferegions.OperationAttributesIdentifiers;
 import pt.uminho.haslab.smpc.exceptions.InvalidNumberOfBits;
 import pt.uminho.haslab.smpc.exceptions.InvalidSecretValue;
 import pt.uminho.haslab.smpc.interfaces.Dealer;
+import pt.uminho.haslab.smpc.sharemindImp.IntSharemindDealer;
 import pt.uminho.haslab.smpc.sharemindImp.SharemindDealer;
 import pt.uminho.haslab.smpc.sharemindImp.SharemindSharedSecret;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -50,6 +53,8 @@ public class MultiScan extends MultiOP implements ResultScanner {
     private void generateSecureScans() {
 
 
+        LOG.debug("Scan has filter " + scan.hasFilter());
+        LOG.debug("Scan is " + scan);
         if (scan.hasFilter()) {
             Filter originalFilter = scan.getFilter();
             List<Filter> parsedFilters = handleFilterWithProtectedColumns(originalFilter);
@@ -147,37 +152,70 @@ public class MultiScan extends MultiOP implements ResultScanner {
         byte[] family = filter.getFamily();
         byte[] qualifier = filter.getQualifier();
         byte[] value = filter.getComparator().getValue();
+
+        String sFamily = new String(family, Charset.forName("UTF-8"));
+        String sQualifier = new String(qualifier, Charset.forName("UTF-8"));
+
         CompareFilter.CompareOp operator = filter.getOperator();
         List<Filter> fList = new ArrayList<Filter>();
-        LOG.debug("Comparing column " + family + ":" + qualifier);
-        LOG.debug(DatabaseSchema.isProtectedColumn(schema, family, qualifier));
-        if (DatabaseSchema.isProtectedColumn(schema, family, qualifier)) {
-            String sFamily = new String(family);
-            String sQualifier = new String(qualifier);
 
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Generated Protected Filter for column " + sFamily + ":" + sQualifier);
-            }
+        DatabaseSchema.CryptoType type = schema.getCryptoTypeFromQualifier(sFamily, sQualifier);
 
-            hasProtectedScan = true;
-            int formatSize = schema.getFormatSizeFromQualifier(sFamily, sQualifier);
+        LOG.debug("CType is  " + type);
+        switch (type) {
 
-            try {
-                Dealer dealer = new SharemindDealer(formatSize);
-                byte[] sQualifierMod = sQualifier.getBytes();
-                BigInteger bigVal = new BigInteger(value);
-                SharemindSharedSecret secret = (SharemindSharedSecret) dealer.share(bigVal);
-                fList.add(new SingleColumnValueFilter(family, sQualifierMod, operator, secret.getU1().toByteArray()));
-                fList.add(new SingleColumnValueFilter(family, sQualifierMod, operator, secret.getU2().toByteArray()));
-                fList.add(new SingleColumnValueFilter(family, sQualifierMod, operator, secret.getU3().toByteArray()));
-            } catch (InvalidNumberOfBits | InvalidSecretValue ex) {
-                LOG.error(ex);
-                throw new IllegalStateException(ex);
-            }
-        } else {
-            fList.add(filter);
-            fList.add(filter);
-            fList.add(filter);
+            case SMPC:
+
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Generate Protected Filter for column " + sFamily + ":" + sQualifier + " with type " + type);
+                }
+
+                hasProtectedScan = true;
+                int formatSize = schema.getFormatSizeFromQualifier(sFamily, sQualifier);
+
+                try {
+                    Dealer dealer = new SharemindDealer(formatSize);
+                    byte[] sQualifierMod = sQualifier.getBytes();
+                    BigInteger bigVal = new BigInteger(value);
+                    SharemindSharedSecret secret = (SharemindSharedSecret) dealer.share(bigVal);
+                    fList.add(new SingleColumnValueFilter(family, sQualifierMod, operator, secret.getU1().toByteArray()));
+                    fList.add(new SingleColumnValueFilter(family, sQualifierMod, operator, secret.getU2().toByteArray()));
+                    fList.add(new SingleColumnValueFilter(family, sQualifierMod, operator, secret.getU3().toByteArray()));
+                } catch (InvalidNumberOfBits | InvalidSecretValue ex) {
+                    LOG.error(ex);
+                    throw new IllegalStateException(ex);
+                }
+                break;
+            case ISMPC:
+
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Generate Protected Filter for column " + sFamily + ":" + sQualifier + " with type " + type);
+                }
+
+                hasProtectedScan = true;
+                IntSharemindDealer dealer = new IntSharemindDealer();
+                try {
+                    int[] secrets = dealer.share(ByteBuffer.wrap(value).getInt());
+                    byte[] sQualifierMod = sQualifier.getBytes();
+
+                    for (int secret : secrets) {
+                        ByteBuffer buffer = ByteBuffer.allocate(4);
+                        buffer.putInt(secret);
+                        buffer.flip();
+                        fList.add(new SingleColumnValueFilter(family, sQualifierMod, operator, buffer.array()));
+                        buffer.clear();
+                    }
+                } catch (InvalidSecretValue ex) {
+                    LOG.error(ex);
+                    throw new IllegalStateException(ex);
+                }
+                break;
+            default:
+                LOG.debug("Default case");
+                fList.add(filter);
+                fList.add(filter);
+                fList.add(filter);
+
         }
 
         return fList;

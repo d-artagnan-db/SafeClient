@@ -282,7 +282,8 @@ public class CryptoTable implements ExtendedHTable {
 						getResult = this.decodeGetObject((ResultScanner) encodedGet, row);
 						break;
                     case SMPC:
-                    case PLT:
+					case ISMPC:
+					case PLT:
 					case DET:
 					case OPE:
 					case FPE:
@@ -320,7 +321,8 @@ public class CryptoTable implements ExtendedHTable {
 					switch (this.cryptoProperties.tableSchema.getKey().getCryptoType()) {
 						case PLT:
                         case SMPC:
-                        case DET:
+						case ISMPC:
+						case DET:
 						case OPE:
 						case FPE:
 							Get encGet = new Get(this.cryptoProperties.encodeRow(row));
@@ -358,6 +360,7 @@ public class CryptoTable implements ExtendedHTable {
 						break;
 					case PLT:
                     case SMPC:
+					case ISMPC:
 					case DET:
 					case OPE:
 					case FPE:
@@ -408,6 +411,7 @@ public class CryptoTable implements ExtendedHTable {
 						}
 						break;
                     case SMPC:
+					case ISMPC:
 					case PLT:
 					case DET:
 					case OPE:
@@ -564,6 +568,7 @@ public class CryptoTable implements ExtendedHTable {
 						break;
 					case PLT:
                     case SMPC:
+					case ISMPC:
 					case DET:
 					case OPE:
 					case FPE:
@@ -637,6 +642,7 @@ public class CryptoTable implements ExtendedHTable {
 						}
 						break;
 					case SMPC:
+					case ISMPC:
 					case STD:
 					case DET:
 					case OPE:
@@ -680,6 +686,7 @@ public class CryptoTable implements ExtendedHTable {
 						hRegionLocation = stdHRegionLocation;
 						break;
                     case SMPC:
+					case ISMPC:
 					case PLT:
 					case DET:
 					case OPE:
@@ -765,6 +772,7 @@ public class CryptoTable implements ExtendedHTable {
 						result = this.cryptoProperties.decodeResult(this.cryptoProperties.decodeRow(encResult.getRow()), encResult);
 						break;
                     case SMPC:
+					case ISMPC:
 					case PLT:
 					case OPE:
 						Result encryptedResult = htable.getRowOrBefore(this.cryptoProperties.encodeRow(row), family);
@@ -809,6 +817,7 @@ public class CryptoTable implements ExtendedHTable {
 					break;
 				case PLT:
                 case SMPC:
+				case ISMPC:
 				case DET:
 				case OPE:
 				case FPE:

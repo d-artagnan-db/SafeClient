@@ -12,7 +12,7 @@ public class SimpleMPCTest extends SingleColumnProtectedTest {
 
     @Before
     public void initializeRedisContainer() throws IOException {
-        RedisUtils.flushAll("redis");
+        RedisUtils.flushAll("localhost");
     }
 
     @Override

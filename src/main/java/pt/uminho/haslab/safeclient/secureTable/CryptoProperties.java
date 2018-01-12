@@ -16,7 +16,6 @@ import pt.uminho.haslab.safemapper.*;
 import pt.uminho.haslab.safemapper.DatabaseSchema.CryptoType;
 
 import java.io.UnsupportedEncodingException;
-import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.util.*;
 
@@ -215,6 +214,7 @@ public class CryptoProperties {
 
 		switch (cType) {
 			case SMPC:
+			case ISMPC:
 			case PLT :
 				return row;
 			case STD :
@@ -248,6 +248,7 @@ public class CryptoProperties {
 		}
 		switch (cType) {
             case SMPC:
+			case ISMPC:
             case PLT :
                 return value;
 			case STD :
@@ -275,6 +276,7 @@ public class CryptoProperties {
 		byte[] row;
 		switch (cType) {
             case SMPC:
+			case ISMPC:
 			case PLT :
 				row = ciphertext;
 				break;
@@ -315,6 +317,7 @@ public class CryptoProperties {
 		byte[] value;
 		switch (cType) {
             case SMPC:
+			case ISMPC:
 			case PLT :
 				value = ciphertext;
 				break;

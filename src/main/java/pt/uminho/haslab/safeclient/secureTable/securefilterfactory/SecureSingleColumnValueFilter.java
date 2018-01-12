@@ -40,6 +40,7 @@ public class SecureSingleColumnValueFilter implements SecureFilterProperties {
                     throw new UnsupportedOperationException("Only equality comparison is supported for values protected with Deterministic-based encryption schemes.");
                 }
             case SMPC:
+            case ISMPC:
             case PLT:
             case OPE:
                 byte[] encryptedValue =
@@ -76,6 +77,7 @@ public class SecureSingleColumnValueFilter implements SecureFilterProperties {
 
                 return parserResult;
             case SMPC:
+            case ISMPC:
             case PLT:
             case OPE :
                 return buildEncryptedFilter(plaintextFilter, cryptoType);

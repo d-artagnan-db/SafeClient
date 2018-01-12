@@ -18,6 +18,7 @@ import pt.uminho.haslab.testingutils.ValuesGenerator;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.util.*;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -67,8 +68,6 @@ public abstract class AbstractTableGenerator {
                             val = ValuesGenerator.randomString(10).getBytes();
                             break;
                         case INT:
-                            //val = ValuesGenerator.randomBigInteger(10).toByteArray();
-
                             boolean invalid = true;
                             do {
                                 int intVal = ValuesGenerator.randomInt();
@@ -85,7 +84,13 @@ public abstract class AbstractTableGenerator {
                                 }
                             } while (invalid);
                             break;
-
+                        case INTEGER:
+                            ByteBuffer buffer = ByteBuffer.allocate(4);
+                            buffer.putInt((int) (Math.abs(ValuesGenerator.randomInt())%Math.pow(2, 31)));
+                            buffer.flip();
+                            val = buffer.array();
+                            buffer.clear();
+                            break;
                     }
                     put.add(fam.getFamilyName().getBytes(), qual.getName()
                             .getBytes(), val);
@@ -256,7 +261,7 @@ public abstract class AbstractTableGenerator {
 
     protected abstract Set<String> getExpectedExceptionNames();
     public enum ColType {
-        STRING, INT
+        STRING, INT, INTEGER
     }
 
 }

@@ -28,6 +28,7 @@ public class SecureRowFilter implements SecureFilterProperties {
                 LOG.error("SecureRowFilter.class:buildEncryptedFilter:UnsupportedOperationException: RowFilter operation not supported for non-order-preserving CryptoBoxes.");
                 throw new UnsupportedOperationException("RowFilter operation not supported for non-order-preserving CryptoBoxes.");
             case SMPC:
+            case ISMPC:
             case PLT:
             case OPE:
                 byte[] encryptedRowKey = this.cryptoProperties.encodeRow(plainRowFilter.getComparator().getValue());
@@ -53,6 +54,7 @@ public class SecureRowFilter implements SecureFilterProperties {
 
                 return parserResult;
             case SMPC:
+            case ISMPC:
             case PLT :
             case OPE :
             // Generate a Binary Comparator to perform the comparison with the respective encrypted value

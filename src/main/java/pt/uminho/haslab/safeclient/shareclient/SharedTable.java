@@ -128,10 +128,8 @@ public class SharedTable implements ExtendedHTable {
 
         long requestID = getRequestId();
         int targetPlayer = LB.getResultPlayer();
-        LOG.debug("Id generated is " + requestID);
         MultiScan mScan = new MultiScan(sharedConfig, connections, schema, requestID, targetPlayer, scan);
         mScan.startScan();
-
         readLock.unlock();
         return mScan;
 

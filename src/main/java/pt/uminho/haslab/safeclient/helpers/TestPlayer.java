@@ -22,6 +22,11 @@ public class TestPlayer implements Player{
     }
 
     @Override
+    public void storeValues(Integer integer, Integer integer1, int[] ints) {
+
+    }
+
+    @Override
     public BigInteger getValue(Integer integer) {
         return null;
     }
@@ -39,5 +44,15 @@ public class TestPlayer implements Player{
     @Override
     public List<byte[]> getValues(Integer integer) {
         return null;
+    }
+
+    @Override
+    public void sendValueToPlayer(Integer integer, int[] ints) {
+
+    }
+
+    @Override
+    public int[] getIntValues(Integer integer) {
+        return new int[0];
     }
 }

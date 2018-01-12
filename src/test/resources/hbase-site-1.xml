@@ -77,12 +77,12 @@
     </property>
     <property>
         <name>smhbase.batch.size</name>
-        <value>200</value>
+        <value>500000</value>
     </property>
     >
     <property>
         <name>smhbase.discovery.location</name>
-        <value>redis</value>
+        <value>localhost</value>
     </property>
     <property>
         <name>smhbase.discovery.sleepTime</name>
@@ -96,10 +96,8 @@
         <name>smhbase.discovery.retries</name>
         <value>5</value>
     </property>
-    <!--  This property is defined by the tests as each tests can have a different schema.
     <property>
-        <name>smhbase.schema</name>
-        <value>protected-schema.xml</value>
+        <name>smhbase.regions.fixed</name>
+        <value>True</value>
     </property>
-    -->
 </configuration>

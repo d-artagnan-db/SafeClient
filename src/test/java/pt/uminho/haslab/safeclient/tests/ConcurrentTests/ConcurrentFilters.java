@@ -78,6 +78,6 @@ public abstract class ConcurrentFilters extends SingleColumnProtectedTest {
     }
 
     protected int getNumberOfThreads() {
-        return 20;
+        return 50;
     }
 }
