@@ -27,7 +27,7 @@ public class SimpleMPCTest extends SingleColumnProtectedTest {
 
     @Override
     protected String getProtectedSchemaPath() {
-        return "put-get-schema.xml";
+        return "/Users/roger/Documents/HASLab/safecloud-eu/safeclient/src/test/resources/put-get-schema.xml";
     }
     protected int getProtectedColumnFormatSize(){
         return 64;

@@ -52,7 +52,7 @@
     <property>
         <name>hbase.coprocessor.region.classes</name>
         <value>
-            pt.uminho.haslab.saferegions.SmpcCoprocessor
+            pt.uminho.haslab.saferegions.ConcurrentScanCoprocessor
         </value>
     </property>
     <property>

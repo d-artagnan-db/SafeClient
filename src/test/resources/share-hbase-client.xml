@@ -43,4 +43,8 @@
             before retries exhausted, it will break early and throw SocketTimeoutException.
         </description>
   </property>
+    <property>
+        <name>saferegions.coprocessor.concurrent</name>
+        <value>True</value>
+    </property>
 </configuration>

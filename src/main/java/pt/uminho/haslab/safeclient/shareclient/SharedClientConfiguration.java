@@ -11,13 +11,20 @@ public class SharedClientConfiguration {
 	private final Configuration conf;
 	private final int id;
 
+	private final boolean hasConcurrentScanEndpoint;
+
 	public SharedClientConfiguration(Configuration conf, int id) {
 		this.conf = conf;
 		this.id = id;
+		hasConcurrentScanEndpoint = conf.getBoolean("saferegions.coprocessor.concurrent", false);
 
 	}
 
-	public Configuration createClusterConfiguration() {
+    public boolean hasConcurrentScanEndpoint() {
+        return hasConcurrentScanEndpoint;
+    }
+
+    public Configuration createClusterConfiguration() {
 		Configuration cluster = new Configuration();
         List<String> keys = new ArrayList<String>();
         List<String> values = new ArrayList<String>();

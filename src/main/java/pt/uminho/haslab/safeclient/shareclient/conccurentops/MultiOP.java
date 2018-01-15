@@ -205,7 +205,9 @@ public abstract class MultiOP {
 			index += 1;
 		}
 
-		LOG.debug("Going to start scan request");
+		if(LOG.isDebugEnabled()){
+		    LOG.debug("Going to start scan request");
+		}
 
 		for (Thread t : calls) {
 			t.start();

@@ -52,9 +52,10 @@ public class MultiScan extends MultiOP implements ResultScanner {
 
     private void generateSecureScans() {
 
-
-        LOG.debug("Scan has filter " + scan.hasFilter());
-        LOG.debug("Scan is " + scan);
+        if(LOG.isDebugEnabled()){
+            LOG.debug("Scan has filter " + scan.hasFilter());
+            LOG.debug("Scan is " + scan);
+        }
         if (scan.hasFilter()) {
             Filter originalFilter = scan.getFilter();
             List<Filter> parsedFilters = handleFilterWithProtectedColumns(originalFilter);
@@ -88,7 +89,9 @@ public class MultiScan extends MultiOP implements ResultScanner {
     }
 
     private List<Filter> handleFilterWithProtectedColumns(Filter original) {
-        LOG.debug("Original filter " + original);
+       if(LOG.isDebugEnabled()){
+         LOG.debug("Original filter " + original);
+       }
         if (original instanceof SingleColumnValueFilter) {
             return handleSingleColumnValueFilter((SingleColumnValueFilter) original);
         } else if (original instanceof FilterList) {
@@ -161,7 +164,9 @@ public class MultiScan extends MultiOP implements ResultScanner {
 
         DatabaseSchema.CryptoType type = schema.getCryptoTypeFromQualifier(sFamily, sQualifier);
 
-        LOG.debug("CType is  " + type);
+        if(LOG.isDebugEnabled()){
+            LOG.debug("CType is  " + type);
+        }
         switch (type) {
 
             case SMPC:

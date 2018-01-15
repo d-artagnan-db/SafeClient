@@ -484,7 +484,9 @@ public class CryptoTable implements ExtendedHTable {
      */
 	@Override
 	public ResultScanner getScanner(Scan scan) {
-	    LOG.debug("getScanner operation");
+		if(LOG.isDebugEnabled()){
+	    	LOG.debug("getScanner operation");
+		}
 		ResultScanner result = null;
 		try {
 			if (this.tableSchema.getEncryptionMode()) {
@@ -526,7 +528,9 @@ public class CryptoTable implements ExtendedHTable {
 
 	@Override
 	public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier, byte[] value, Put put) {
-	    LOG.debug("CheckAndPut operation");
+	    if(LOG.isDebugEnabled()){
+	        LOG.debug("CheckAndPut operation");
+	    }
 		boolean operationPerformed = false;
 		try {
 			if (this.tableSchema.getEncryptionMode()) {
@@ -615,7 +619,9 @@ public class CryptoTable implements ExtendedHTable {
 
 	@Override
 	public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount) {
-	    LOG.debug("incrementColumnValue operation");
+	    if(LOG.isDebugEnabled()){
+	        LOG.debug("incrementColumnValue operation");
+	    }
 		long operationValue = 0;
 		try {
 			if (this.tableSchema.getEncryptionMode()) {
