@@ -14,9 +14,10 @@ import pt.uminho.haslab.saferegions.OperationAttributesIdentifiers;
 import pt.uminho.haslab.smpc.exceptions.InvalidNumberOfBits;
 import pt.uminho.haslab.smpc.exceptions.InvalidSecretValue;
 import pt.uminho.haslab.smpc.interfaces.Dealer;
-import pt.uminho.haslab.smpc.sharemindImp.IntSharemindDealer;
-import pt.uminho.haslab.smpc.sharemindImp.SharemindDealer;
-import pt.uminho.haslab.smpc.sharemindImp.SharemindSharedSecret;
+import pt.uminho.haslab.smpc.sharemindImp.BigInteger.SharemindDealer;
+import pt.uminho.haslab.smpc.sharemindImp.BigInteger.SharemindSharedSecret;
+import pt.uminho.haslab.smpc.sharemindImp.Integer.IntSharemindDealer;
+import pt.uminho.haslab.smpc.sharemindImp.Long.LongSharemindDealer;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -206,6 +207,29 @@ public class MultiScan extends MultiOP implements ResultScanner {
                     for (int secret : secrets) {
                         ByteBuffer buffer = ByteBuffer.allocate(4);
                         buffer.putInt(secret);
+                        buffer.flip();
+                        fList.add(new SingleColumnValueFilter(family, sQualifierMod, operator, buffer.array()));
+                        buffer.clear();
+                    }
+                } catch (InvalidSecretValue ex) {
+                    LOG.error(ex);
+                    throw new IllegalStateException(ex);
+                }
+                break;
+            case LSMPC:
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Generate Protected Filter for column " + sFamily + ":" + sQualifier + " with type " + type);
+                }
+
+                hasProtectedScan = true;
+                LongSharemindDealer lDealer = new LongSharemindDealer();
+                try {
+                    long[] secrets = lDealer.share(ByteBuffer.wrap(value).getLong());
+                    byte[] sQualifierMod = sQualifier.getBytes();
+
+                    for (long secret : secrets) {
+                        ByteBuffer buffer = ByteBuffer.allocate(8);
+                        buffer.putLong(secret);
                         buffer.flip();
                         fList.add(new SingleColumnValueFilter(family, sQualifierMod, operator, buffer.array()));
                         buffer.clear();

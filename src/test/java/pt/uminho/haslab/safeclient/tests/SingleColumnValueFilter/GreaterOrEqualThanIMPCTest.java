@@ -8,16 +8,16 @@ import pt.uminho.haslab.smpc.helpers.RandomGenerator;
 
 import java.util.HashMap;
 
-public class EqualIMPCTest extends SingleColumnMPCTest{
+public class GreaterOrEqualThanIMPCTest extends SingleColumnMPCTest {
 
-    public EqualIMPCTest() {
-        RandomGenerator.initIntBatch(100);
+    public GreaterOrEqualThanIMPCTest() {
+        RandomGenerator.initLongBatch(100);
 
     }
 
     @Override
     protected CompareFilter.CompareOp getOperation() {
-        return CompareFilter.CompareOp.EQUAL;
+        return CompareFilter.CompareOp.GREATER_OR_EQUAL;
     }
 
     @Override
@@ -35,13 +35,13 @@ public class EqualIMPCTest extends SingleColumnMPCTest{
         return "/Users/roger/Documents/HASLab/safecloud-eu/safeclient/src/test/resources/IMPC-put-get-schema.xml";
     }
 
-    protected void defineColTypes(){
+    protected void defineColTypes() {
         this.qualifierColTypes.put("Teste", new HashMap<String, ColType>());
         this.qualifierColTypes.get("Teste").put("Name", ColType.STRING);
         this.qualifierColTypes.get("Teste").put("Age", ColType.INTEGER);
     }
 
-    protected int getProtectedColumnFormatSize(){
+    protected int getProtectedColumnFormatSize() {
         return 64;
     }
 }

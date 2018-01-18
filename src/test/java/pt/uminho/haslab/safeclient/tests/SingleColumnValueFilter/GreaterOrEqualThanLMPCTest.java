@@ -8,21 +8,21 @@ import pt.uminho.haslab.smpc.helpers.RandomGenerator;
 
 import java.util.HashMap;
 
-public class EqualIMPCTest extends SingleColumnMPCTest{
+public class GreaterOrEqualThanLMPCTest extends SingleColumnMPCTest {
 
-    public EqualIMPCTest() {
-        RandomGenerator.initIntBatch(100);
+    public GreaterOrEqualThanLMPCTest() {
+        RandomGenerator.initLongBatch(100);
 
     }
 
     @Override
     protected CompareFilter.CompareOp getOperation() {
-        return CompareFilter.CompareOp.EQUAL;
+        return CompareFilter.CompareOp.GREATER_OR_EQUAL;
     }
 
     @Override
     protected DatabaseSchema.CryptoType getProtectedColumnType() {
-        return DatabaseSchema.CryptoType.ISMPC;
+        return DatabaseSchema.CryptoType.LSMPC;
     }
 
     @Override
@@ -32,16 +32,16 @@ public class EqualIMPCTest extends SingleColumnMPCTest{
 
     @Override
     protected String getProtectedSchemaPath() {
-        return "/Users/roger/Documents/HASLab/safecloud-eu/safeclient/src/test/resources/IMPC-put-get-schema.xml";
+        return "/Users/roger/Documents/HASLab/safecloud-eu/safeclient/src/test/resources/LMPC-put-get-schema.xml";
     }
 
-    protected void defineColTypes(){
+    protected void defineColTypes() {
         this.qualifierColTypes.put("Teste", new HashMap<String, ColType>());
         this.qualifierColTypes.get("Teste").put("Name", ColType.STRING);
-        this.qualifierColTypes.get("Teste").put("Age", ColType.INTEGER);
+        this.qualifierColTypes.get("Teste").put("Age", ColType.LONG);
     }
 
-    protected int getProtectedColumnFormatSize(){
+    protected int getProtectedColumnFormatSize() {
         return 64;
     }
 }

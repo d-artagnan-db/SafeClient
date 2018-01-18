@@ -14,7 +14,8 @@ public class ResultScannerFactory {
 		switch (cType) {
 			case SMPC:
 			case ISMPC:
-			case PLT :
+            case LSMPC:
+            case PLT :
 				return new PlaintextResultScanner(cp, rs);
 			case STD :
 				return new StandardResultScanner(cp, startRow, stopRow, rs, filterResult);

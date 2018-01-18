@@ -74,7 +74,7 @@ public abstract class SingleColumnProtectedTest extends AbstractTableGenerator {
 
     @Override
     protected int getNumberOfRecords() {
-        return 10000;
+        return 100;
     }
 
     @Override

@@ -41,6 +41,7 @@ public class SecureSingleColumnValueFilter implements SecureFilterProperties {
                 }
             case SMPC:
             case ISMPC:
+            case LSMPC:
             case PLT:
             case OPE:
                 byte[] encryptedValue =
@@ -78,6 +79,7 @@ public class SecureSingleColumnValueFilter implements SecureFilterProperties {
                 return parserResult;
             case SMPC:
             case ISMPC:
+            case LSMPC:
             case PLT:
             case OPE :
                 return buildEncryptedFilter(plaintextFilter, cryptoType);

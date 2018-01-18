@@ -13,9 +13,10 @@ import pt.uminho.haslab.safemapper.TableSchema;
 import pt.uminho.haslab.smpc.exceptions.InvalidNumberOfBits;
 import pt.uminho.haslab.smpc.exceptions.InvalidSecretValue;
 import pt.uminho.haslab.smpc.interfaces.Dealer;
-import pt.uminho.haslab.smpc.sharemindImp.IntSharemindDealer;
-import pt.uminho.haslab.smpc.sharemindImp.SharemindDealer;
-import pt.uminho.haslab.smpc.sharemindImp.SharemindSharedSecret;
+import pt.uminho.haslab.smpc.sharemindImp.BigInteger.SharemindDealer;
+import pt.uminho.haslab.smpc.sharemindImp.BigInteger.SharemindSharedSecret;
+import pt.uminho.haslab.smpc.sharemindImp.Integer.IntSharemindDealer;
+import pt.uminho.haslab.smpc.sharemindImp.Long.LongSharemindDealer;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -66,38 +67,60 @@ public abstract class MultiOP {
             String family = new String(bCF, Charset.forName("UTF-8"));
             String qualifier = new String(bCQ, Charset.forName("UTF-8"));
             List<byte[]> values = new ArrayList<byte[]>();
+            DatabaseSchema.CryptoType type = schema.getCryptoTypeFromQualifier(family, qualifier);
 
-            if (schema.getCryptoTypeFromQualifier(family, qualifier) == DatabaseSchema.CryptoType.SMPC) {
+            switch (type) {
+                case SMPC:
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Sharing SMPC");
+                    }
+                    int formatSize = schema.getFormatSizeFromQualifier(family, qualifier);
+                    Dealer dealer = new SharemindDealer(formatSize);
 
-                int formatSize = schema.getFormatSizeFromQualifier(family, qualifier);
-                Dealer dealer = new SharemindDealer(formatSize);
+                    BigInteger bigVal = new BigInteger(value);
+                    SharemindSharedSecret secret = (SharemindSharedSecret) dealer.share(bigVal);
 
-                BigInteger bigVal = new BigInteger(value);
-                SharemindSharedSecret secret = (SharemindSharedSecret) dealer.share(bigVal);
+                    values.add(secret.getU1().toByteArray());
+                    values.add(secret.getU2().toByteArray());
+                    values.add(secret.getU3().toByteArray());
+                    break;
+                case ISMPC:
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Sharing ISMPC");
+                    }
+                    IntSharemindDealer iDealer = new IntSharemindDealer();
+                    int ptxValue = ByteBuffer.wrap(value).getInt();
+                    int[] shares = iDealer.share(ptxValue);
 
-                values.add(secret.getU1().toByteArray());
-                values.add(secret.getU2().toByteArray());
-                values.add(secret.getU3().toByteArray());
+                    for (int share : shares) {
+                        ByteBuffer buffer = ByteBuffer.allocate(4);
+                        buffer.putInt(share);
+                        buffer.flip();
+                        values.add(buffer.array());
+                        buffer.clear();
+                    }
+                    break;
+                case LSMPC:
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Sharing LSMPC");
+                    }
+                    LongSharemindDealer lDealer = new LongSharemindDealer();
+                    long lValue = ByteBuffer.wrap(value).getLong();
+                    long[] lshares = lDealer.share(lValue);
 
-            }else if(schema.getCryptoTypeFromQualifier(family, qualifier) == DatabaseSchema.CryptoType.ISMPC){
+                    for (long lshare : lshares) {
+                        ByteBuffer buffer = ByteBuffer.allocate(8);
+                        buffer.putLong(lshare);
+                        buffer.flip();
+                        values.add(buffer.array());
+                        buffer.clear();
+                    }
+                    break;
+                default:
+                    values.add(value);
+                    values.add(value);
+                    values.add(value);
 
-                IntSharemindDealer dealer = new IntSharemindDealer();
-                int ptxValue = ByteBuffer.wrap(value).getInt();
-                int[] shares = dealer.share(ptxValue);
-
-                for(int share: shares){
-                    ByteBuffer buffer = ByteBuffer.allocate(4);
-                    buffer.putInt(share);
-                    buffer.flip();
-                    values.add(buffer.array());
-                    buffer.clear();
-                }
-
-            }
-            else {
-                values.add(value);
-                values.add(value);
-                values.add(value);
             }
 
             for (int i = 0; i < putResults.size(); i++) {
@@ -136,37 +159,67 @@ public abstract class MultiOP {
             byte type = firstCell.getTypeByte();
             long timestamp = firstCell.getTimestamp();
 
-            // Revert secrets back to original value
-            if (schema.getCryptoTypeFromQualifier(family, qualifier) == DatabaseSchema.CryptoType.SMPC) {
-                // FormatSize defines the size of the ring in which the shares generated
+            DatabaseSchema.CryptoType ctype = schema.getCryptoTypeFromQualifier(family, qualifier);
 
-				int formatSize = schema.getFormatSizeFromQualifier(family, qualifier);
-                byte[] fSecret = CellUtil.cloneValue(firstCell);
-                byte[] sSecret = CellUtil.cloneValue(secondCell);
-                byte[] tSecret = CellUtil.cloneValue(thirdCell);
+            switch (ctype) {
 
-                BigInteger firstSecret = new BigInteger(fSecret);
-                BigInteger secondSecret = new BigInteger(sSecret);
-                BigInteger thirdSecret = new BigInteger(tSecret);
+                case SMPC:
+                    // FormatSize defines the size of the ring in which the shares generated
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Decode SMPC");
+                    }
+                    int formatSize = schema.getFormatSizeFromQualifier(family, qualifier);
+                    byte[] fSecret = CellUtil.cloneValue(firstCell);
+                    byte[] sSecret = CellUtil.cloneValue(secondCell);
+                    byte[] tSecret = CellUtil.cloneValue(thirdCell);
 
-                SharemindSharedSecret secret = new SharemindSharedSecret(formatSize, firstSecret, secondSecret, thirdSecret);
-                decValue = secret.unshare().toByteArray();
-               // LOG.debug("Decoding secrets " + firstSecret + ":" + secondSecret + ":" + thirdSecret + " into val " + new BigInteger(decValue));
-            }else if(schema.getCryptoTypeFromQualifier(family, qualifier) == DatabaseSchema.CryptoType.ISMPC){
-                int[] shares = new int[3];
-                shares[0] = ByteBuffer.wrap(CellUtil.cloneValue(firstCell)).getInt();
-                shares[1] = ByteBuffer.wrap(CellUtil.cloneValue(secondCell)).getInt();
-                shares[2] = ByteBuffer.wrap(CellUtil.cloneValue(thirdCell)).getInt();
+                    BigInteger firstSecret = new BigInteger(fSecret);
+                    BigInteger secondSecret = new BigInteger(sSecret);
+                    BigInteger thirdSecret = new BigInteger(tSecret);
 
-                IntSharemindDealer dealer = new IntSharemindDealer();
+                    SharemindSharedSecret secret = new SharemindSharedSecret(formatSize, firstSecret, secondSecret, thirdSecret);
+                    decValue = secret.unshare().toByteArray();
+                    break;
+                case ISMPC:
 
-                int plxValue = dealer.unshare(shares);
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Decode LSMPC");
+                    }
+                    int[] shares = new int[3];
+                    shares[0] = ByteBuffer.wrap(CellUtil.cloneValue(firstCell)).getInt();
+                    shares[1] = ByteBuffer.wrap(CellUtil.cloneValue(secondCell)).getInt();
+                    shares[2] = ByteBuffer.wrap(CellUtil.cloneValue(thirdCell)).getInt();
 
-                ByteBuffer buffer = ByteBuffer.allocate(4);
-                buffer.putInt(plxValue);
-                buffer.flip();
-                decValue = buffer.array();
-                buffer.clear();
+                    IntSharemindDealer dealer = new IntSharemindDealer();
+
+                    int plxValue = dealer.unshare(shares);
+
+                    ByteBuffer buffer = ByteBuffer.allocate(4);
+                    buffer.putInt(plxValue);
+                    buffer.flip();
+                    decValue = buffer.array();
+                    buffer.clear();
+                    break;
+                case LSMPC:
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Decode LSMPC");
+                    }
+                    long[] lshares = new long[3];
+                    lshares[0] = ByteBuffer.wrap(CellUtil.cloneValue(firstCell)).getLong();
+                    lshares[1] = ByteBuffer.wrap(CellUtil.cloneValue(secondCell)).getLong();
+                    lshares[2] = ByteBuffer.wrap(CellUtil.cloneValue(thirdCell)).getLong();
+
+                    LongSharemindDealer ldealer = new LongSharemindDealer();
+
+                    long lValue = ldealer.unshare(lshares);
+
+                    ByteBuffer lbuffer = ByteBuffer.allocate(8);
+                    lbuffer.putLong(lValue);
+                    lbuffer.flip();
+                    decValue = lbuffer.array();
+                    lbuffer.clear();
+                    break;
+
 
             }
             Cell decCell = CellUtil.createCell(row, cf, cq, timestamp,

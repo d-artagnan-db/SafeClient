@@ -161,6 +161,7 @@ public class HTableFeaturesUtils {
             switch (this.cp.tableSchema.getKey().getCryptoType()) {
                 case SMPC:
                 case ISMPC:
+                case LSMPC:
                 case PLT:
                 case OPE:
                     encryptedScan = encodeDelimitingRows(encryptedScan, s.getStartRow(), s.getStopRow());

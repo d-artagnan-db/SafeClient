@@ -9,11 +9,12 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <hbase.version>0.98.21-hadoop2</hbase.version>
-        <smpc.version>1.1.0</smpc.version>
+        <smpc.version>1.2.0</smpc.version>
         <saferegions.version>1.1.0</saferegions.version>
         <safemapper.version>1.0.0</safemapper.version>
         <cryptoEnv.version>1.0.0</cryptoEnv.version>
         <redis.version>2.9.0</redis.version>
+        <testingutilities.version>1.1.1</testingutilities.version>
         <hbaseinterfaces.version>1.0.0</hbaseinterfaces.version>
         <relativePath>..</relativePath>
     </properties>
@@ -21,7 +22,7 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>testingutilities</artifactId>
-            <version>${project.version}</version>
+            <version>${testingutilities.version}</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>

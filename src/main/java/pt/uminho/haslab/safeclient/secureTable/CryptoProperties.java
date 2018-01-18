@@ -215,7 +215,8 @@ public class CryptoProperties {
 		switch (cType) {
 			case SMPC:
 			case ISMPC:
-			case PLT :
+            case LSMPC:
+            case PLT :
 				return row;
 			case STD :
 				return this.stdHandler.encrypt(this.stdKey, row);
@@ -249,6 +250,7 @@ public class CryptoProperties {
 		switch (cType) {
             case SMPC:
 			case ISMPC:
+            case LSMPC:
             case PLT :
                 return value;
 			case STD :
@@ -277,7 +279,8 @@ public class CryptoProperties {
 		switch (cType) {
             case SMPC:
 			case ISMPC:
-			case PLT :
+            case LSMPC:
+            case PLT :
 				row = ciphertext;
 				break;
 			case STD :
@@ -318,7 +321,8 @@ public class CryptoProperties {
 		switch (cType) {
             case SMPC:
 			case ISMPC:
-			case PLT :
+            case LSMPC:
+            case PLT :
 				value = ciphertext;
 				break;
 			case STD :

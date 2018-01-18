@@ -15,7 +15,7 @@
     <orderEntry type="library" name="Maven: pt.uminho.haslab:smpc:1.0.0-SNAPSHOT" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Maven: pt.uminho.haslab:saferegions:1.0.0-SNAPSHOT" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Maven: pt.uminho.haslab:protocommunication:1.0-SNAPSHOT" level="project" />
-    <orderEntry type="library" name="Maven: pt.uminho.haslab:testingutilities:1.0.0" level="project" />
+    <orderEntry type="library" name="Maven: pt.uminho.haslab:testingutilities:1.1.1" level="project" />
     <orderEntry type="library" name="Maven: org.apache.hbase:hbase-testing-util:0.98.24-hadoop2" level="project" />
     <orderEntry type="library" name="Maven: org.apache.hbase:hbase-common:0.98.24-hadoop2" level="project" />
     <orderEntry type="library" name="Maven: org.apache.hbase:hbase-common:test-jar:tests:0.98.24-hadoop2" level="project" />
@@ -137,7 +137,7 @@
     <orderEntry type="library" name="Maven: pt.uminho.haslab:det-enc:1.0-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: pt.uminho.haslab:std-enc:1.0-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: junit:junit:4.12" level="project" />
-    <orderEntry type="library" name="Maven: pt.uminho.haslab:smpc:1.1.0" level="project" />
+    <orderEntry type="library" name="Maven: pt.uminho.haslab:smpc:1.2.0" level="project" />
     <orderEntry type="library" name="Maven: pt.uminho.haslab:safemapper:1.0.0" level="project" />
     <orderEntry type="library" name="Maven: dom4j:dom4j:1.6.1" level="project" />
     <orderEntry type="library" name="Maven: xml-apis:xml-apis:1.0.b2" level="project" />

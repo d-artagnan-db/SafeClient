@@ -14,6 +14,7 @@ import pt.uminho.haslab.hbaseInterfaces.ExtendedHTable;
 import pt.uminho.haslab.safemapper.Family;
 import pt.uminho.haslab.safemapper.Qualifier;
 import pt.uminho.haslab.safemapper.TableSchema;
+import pt.uminho.haslab.smpc.helpers.RandomGenerator;
 import pt.uminho.haslab.testingutils.ValuesGenerator;
 
 import java.io.IOException;
@@ -86,11 +87,19 @@ public abstract class AbstractTableGenerator {
                             break;
                         case INTEGER:
                             ByteBuffer buffer = ByteBuffer.allocate(4);
-                            buffer.putInt((int) (Math.abs(ValuesGenerator.randomInt())%Math.pow(2, 31)));
+                            buffer.putInt(RandomGenerator.nextInt());
                             buffer.flip();
                             val = buffer.array();
                             buffer.clear();
                             break;
+                        case LONG:
+                            ByteBuffer lbuffer = ByteBuffer.allocate(8);
+                            lbuffer.putLong(RandomGenerator.nextLong());
+                            lbuffer.flip();
+                            val = lbuffer.array();
+                            lbuffer.clear();
+                            break;
+
                     }
                     put.add(fam.getFamilyName().getBytes(), qual.getName()
                             .getBytes(), val);
@@ -261,7 +270,7 @@ public abstract class AbstractTableGenerator {
 
     protected abstract Set<String> getExpectedExceptionNames();
     public enum ColType {
-        STRING, INT, INTEGER
+        STRING, INT, INTEGER, LONG
     }
 
 }
