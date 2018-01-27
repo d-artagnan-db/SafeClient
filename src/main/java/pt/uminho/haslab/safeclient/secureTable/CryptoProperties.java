@@ -248,6 +248,7 @@ public class CryptoProperties {
 			value = content;
 		}
 		switch (cType) {
+			case XOR:
             case SMPC:
 			case ISMPC:
             case LSMPC:
@@ -319,6 +320,7 @@ public class CryptoProperties {
 	private byte[] decodeValueCryptoType(CryptoType cType, byte[] ciphertext, String family, String qualifier) {
 		byte[] value;
 		switch (cType) {
+            case XOR:
             case SMPC:
 			case ISMPC:
             case LSMPC:

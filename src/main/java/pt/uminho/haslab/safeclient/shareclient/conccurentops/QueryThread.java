@@ -8,7 +8,7 @@ import pt.uminho.haslab.safeclient.shareclient.SharedClientConfiguration;
 
 import java.io.IOException;
 
-public abstract class QueryThread extends Thread {
+public abstract class QueryThread implements Runnable {
 	static final Log LOG = LogFactory.getLog(QueryThread.class.getName());
 
 	protected final HTable table;

@@ -7,6 +7,8 @@ import pt.uminho.haslab.safemapper.TableSchema;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 public class MultiDelete extends MultiOP {
 
@@ -16,20 +18,20 @@ public class MultiDelete extends MultiOP {
 
     private boolean isBatchDelete;
 
-    public MultiDelete(SharedClientConfiguration conf, List<HTable> connections, TableSchema schema, Delete delete) {
-        super(conf, connections, schema);
+    public MultiDelete(SharedClientConfiguration conf, List<HTable> connections, TableSchema schema, Delete delete, ExecutorService threadPool) {
+        super(conf, connections, schema, threadPool);
         this.delete = delete;
 
     }
 
-    public MultiDelete(SharedClientConfiguration conf, List<HTable> connections, TableSchema schema, List<Delete> delete) {
-        super(conf, connections, schema);
+    public MultiDelete(SharedClientConfiguration conf, List<HTable> connections, TableSchema schema, List<Delete> delete, ExecutorService threadPool) {
+        super(conf, connections, schema, threadPool);
         this.batchDelete = delete;
         isBatchDelete = true;
     }
 
     @Override
-    protected Thread queryThread(SharedClientConfiguration config, HTable table, int index) throws IOException {
+    protected Runnable queryThread(SharedClientConfiguration config, HTable table, int index) throws IOException {
 
         if (!isBatchDelete) {
             return new DeleteThread(config, table, delete);
@@ -39,8 +41,12 @@ public class MultiDelete extends MultiOP {
     }
 
     @Override
-    protected void threadsJoined(List<Thread> threads) throws IOException {
+    protected void threadsJoined(List<Runnable> threads) throws IOException {
+    }
 
+    @Override
+    protected void joinThreads(List<Future> threads) throws IOException {
+        throw new UnsupportedOperationException("Join threads not supported for this operation.");
     }
 
     private class DeleteThread extends QueryThread {

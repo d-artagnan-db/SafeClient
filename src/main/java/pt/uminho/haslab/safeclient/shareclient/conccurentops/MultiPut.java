@@ -10,6 +10,8 @@ import pt.uminho.haslab.smpc.exceptions.InvalidSecretValue;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 public class MultiPut extends MultiOP {
 
@@ -21,13 +23,13 @@ public class MultiPut extends MultiOP {
 
     private boolean isBatchPut;
 
-    public MultiPut(SharedClientConfiguration conf, List<HTable> connections, TableSchema schema, Put put) throws InvalidSecretValue, InvalidNumberOfBits, IOException {
-        super(conf, connections, schema);
+    public MultiPut(SharedClientConfiguration conf, List<HTable> connections, TableSchema schema, Put put, ExecutorService threadPool) throws InvalidSecretValue, InvalidNumberOfBits, IOException {
+        super(conf, connections, schema, threadPool);
         protectedPuts = generateMPCPut(put);
     }
 
-    public MultiPut(SharedClientConfiguration conf, List<HTable> connections, TableSchema schema, List<Put> puts) throws InvalidSecretValue, InvalidNumberOfBits, IOException {
-        super(conf, connections, schema);
+    public MultiPut(SharedClientConfiguration conf, List<HTable> connections, TableSchema schema, List<Put> puts, ExecutorService threadPool) throws InvalidSecretValue, InvalidNumberOfBits, IOException {
+        super(conf, connections, schema, threadPool);
         protectedBatchPuts = generateBatchMPCPut(puts);
         isBatchPut = true;
     }
@@ -54,7 +56,7 @@ public class MultiPut extends MultiOP {
     }
 
 	@Override
-	protected Thread queryThread(SharedClientConfiguration conf, HTable table,
+	protected Runnable queryThread(SharedClientConfiguration conf, HTable table,
 			int index) {
 
         if (!isBatchPut) {
@@ -66,7 +68,14 @@ public class MultiPut extends MultiOP {
     }
 
 	@Override
-	protected void threadsJoined(List<Thread> threads) throws IOException {
-	}
+	protected void threadsJoined(List<Runnable> threads) throws IOException {
+    }
+
+    @Override
+    protected void joinThreads(List<Future> threads) throws IOException {
+        throw new UnsupportedOperationException("Join threads not supported for this operation.");
+
+    }
+
 
 }

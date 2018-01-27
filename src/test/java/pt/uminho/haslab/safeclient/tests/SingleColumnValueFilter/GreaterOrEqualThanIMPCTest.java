@@ -3,6 +3,7 @@ package pt.uminho.haslab.safeclient.tests.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import pt.uminho.haslab.safeclient.helpers.AdminProxy;
 import pt.uminho.haslab.safeclient.helpers.ShareClient;
+import pt.uminho.haslab.safeclient.shareclient.SharedTable;
 import pt.uminho.haslab.safemapper.DatabaseSchema;
 import pt.uminho.haslab.smpc.helpers.RandomGenerator;
 
@@ -12,6 +13,7 @@ public class GreaterOrEqualThanIMPCTest extends SingleColumnMPCTest {
 
     public GreaterOrEqualThanIMPCTest() {
         RandomGenerator.initLongBatch(100);
+        SharedTable.initializeThreadPool(100);
 
     }
 

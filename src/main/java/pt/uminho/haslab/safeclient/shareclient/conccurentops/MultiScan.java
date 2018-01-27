@@ -26,27 +26,31 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 public class MultiScan extends MultiOP implements ResultScanner {
 
     static final Log LOG = LogFactory.getLog(MultiScan.class.getName());
-    private final List<Thread> scans;
+    private final List<Runnable> scans;
     private TableSchema schema;
     private long requestID;
     private long targetPlayer;
     private Scan scan;
     private boolean hasProtectedScan;
     private List<Scan> protectedScans;
+    private List<Future> futures;
 
 
     public MultiScan(SharedClientConfiguration config,
-                     List<HTable> connections, TableSchema schema, long requestID, int targetPlayer, Scan scan) {
-        super(config, connections, schema);
+                     List<HTable> connections, TableSchema schema, long requestID, int targetPlayer, Scan scan, ExecutorService threadPool) {
+        super(config, connections, schema, threadPool);
         this.scan = scan;
         this.requestID = requestID;
         this.targetPlayer = targetPlayer;
         this.schema = schema;
-        scans = new ArrayList<Thread>();
+        scans = new ArrayList<Runnable>();
         this.protectedScans = new ArrayList<Scan>();
         generateSecureScans();
     }
@@ -240,7 +244,9 @@ public class MultiScan extends MultiOP implements ResultScanner {
                 }
                 break;
             default:
-                LOG.debug("Default case");
+                if(LOG.isDebugEnabled()){
+                    LOG.debug("Default case");
+                }
                 fList.add(filter);
                 fList.add(filter);
                 fList.add(filter);
@@ -251,7 +257,7 @@ public class MultiScan extends MultiOP implements ResultScanner {
     }
 
     @Override
-    protected Thread queryThread(SharedClientConfiguration config,
+    protected Runnable queryThread(SharedClientConfiguration config,
                                  HTable table, int index) throws IOException {
 
         if(LOG.isDebugEnabled()){
@@ -260,22 +266,29 @@ public class MultiScan extends MultiOP implements ResultScanner {
 
         ResultScannerThread t = null;
         if (hasProtectedScan) {
-            t = new ResultScannerThread(config, table, protectedScans.get(index));
+            t = new ResultScannerThread(config, table, protectedScans.get(index), true);
         } else {
-            t = new ResultScannerThread(config, table, scan);
+            t = new ResultScannerThread(config, table, scan, false);
         }
         this.scans.add(t);
         return t;
     }
 
     @Override
-    protected void threadsJoined(List<Thread> threads) throws IOException {
+    protected void threadsJoined(List<Runnable> threads) throws IOException {
+    }
+
+    @Override
+    protected void joinThreads(List<Future> threads) throws IOException {
+        this.futures = threads;
     }
 
     public Result next() throws IOException {
-        LOG.debug("Requesting next value");
+        if(LOG.isDebugEnabled()){
+            LOG.debug("Requesting next value");
+        }
         List<Result> results = new ArrayList<Result>();
-        for (Thread t : scans) {
+        for (Runnable t : scans) {
             Result rst = ((ResultScannerThread) t).next();
             results.add(rst);
         }
@@ -291,30 +304,35 @@ public class MultiScan extends MultiOP implements ResultScanner {
     }
 
     public void close() {
-        for (Thread t : scans) {
+        for (Future t : futures) {
             try {
-                t.join();
-            } catch (InterruptedException e) {
+                t.get();
+            } catch (InterruptedException | ExecutionException e) {
                 LOG.debug(e);
                 throw new IllegalStateException(e);
             }
+        }
+        for(Runnable t: scans){
             ((ResultScannerThread) t).close();
         }
+
     }
 
     public Iterator<Result> iterator() {
-        LOG.debug("Iterating over records");
+        if(LOG.isDebugEnabled()){
+            LOG.debug("Iterating over records");
+        }
         List<Result> resultIterator = new ArrayList<Result>();
         try {
 
-            for(Thread t: scans){
-                t.join();
+            for(Future t: futures){
+                t.get();
             }
             boolean stop = false;
             while(!stop){
 
                 List<Result> results = new ArrayList<Result>();
-                for (Thread t : scans) {
+                for (Runnable t : scans) {
                     Result rst = ((ResultScannerThread) t).next();
                         results.add(rst);
                 }
@@ -325,7 +343,7 @@ public class MultiScan extends MultiOP implements ResultScanner {
                 }
             }
         }
-        catch (InterruptedException | IOException e) {
+        catch (InterruptedException | IOException | ExecutionException e) {
                 LOG.error(e);
                 throw new IllegalStateException(e);
         }

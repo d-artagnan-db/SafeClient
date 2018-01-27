@@ -26,6 +26,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 
@@ -40,6 +43,7 @@ public class SharedTable implements ExtendedHTable {
 
 	private static final AtomicLong identifierGenerator = new AtomicLong();
 	private static ResultPlayerLoadBalancer LB = new ResultPlayerLoadBalancerImpl();
+    private static ExecutorService threadPool;
 
     private static final TableLock TABLE_LOCKS = new TableLockImpl();
     private final String tableName;
@@ -55,6 +59,13 @@ public class SharedTable implements ExtendedHTable {
             LOG.error(error);
             throw new IllegalStateException(error);
         }
+
+
+            if (threadPool == null) {
+                String error = "Thread Pool not initialized";
+                LOG.error(error);
+                throw new IllegalStateException(error);
+            }
 
         connections = new ArrayList<HTable>();
 
@@ -75,6 +86,10 @@ public class SharedTable implements ExtendedHTable {
         LB = loadBalancer;
     }
 
+    public static void initializeThreadPool(int nthreads){
+	    threadPool = Executors.newFixedThreadPool(nthreads);
+    }
+
     private Long getRequestId() {
         return identifierGenerator.getAndAdd(1);
     }
@@ -92,9 +107,9 @@ public class SharedTable implements ExtendedHTable {
         try {
             Lock writeLock = TABLE_LOCKS.writeLock(tableName);
             writeLock.lock();
-            new MultiPut(this.sharedConfig, connections, schema, put).doOperation();
+            new MultiPut(this.sharedConfig, connections, schema, put, threadPool).doOperation();
             writeLock.unlock();
-        } catch (InterruptedException | InvalidNumberOfBits | InvalidSecretValue ex) {
+        } catch (InterruptedException | InvalidNumberOfBits | ExecutionException | InvalidSecretValue ex) {
             LOG.error(ex);
             throw new IllegalStateException(ex);
 		}
@@ -108,10 +123,10 @@ public class SharedTable implements ExtendedHTable {
         Lock readLock = TABLE_LOCKS.readLock(tableName);
         readLock.lock();
         try {
-            MultiGet mGet = new MultiGet(sharedConfig, connections, schema, get);
+            MultiGet mGet = new MultiGet(sharedConfig, connections, schema, get, threadPool);
             mGet.doOperation();
             return mGet.getResult();
-        } catch (InterruptedException | IOException ex) {
+        } catch (InterruptedException | IOException | ExecutionException ex) {
             LOG.error(ex);
             throw new IllegalStateException(ex);
         } finally {
@@ -128,7 +143,7 @@ public class SharedTable implements ExtendedHTable {
 
         long requestID = getRequestId();
         int targetPlayer = LB.getResultPlayer();
-        MultiScan mScan = new MultiScan(sharedConfig, connections, schema, requestID, targetPlayer, scan);
+        MultiScan mScan = new MultiScan(sharedConfig, connections, schema, requestID, targetPlayer, scan, threadPool);
         mScan.startScan();
         readLock.unlock();
         return mScan;
@@ -230,14 +245,14 @@ public class SharedTable implements ExtendedHTable {
         try {
             Lock writeLock = TABLE_LOCKS.writeLock(tableName);
             writeLock.lock();
-            new MultiPut(this.sharedConfig, connections, schema, list).doOperation();
+            new MultiPut(this.sharedConfig, connections, schema, list, threadPool).doOperation();
             writeLock.unlock();
-        } catch (InvalidSecretValue | InterruptedException | InvalidNumberOfBits ex) {
+        } catch (InvalidSecretValue | InterruptedException | InvalidNumberOfBits | ExecutionException ex) {
             LOG.error(ex);
             throw new IllegalStateException(ex);
         }
 
-	}
+    }
 
     public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier,
                                byte[] value, Put put) throws IOException {
@@ -250,11 +265,11 @@ public class SharedTable implements ExtendedHTable {
             writeLock.lock();
             long requestID = getRequestId();
             int targetPlayer = LB.getResultPlayer();
-            MultiCheckAndPut op = new MultiCheckAndPut(this.sharedConfig, connections, schema, row, family, qualifier, value, requestID, targetPlayer, put);
+            MultiCheckAndPut op = new MultiCheckAndPut(this.sharedConfig, connections, schema, row, family, qualifier, value, requestID, targetPlayer, put, threadPool);
             op.doOperation();
             res = op.getResult();
             writeLock.unlock();
-        } catch (InvalidSecretValue | InterruptedException | InvalidNumberOfBits ex) {
+        } catch (InvalidSecretValue | InterruptedException | InvalidNumberOfBits | ExecutionException ex) {
             LOG.error(ex);
             throw new IllegalStateException(ex);
         }
@@ -267,10 +282,10 @@ public class SharedTable implements ExtendedHTable {
         }
         Lock writeLock = TABLE_LOCKS.writeLock(tableName);
         writeLock.lock();
-        MultiDelete mDel = new MultiDelete(sharedConfig, connections, schema, delete);
+        MultiDelete mDel = new MultiDelete(sharedConfig, connections, schema, delete, threadPool);
         try {
             mDel.doOperation();
-        } catch (InterruptedException ex) {
+        } catch (InterruptedException | ExecutionException ex) {
             LOG.error(ex);
             throw new IllegalStateException(ex);
         }
@@ -285,10 +300,10 @@ public class SharedTable implements ExtendedHTable {
         }
         Lock writeLock = TABLE_LOCKS.writeLock(tableName);
         writeLock.lock();
-        MultiDelete mDel = new MultiDelete(sharedConfig, connections, schema, list);
+        MultiDelete mDel = new MultiDelete(sharedConfig, connections, schema, list, threadPool);
         try {
             mDel.doOperation();
-        } catch (InterruptedException ex) {
+        } catch (InterruptedException | ExecutionException ex) {
             LOG.error(ex);
             throw new IllegalStateException(ex);
         }

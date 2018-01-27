@@ -16,6 +16,7 @@ import pt.uminho.haslab.testingutils.ShareCluster;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 public class ShareClient implements AdminProxy {
 
@@ -28,6 +29,7 @@ public class ShareClient implements AdminProxy {
 	public ShareClient(String configuration) throws IOException {
 		LOG.debug("Going to start Shareclient ");
 		SharedTable.initializeLoadBalancer(new ResultPlayerLoadBalancerImpl());
+		SharedTable.initializeThreadPool(100);
 		clusters = null;
 		this.configuration = configuration;
 	}
