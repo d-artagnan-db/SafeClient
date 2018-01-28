@@ -260,9 +260,9 @@ public class MultiScan extends MultiOP implements ResultScanner {
 
         ResultScannerThread t = null;
         if (hasProtectedScan) {
-            t = new ResultScannerThread(config, table, protectedScans.get(index));
+            t = new ResultScannerThread(config, table, protectedScans.get(index), hasProtectedScan);
         } else {
-            t = new ResultScannerThread(config, table, scan);
+            t = new ResultScannerThread(config, table, scan, hasProtectedScan);
         }
         this.scans.add(t);
         return t;

@@ -30,7 +30,10 @@ public abstract class MultiOP {
 	static final org.apache.commons.logging.Log LOG = LogFactory
 			.getLog(MultiOP.class.getName());
 
-	protected final List<HTable> connections;
+	private static final LongSharemindDealer lDealer = new LongSharemindDealer();
+    private static final IntSharemindDealer iDealer = new IntSharemindDealer();
+
+    protected final List<HTable> connections;
 	protected final SharedClientConfiguration config;
 	protected final TableSchema schema;
     protected byte[] uniqueRowId;
@@ -88,7 +91,6 @@ public abstract class MultiOP {
                     if (LOG.isDebugEnabled()) {
                         LOG.debug("Sharing ISMPC");
                     }
-                    IntSharemindDealer iDealer = new IntSharemindDealer();
                     int ptxValue = ByteBuffer.wrap(value).getInt();
                     int[] shares = iDealer.share(ptxValue);
 
@@ -104,7 +106,6 @@ public abstract class MultiOP {
                     if (LOG.isDebugEnabled()) {
                         LOG.debug("Sharing LSMPC");
                     }
-                    LongSharemindDealer lDealer = new LongSharemindDealer();
                     long lValue = ByteBuffer.wrap(value).getLong();
                     long[] lshares = lDealer.share(lValue);
 
@@ -115,6 +116,13 @@ public abstract class MultiOP {
                         values.add(buffer.array());
                         buffer.clear();
                     }
+                    break;
+                case XOR:
+                    if(LOG.isDebugEnabled()){
+                        LOG.debug("Encoding with XOR");
+                    }
+                    List<byte[]> xvalues = OneTimePad.oneTimePadEncode(value);
+                    values.addAll(xvalues);
                     break;
                 default:
                     values.add(value);
@@ -190,9 +198,7 @@ public abstract class MultiOP {
                     shares[1] = ByteBuffer.wrap(CellUtil.cloneValue(secondCell)).getInt();
                     shares[2] = ByteBuffer.wrap(CellUtil.cloneValue(thirdCell)).getInt();
 
-                    IntSharemindDealer dealer = new IntSharemindDealer();
-
-                    int plxValue = dealer.unshare(shares);
+                    int plxValue = iDealer.unshare(shares);
 
                     ByteBuffer buffer = ByteBuffer.allocate(4);
                     buffer.putInt(plxValue);
@@ -209,15 +215,24 @@ public abstract class MultiOP {
                     lshares[1] = ByteBuffer.wrap(CellUtil.cloneValue(secondCell)).getLong();
                     lshares[2] = ByteBuffer.wrap(CellUtil.cloneValue(thirdCell)).getLong();
 
-                    LongSharemindDealer ldealer = new LongSharemindDealer();
 
-                    long lValue = ldealer.unshare(lshares);
+                    long lValue = lDealer.unshare(lshares);
 
                     ByteBuffer lbuffer = ByteBuffer.allocate(8);
                     lbuffer.putLong(lValue);
                     lbuffer.flip();
                     decValue = lbuffer.array();
                     lbuffer.clear();
+                    break;
+                case XOR:
+                    List<byte[]> xors = new ArrayList<byte[]>();
+                    byte[] fxSecret = CellUtil.cloneValue(firstCell);
+                    byte[] sxSecret = CellUtil.cloneValue(secondCell);
+                    byte[] txSecret = CellUtil.cloneValue(thirdCell);
+                    xors.add(fxSecret);
+                    xors.add(sxSecret);
+                    xors.add(txSecret);
+                    decValue = OneTimePad.oneTimeDecode(xors);
                     break;
 
 

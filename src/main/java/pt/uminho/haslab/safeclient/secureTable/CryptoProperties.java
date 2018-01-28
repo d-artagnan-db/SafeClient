@@ -251,6 +251,7 @@ public class CryptoProperties {
             case SMPC:
 			case ISMPC:
             case LSMPC:
+			case XOR:
             case PLT :
                 return value;
 			case STD :
@@ -322,6 +323,7 @@ public class CryptoProperties {
             case SMPC:
 			case ISMPC:
             case LSMPC:
+			case XOR:
             case PLT :
 				value = ciphertext;
 				break;
