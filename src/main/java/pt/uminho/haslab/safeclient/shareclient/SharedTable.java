@@ -104,15 +104,16 @@ public class SharedTable implements ExtendedHTable {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Put operation");
         }
+        Lock writeLock = TABLE_LOCKS.writeLock(tableName);
+        writeLock.lock();
         try {
-            Lock writeLock = TABLE_LOCKS.writeLock(tableName);
-            writeLock.lock();
             new MultiPut(this.sharedConfig, connections, schema, put, threadPool).doOperation();
-            writeLock.unlock();
         } catch (InterruptedException | InvalidNumberOfBits | ExecutionException | InvalidSecretValue ex) {
             LOG.error(ex);
             throw new IllegalStateException(ex);
-		}
+		}finally{
+            writeLock.unlock();
+        }
     }
 
 
@@ -242,14 +243,15 @@ public class SharedTable implements ExtendedHTable {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Batch put operation");
         }
+        Lock writeLock = TABLE_LOCKS.writeLock(tableName);
+        writeLock.lock();
         try {
-            Lock writeLock = TABLE_LOCKS.writeLock(tableName);
-            writeLock.lock();
             new MultiPut(this.sharedConfig, connections, schema, list, threadPool).doOperation();
-            writeLock.unlock();
         } catch (InvalidSecretValue | InterruptedException | InvalidNumberOfBits | ExecutionException ex) {
             LOG.error(ex);
             throw new IllegalStateException(ex);
+        }finally{
+            writeLock.unlock();
         }
 
     }
@@ -260,19 +262,21 @@ public class SharedTable implements ExtendedHTable {
             LOG.debug("checkAndPut operation");
         }
         boolean res;
+        Lock writeLock = TABLE_LOCKS.writeLock(tableName);
+        writeLock.lock();
         try {
-            Lock writeLock = TABLE_LOCKS.writeLock(tableName);
-            writeLock.lock();
             long requestID = getRequestId();
             int targetPlayer = LB.getResultPlayer();
             MultiCheckAndPut op = new MultiCheckAndPut(this.sharedConfig, connections, schema, row, family, qualifier, value, requestID, targetPlayer, put, threadPool);
             op.doOperation();
             res = op.getResult();
-            writeLock.unlock();
         } catch (InvalidSecretValue | InterruptedException | InvalidNumberOfBits | ExecutionException ex) {
             LOG.error(ex);
             throw new IllegalStateException(ex);
+        }finally{
+            writeLock.unlock();
         }
+
         return res;
     }
 
@@ -288,8 +292,9 @@ public class SharedTable implements ExtendedHTable {
         } catch (InterruptedException | ExecutionException ex) {
             LOG.error(ex);
             throw new IllegalStateException(ex);
+        }finally{
+            writeLock.unlock();
         }
-        writeLock.unlock();
 
     }
 
@@ -306,8 +311,9 @@ public class SharedTable implements ExtendedHTable {
         } catch (InterruptedException | ExecutionException ex) {
             LOG.error(ex);
             throw new IllegalStateException(ex);
+        }finally{
+            writeLock.unlock();
         }
-        writeLock.unlock();
     }
 
     public boolean checkAndDelete(byte[] row, byte[] family, byte[] qualifier,

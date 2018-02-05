@@ -7,6 +7,7 @@ import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.util.Bytes;
 import pt.uminho.haslab.safeclient.shareclient.SharedClientConfiguration;
 import pt.uminho.haslab.safemapper.DatabaseSchema;
 import pt.uminho.haslab.safemapper.TableSchema;
@@ -23,6 +24,7 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -59,7 +61,7 @@ public abstract class MultiOP {
 			throws IOException;
 
 
-    protected List<Put> generateMPCPut(Put originalPut) throws InvalidNumberOfBits, InvalidSecretValue, IOException, InvalidNumberOfBits, InvalidSecretValue {
+    protected List<Put> generateMPCPut(Put originalPut) throws IOException, InvalidNumberOfBits, InvalidSecretValue {
 
         byte[] row = originalPut.getRow();
         List<Put> putResults = new ArrayList<Put>();
@@ -86,6 +88,7 @@ public abstract class MultiOP {
                     Dealer dealer = new SharemindDealer(formatSize);
 
                     BigInteger bigVal = new BigInteger(value);
+
                     if (LOG.isDebugEnabled()) {
                         LOG.debug("Sharing SMPC value " + bigVal + " with formatsize "+ formatSize +" for column " + family +":"+qualifier);
                     }
@@ -96,19 +99,18 @@ public abstract class MultiOP {
                     values.add(secret.getU3().toByteArray());
                     break;
                 case ISMPC:
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Sharing ISMPC");
-                    }
+
                     int ptxValue = ByteBuffer.wrap(value).getInt();
                     int[] shares = iDealer.share(ptxValue);
 
-                    for (int share : shares) {
-                        ByteBuffer buffer = ByteBuffer.allocate(4);
-                        buffer.putInt(share);
-                        buffer.flip();
-                        values.add(buffer.array());
-                        buffer.clear();
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Sharing ISMPC value " + ptxValue + " in values " + Arrays.toString(shares));
                     }
+
+                    for (int share : shares) {
+                        values.add(Bytes.toBytes(share));
+                    }
+
                     break;
                 case LSMPC:
                     if (LOG.isDebugEnabled()) {
@@ -118,19 +120,15 @@ public abstract class MultiOP {
                     long[] lshares = lDealer.share(lValue);
 
                     for (long lshare : lshares) {
-                        ByteBuffer buffer = ByteBuffer.allocate(8);
-                        buffer.putLong(lshare);
-                        buffer.flip();
-                        values.add(buffer.array());
-                        buffer.clear();
+                        values.add(Bytes.toBytes(lshare));
                     }
                     break;
                 case XOR:
                     if(LOG.isDebugEnabled()){
                         LOG.debug("Encoding with XOR");
                     }
-                    List<byte[]> xvalues = OneTimePad.oneTimePadEncode(value);
-                    values.addAll(xvalues);
+                    byte[][] xvalues = OneTimePad.oneTimePadEncode(value);
+                    values.addAll(Arrays.asList(xvalues));
                     break;
                 default:
                     values.add(value);
@@ -198,21 +196,18 @@ public abstract class MultiOP {
                     break;
                 case ISMPC:
 
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Decode LSMPC");
-                    }
+
                     int[] shares = new int[3];
                     shares[0] = ByteBuffer.wrap(CellUtil.cloneValue(firstCell)).getInt();
                     shares[1] = ByteBuffer.wrap(CellUtil.cloneValue(secondCell)).getInt();
                     shares[2] = ByteBuffer.wrap(CellUtil.cloneValue(thirdCell)).getInt();
 
                     int plxValue = iDealer.unshare(shares);
+                    decValue = Bytes.toBytes(plxValue);
 
-                    ByteBuffer buffer = ByteBuffer.allocate(4);
-                    buffer.putInt(plxValue);
-                    buffer.flip();
-                    decValue = buffer.array();
-                    buffer.clear();
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Decode ISMPC value " + plxValue);
+                    }
                     break;
                 case LSMPC:
                     if (LOG.isDebugEnabled()) {
@@ -224,22 +219,14 @@ public abstract class MultiOP {
                     lshares[2] = ByteBuffer.wrap(CellUtil.cloneValue(thirdCell)).getLong();
 
                     long lValue = lDealer.unshare(lshares);
-
-                    ByteBuffer lbuffer = ByteBuffer.allocate(8);
-                    lbuffer.putLong(lValue);
-                    lbuffer.flip();
-                    decValue = lbuffer.array();
-                    lbuffer.clear();
+                    decValue = Bytes.toBytes(lValue);
                     break;
                 case XOR:
-                    List<byte[]> xors = new ArrayList<byte[]>();
-                    byte[] fxSecret = CellUtil.cloneValue(firstCell);
-                    byte[] sxSecret = CellUtil.cloneValue(secondCell);
-                    byte[] txSecret = CellUtil.cloneValue(thirdCell);
+                    byte[][] xors = new byte[3][];
+                    xors[0] = CellUtil.cloneValue(firstCell);
+                    xors[1] = CellUtil.cloneValue(secondCell);
+                    xors[2] = CellUtil.cloneValue(thirdCell);
 
-                    xors.add(fxSecret);
-                    xors.add(sxSecret);
-                    xors.add(txSecret);
                     decValue = OneTimePad.oneTimeDecode(xors);
                     break;
 

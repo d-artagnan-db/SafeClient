@@ -12,15 +12,21 @@ public class SharedClientConfiguration {
 	private final int id;
 
 	private final boolean hasConcurrentScanEndpoint;
+	private final int scanQueueSize;
 
 	public SharedClientConfiguration(Configuration conf, int id) {
 		this.conf = conf;
 		this.id = id;
 		hasConcurrentScanEndpoint = conf.getBoolean("saferegions.coprocessor.concurrent", false);
+		scanQueueSize = conf.getInt("sharedClient.scan.queue.size", 100);
 
 	}
 
-    public boolean hasConcurrentScanEndpoint() {
+	public int getScanQueueSize() {
+		return scanQueueSize;
+	}
+
+	public boolean hasConcurrentScanEndpoint() {
         return hasConcurrentScanEndpoint;
     }
 

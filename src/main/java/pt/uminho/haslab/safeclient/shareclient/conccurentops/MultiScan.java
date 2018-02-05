@@ -24,6 +24,7 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -161,6 +162,7 @@ public class MultiScan extends MultiOP implements ResultScanner {
         byte[] qualifier = filter.getQualifier();
         byte[] value = filter.getComparator().getValue();
 
+
         String sFamily = new String(family, Charset.forName("UTF-8"));
         String sQualifier = new String(qualifier, Charset.forName("UTF-8"));
 
@@ -177,7 +179,7 @@ public class MultiScan extends MultiOP implements ResultScanner {
             case SMPC:
 
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("Generate Protected Filter for column " + sFamily + ":" + sQualifier + " with type " + type);
+                    LOG.debug("Generate Protected Filter for column " + sFamily + ":" + sQualifier + " with type " + type + " value " + Arrays.toString(value));
                 }
 
                 hasProtectedScan = true;
@@ -206,14 +208,20 @@ public class MultiScan extends MultiOP implements ResultScanner {
                 IntSharemindDealer dealer = new IntSharemindDealer();
                 try {
                     int[] secrets = dealer.share(ByteBuffer.wrap(value).getInt());
+                    if(LOG.isDebugEnabled()){
+                        LOG.debug("ISMPC single column value filter is " + ByteBuffer.wrap(value).getInt() + " with shares " + Arrays.toString(secrets));
+                    }
                     byte[] sQualifierMod = sQualifier.getBytes();
 
                     for (int secret : secrets) {
                         ByteBuffer buffer = ByteBuffer.allocate(4);
                         buffer.putInt(secret);
                         buffer.flip();
-                        fList.add(new SingleColumnValueFilter(family, sQualifierMod, operator, buffer.array()));
-                        buffer.clear();
+                        byte[] res = buffer.array();
+                        //LOG.debug("Res is " + Arrays.toString(res));
+                        fList.add(new SingleColumnValueFilter(family, sQualifierMod, operator, res));
+                        //buffer.clear();
+
                     }
                 } catch (InvalidSecretValue ex) {
                     LOG.error(ex);
@@ -236,7 +244,7 @@ public class MultiScan extends MultiOP implements ResultScanner {
                         buffer.putLong(secret);
                         buffer.flip();
                         fList.add(new SingleColumnValueFilter(family, sQualifierMod, operator, buffer.array()));
-                        buffer.clear();
+                        //buffer.clear();
                     }
                 } catch (InvalidSecretValue ex) {
                     LOG.error(ex);

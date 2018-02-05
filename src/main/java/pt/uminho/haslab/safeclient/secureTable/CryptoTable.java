@@ -83,7 +83,7 @@ public class CryptoTable implements ExtendedHTable {
             this.cryptoProperties = new CryptoProperties(this.tableSchema);
 
         }else{
-            this.setSchema(conf, schemaProperty, tableName);
+            this.setSchema(conf, schemaProperty, tableName, tableType);
         }
 
         if(tableType.equals("HTable")){
@@ -109,7 +109,7 @@ public class CryptoTable implements ExtendedHTable {
         this.htableUtils = new HTableFeaturesUtils(this.cryptoProperties, this.secureFilterConverter);
     }
 
-	private void setSchema(Configuration conf, String schemaProperty, String tableName) throws FileNotFoundException, UnsupportedEncodingException {
+	private void setSchema(Configuration conf, String schemaProperty, String tableName, String tableType) throws FileNotFoundException, UnsupportedEncodingException {
 		if(schemaProperty != null && !schemaProperty.isEmpty()) {
 			while(!parsingComplete) {
 				try {
@@ -121,6 +121,9 @@ public class CryptoTable implements ExtendedHTable {
                         databaseDefaultProperties = new HashMap<>();
                         databaseDefaultProperties = databaseSchema.getDatabaseDefaultProperties();
 						parsingComplete = true;
+						if(tableType.equals("SharedTable")){
+							SharedTable.initializeThreadPool(conf.getInt("sharedClient.ThreadPool.size", 50));
+						}
 					}
 
 				} finally {

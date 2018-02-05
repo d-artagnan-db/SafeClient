@@ -32,7 +32,7 @@ public class ResultScannerThread extends QueryThread implements ResultScanner {
     public ResultScannerThread(SharedClientConfiguration config, HTable table, Scan scan, boolean hasProtectedScan)
             throws IOException {
         super(config, table);
-        results = new LinkedBlockingDeque<Result>();
+        results = new LinkedBlockingDeque<Result>(config.getScanQueueSize());
         this.hasProtectedScan = hasProtectedScan;
 
         if(!hasProtectedScan || !conf.hasConcurrentScanEndpoint()){
@@ -110,7 +110,7 @@ public class ResultScannerThread extends QueryThread implements ResultScanner {
                 byte[] requestID = scan.getAttribute(OperationAttributesIdentifiers.RequestIdentifier);
                 int targetPlayer = Integer.parseInt(new String(scan.getAttribute(OperationAttributesIdentifiers.TargetPlayer)));
                 EndpointCallback callback = new EndpointCallback(scan, requestID, targetPlayer);
-                Map<byte[], Smpc.Results> coprocessorResults = table.coprocessorService(Smpc.ConcurrentScanService.class, null, null, callback);
+                Map<byte[], Smpc.Results> coprocessorResults = table.coprocessorService(Smpc.ConcurrentScanService.class, scan.getStartRow(), scan.getStopRow(), callback);
                 handleCoprocessorService(coprocessorResults);
             } catch (Throwable throwable) {
                 LOG.error(throwable);
