@@ -29,11 +29,14 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class MultiOP {
 
 	static final org.apache.commons.logging.Log LOG = LogFactory
 			.getLog(MultiOP.class.getName());
+
+    private static final AtomicLong cellVersions = new AtomicLong(0);
 
 	public static IntSharemindDealer iDealer = new IntSharemindDealer();
 	public static LongSharemindDealer lDealer = new LongSharemindDealer();
@@ -65,7 +68,7 @@ public abstract class MultiOP {
 
         byte[] row = originalPut.getRow();
         List<Put> putResults = new ArrayList<Put>();
-
+        long putVersion = cellVersions.addAndGet(1);
         for (int i = 0; i < 3; i++) {
             putResults.add(new Put(row));
         }
@@ -138,7 +141,7 @@ public abstract class MultiOP {
             }
 
             for (int i = 0; i < putResults.size(); i++) {
-                putResults.get(i).add(bCF, bCQ, values.get(i));
+                putResults.get(i).add(bCF, bCQ, putVersion, values.get(i));
             }
 
         }
@@ -174,7 +177,6 @@ public abstract class MultiOP {
             long timestamp = firstCell.getTimestamp();
 
             DatabaseSchema.CryptoType ctype = schema.getCryptoTypeFromQualifier(family, qualifier);
-
             switch (ctype) {
 
                 case SMPC:

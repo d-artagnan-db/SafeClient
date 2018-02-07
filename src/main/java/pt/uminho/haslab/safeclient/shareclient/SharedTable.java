@@ -50,6 +50,8 @@ public class SharedTable implements ExtendedHTable {
     private final List<HTable> connections;
     private SharedClientConfiguration sharedConfig;
     private TableSchema schema;
+    private final Lock readLock;
+    private final Lock writeLock;
 
 	public SharedTable(Configuration conf, String tableName, TableSchema schema)
             throws IOException, InvalidNumberOfBits {
@@ -79,6 +81,9 @@ public class SharedTable implements ExtendedHTable {
         }
         this.schema = schema;
         this.tableName = tableName;
+        readLock = TABLE_LOCKS.readLock(tableName);
+        writeLock = TABLE_LOCKS.writeLock(tableName);
+
     }
 
     public static void initializeLoadBalancer(
@@ -104,7 +109,6 @@ public class SharedTable implements ExtendedHTable {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Put operation");
         }
-        Lock writeLock = TABLE_LOCKS.writeLock(tableName);
         writeLock.lock();
         try {
             new MultiPut(this.sharedConfig, connections, schema, put, threadPool).doOperation();
@@ -112,7 +116,7 @@ public class SharedTable implements ExtendedHTable {
             LOG.error(ex);
             throw new IllegalStateException(ex);
 		}finally{
-            writeLock.unlock();
+           writeLock.unlock();
         }
     }
 
@@ -121,8 +125,6 @@ public class SharedTable implements ExtendedHTable {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Get operation");
         }
-        Lock readLock = TABLE_LOCKS.readLock(tableName);
-        readLock.lock();
         try {
             MultiGet mGet = new MultiGet(sharedConfig, connections, schema, get, threadPool);
             mGet.doOperation();
@@ -130,8 +132,6 @@ public class SharedTable implements ExtendedHTable {
         } catch (InterruptedException | IOException | ExecutionException ex) {
             LOG.error(ex);
             throw new IllegalStateException(ex);
-        } finally {
-            readLock.unlock();
         }
     }
 
@@ -139,9 +139,8 @@ public class SharedTable implements ExtendedHTable {
         if (LOG.isDebugEnabled()) {
             LOG.debug("getScanner");
         }
-        Lock readLock = TABLE_LOCKS.readLock(tableName);
-        readLock.lock();
 
+        readLock.lock();
         long requestID = getRequestId();
         int targetPlayer = LB.getResultPlayer();
         MultiScan mScan = new MultiScan(sharedConfig, connections, schema, requestID, targetPlayer, scan, threadPool);
@@ -243,7 +242,6 @@ public class SharedTable implements ExtendedHTable {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Batch put operation");
         }
-        Lock writeLock = TABLE_LOCKS.writeLock(tableName);
         writeLock.lock();
         try {
             new MultiPut(this.sharedConfig, connections, schema, list, threadPool).doOperation();
@@ -262,7 +260,6 @@ public class SharedTable implements ExtendedHTable {
             LOG.debug("checkAndPut operation");
         }
         boolean res;
-        Lock writeLock = TABLE_LOCKS.writeLock(tableName);
         writeLock.lock();
         try {
             long requestID = getRequestId();
@@ -284,7 +281,6 @@ public class SharedTable implements ExtendedHTable {
         if (LOG.isDebugEnabled()) {
             LOG.debug("delete operation");
         }
-        Lock writeLock = TABLE_LOCKS.writeLock(tableName);
         writeLock.lock();
         MultiDelete mDel = new MultiDelete(sharedConfig, connections, schema, delete, threadPool);
         try {
@@ -303,7 +299,6 @@ public class SharedTable implements ExtendedHTable {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Batch delete operation");
         }
-        Lock writeLock = TABLE_LOCKS.writeLock(tableName);
         writeLock.lock();
         MultiDelete mDel = new MultiDelete(sharedConfig, connections, schema, list, threadPool);
         try {
