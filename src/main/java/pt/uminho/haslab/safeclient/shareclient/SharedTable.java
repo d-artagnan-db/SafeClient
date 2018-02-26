@@ -109,15 +109,12 @@ public class SharedTable implements ExtendedHTable {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Put operation");
         }
-        writeLock.lock();
         try {
             new MultiPut(this.sharedConfig, connections, schema, put, threadPool).doOperation();
         } catch (InterruptedException | InvalidNumberOfBits | ExecutionException | InvalidSecretValue ex) {
             LOG.error(ex);
             throw new IllegalStateException(ex);
-		}finally{
-           writeLock.unlock();
-        }
+		}
     }
 
 
@@ -242,14 +239,12 @@ public class SharedTable implements ExtendedHTable {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Batch put operation");
         }
-        writeLock.lock();
+        //writeLock.lock();
         try {
             new MultiPut(this.sharedConfig, connections, schema, list, threadPool).doOperation();
         } catch (InvalidSecretValue | InterruptedException | InvalidNumberOfBits | ExecutionException ex) {
             LOG.error(ex);
             throw new IllegalStateException(ex);
-        }finally{
-            writeLock.unlock();
         }
 
     }
