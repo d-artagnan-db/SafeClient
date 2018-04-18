@@ -23,6 +23,7 @@ public class MultiGet extends MultiOP {
 		super(config, connections, schema, threadPool);
 		result = Result.EMPTY_RESULT;
 		this.originalGet = get;
+		LOG.debug("Input row is "+ new String(get.getRow()));
 	}
 
 	@Override
@@ -51,9 +52,9 @@ public class MultiGet extends MultiOP {
 			result = Result.EMPTY_RESULT;
 		} else{
 		    CellVersionCheck check = sameVersionCells(results);
-		    //LOG.debug("Check  result is " + check.isAllEqual());
+		    LOG.debug("Check  result is " + check.isAllEqual());
             if(!check.isAllEqual()){
-                //LOG.debug("Going to get missing results");
+                LOG.debug("Going to get missing results");
                 List<Result> missingResults = getMissingResults(check);
                 if(oneEmpty(missingResults)){
                     //LOG.debug("Can't find missing results");
@@ -61,7 +62,7 @@ public class MultiGet extends MultiOP {
                 }else{
                     //LOG.debug("Returning complete results");
                     results = joinResults(results, missingResults, check);
-                    CellVersionCheck checkAgain = sameVersionCells(results);
+                    //CellVersionCheck checkAgain = sameVersionCells(results);
                     //LOG.debug("Double check result is " + checkAgain.isAllEqual());
                     result = decodeResult(results);
                 }
@@ -187,7 +188,7 @@ public class MultiGet extends MultiOP {
 
             valid = firstVersion == secondVersion && secondVersion == thirdVersion;
             if(!valid){
-                //LOG.debug("cell versions are " +firstVersion + " : " +secondVersion + " : " + thirdVersion);
+                LOG.debug("cell versions are " +firstVersion + " : " +secondVersion + " : " + thirdVersion);
                 getVersions.add(firstVersion);
                 getVersions.add(secondVersion);
                 getVersions.add(thirdVersion);
@@ -196,9 +197,10 @@ public class MultiGet extends MultiOP {
         }
         if(!valid){
             Long versionToGet =  Collections.max(getVersions);
+            LOG.debug("Max Version is " + versionToGet);
             List<Integer> playersToGet = new ArrayList<Integer>();
             for(int i = 0; i < getVersions.size(); i++){
-                if(!getVersions.equals(versionToGet)){
+                if(!getVersions.get(i).equals(versionToGet)){
                     playersToGet.add(i);
                 }
             }

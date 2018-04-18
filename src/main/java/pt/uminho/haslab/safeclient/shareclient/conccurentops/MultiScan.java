@@ -272,7 +272,7 @@ public class MultiScan extends MultiOP implements ResultScanner {
             LOG.debug("HasProtected scan on table " + table.getTableDescriptor().getNameAsString() + "? " + hasProtectedScan);
         }
 
-        ResultScannerThread t = null;
+        ResultScannerThread t;
         if (hasProtectedScan) {
             t = new ResultScannerThread(config, table, protectedScans.get(index), true);
         } else {
@@ -297,12 +297,18 @@ public class MultiScan extends MultiOP implements ResultScanner {
         }
         List<Result> results = new ArrayList<Result>();
         for (Runnable t : scans) {
+            if(LOG.isDebugEnabled()){
+                LOG.debug("Getting next value");
+            }
             Result rst = ((ResultScannerThread) t).next();
             results.add(rst);
         }
 
         if (results.get(0).isEmpty()) {
             return null;
+        }
+        if (LOG.isDebugEnabled()){
+            LOG.debug("Returning next value");
         }
         return decodeResult(results);
     }
@@ -312,16 +318,25 @@ public class MultiScan extends MultiOP implements ResultScanner {
     }
 
     public void close() {
-        for (Future t : futures) {
-            try {
-                t.get();
-            } catch (InterruptedException | ExecutionException e) {
-                LOG.debug(e);
-                throw new IllegalStateException(e);
-            }
+
+        if(LOG.isDebugEnabled()){
+            LOG.debug("Going to close  ResultScannerthreads");
         }
         for(Runnable t: scans){
             ((ResultScannerThread) t).close();
+        }
+
+        if(LOG.isDebugEnabled()){
+            LOG.debug("Going to get last result ");
+        }
+        for (Future t : futures) {
+            try {
+                    t.get();
+
+            } catch (InterruptedException | ExecutionException e) {
+                LOG.error(e);
+                throw new IllegalStateException(e);
+            }
         }
 
     }
