@@ -40,12 +40,13 @@ public class HTableFeaturesUtils {
                 byte[] family = CellUtil.cloneFamily(cell);
                 byte[] qualifier = CellUtil.cloneQualifier(cell);
                 byte[] value = CellUtil.cloneValue(cell);
+		long timestamp = cell.getTimestamp();
 
                 String qualifierString = new String(qualifier, Charset.forName("UTF-8"));
                 String opeValues = "_STD";
 
 //				Encode the original value with the corresponding CryptoBox
-                destination.add(family, qualifier, cryptoProperties.encodeValue(family, qualifier, value));
+                destination.add(family, qualifier, timestamp, cryptoProperties.encodeValue(family, qualifier, value));
 
 //				If the actual qualifier CryptoType is equal to OPE, encode the same value with STD CryptoBox
                 if (tableSchema.getCryptoTypeFromQualifier(new String(family, Charset.forName("UTF-8")), qualifierString) == CryptoType.OPE) {
@@ -58,6 +59,7 @@ public class HTableFeaturesUtils {
                                     value)
                         );
                     }
+	
 
             }
         } catch (Exception e) {

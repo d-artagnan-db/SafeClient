@@ -397,7 +397,7 @@ public class CryptoTable implements ExtendedHTable {
 	public void delete(Delete delete) {
 	    LOG.debug("Delete operation");
 		try {
-			if (this.tableSchema.getEncryptionMode()) {
+/*			if (this.tableSchema.getEncryptionMode()) {
 				byte[] row = this.htableUtils.getObjectRow(delete);
 				List<String> hcolumnsToDelete = this.htableUtils.deleteCells(delete.cellScanner());
 
@@ -427,18 +427,19 @@ public class CryptoTable implements ExtendedHTable {
 				}
 			} else {
 				htable.delete(delete);
-			}
+			}*/
+		 htable.delete(delete);
 		} catch (Exception e) {
 			LOG.error(e.getMessage());
 			throw new IllegalStateException(e);
 		}
-	}
 
+	}
 	@Override
 	public void delete(List<Delete> deletes) {
 	    LOG.debug("Batch delete operation");
-		try {
-			if (this.tableSchema.getEncryptionMode()) {
+	try {
+/*			if (this.tableSchema.getEncryptionMode()) {
 				List<Delete> encryptedDeletes = new ArrayList<>(deletes.size());
 				CryptoType cType = this.cryptoProperties.tableSchema.getKey().getCryptoType();
 
@@ -472,11 +473,12 @@ public class CryptoTable implements ExtendedHTable {
 			} else {
 				htable.delete(deletes);
 			}
-
+*/		htable.delete(deletes);
 		} catch(Exception e) {
 			LOG.error(e.getMessage());
 			throw new IllegalStateException(e);
 		}
+
 	}
 
 	/**
