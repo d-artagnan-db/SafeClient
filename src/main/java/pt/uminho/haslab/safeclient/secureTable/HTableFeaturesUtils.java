@@ -40,7 +40,7 @@ public class HTableFeaturesUtils {
                 byte[] family = CellUtil.cloneFamily(cell);
                 byte[] qualifier = CellUtil.cloneQualifier(cell);
                 byte[] value = CellUtil.cloneValue(cell);
-		long timestamp = cell.getTimestamp();
+		        long timestamp = cell.getTimestamp();
 
                 String qualifierString = new String(qualifier, Charset.forName("UTF-8"));
                 String opeValues = "_STD";
