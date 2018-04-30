@@ -22,7 +22,7 @@ public class DETConcurrentPutTest extends ConcurrentPuts {
         return null;
     }
 
-    protected int getProtectedColumnFormatSize(){
+    protected int getProtectedColumnFormatSize() {
         return 4;
     }
 }

@@ -42,7 +42,7 @@
             RetriesExhaustedException. But if the total time being blocking reach the operation timeout
             before retries exhausted, it will break early and throw SocketTimeoutException.
         </description>
-  </property>
+    </property>
     <property>
         <name>saferegions.coprocessor.concurrent</name>
         <value>True</value>

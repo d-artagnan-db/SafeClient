@@ -14,7 +14,6 @@ import pt.uminho.haslab.safemapper.TableSchema;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -40,26 +39,26 @@ public class HTableFeaturesUtils {
                 byte[] family = CellUtil.cloneFamily(cell);
                 byte[] qualifier = CellUtil.cloneQualifier(cell);
                 byte[] value = CellUtil.cloneValue(cell);
-		        long timestamp = cell.getTimestamp();
+                long timestamp = cell.getTimestamp();
 
                 String qualifierString = new String(qualifier, Charset.forName("UTF-8"));
                 String opeValues = "_STD";
 
-//				Encode the original value with the corresponding CryptoBox
+                // Encode the original value with the corresponding CryptoBox
                 destination.add(family, qualifier, timestamp, cryptoProperties.encodeValue(family, qualifier, value));
 
-//				If the actual qualifier CryptoType is equal to OPE, encode the same value with STD CryptoBox
+                // If the actual qualifier CryptoType is equal to OPE, encode the same value with STD CryptoBox
                 if (tableSchema.getCryptoTypeFromQualifier(new String(family, Charset.forName("UTF-8")), qualifierString) == CryptoType.OPE) {
                     destination.add(
                             family,
-                            (qualifierString + opeValues).getBytes(Charset.forName("UTF-8")),
+                            (qualifierString + opeValues).getBytes(Charset.forName("UTF-8")), timestamp,
                             cryptoProperties.encodeValue(
                                     family,
                                     (qualifierString + opeValues).getBytes(Charset.forName("UTF-8")),
                                     value)
-                        );
-                    }
-	
+                    );
+                }
+
 
             }
         } catch (Exception e) {
@@ -67,44 +66,26 @@ public class HTableFeaturesUtils {
         }
     }
 
-    public List<String> deleteCells(CellScanner cs) {
-        List<String> cellsToDelete = new ArrayList<>();
-        try {
-            while (cs.advance()) {
-                Cell cell = cs.current();
-                byte[] family = CellUtil.cloneFamily(cell);
-                byte[] qualifier = CellUtil.cloneQualifier(cell);
+    public void wrapDeletedCells(Delete originalDelete, Delete delete) throws IOException {
+        CellScanner cs = originalDelete.cellScanner();
 
-                if (family.length != 0 && qualifier.length != 0) {
-                    if (this.cp.tableSchema.getCryptoTypeFromQualifier(new String(family), new String(qualifier)) == CryptoType.OPE) {
-                        cellsToDelete.add(new String(family) + "#" + new String(qualifier));
-                        cellsToDelete.add(new String(family) + "#" + new String(qualifier) + "_STD");
-                    } else {
-                        cellsToDelete.add(new String(family) + "#" + new String(qualifier));
-                    }
-                } else if (family.length != 0) {
-                    cellsToDelete.add(new String(family));
+        while (cs.advance()) {
+            Cell current = cs.current();
+            byte[] family = CellUtil.cloneFamily(current);
+            byte[] qualifier = CellUtil.cloneQualifier(current);
+            long timestamp = current.getTimestamp();
+            if (family.length != 0 && qualifier.length != 0) {
+                if (this.cp.tableSchema.getCryptoTypeFromQualifier(new String(family, Charset.forName("UTF-8")), new String(qualifier, Charset.forName("UTF-8"))) == CryptoType.OPE) {
+                    byte[] std_qualifier = (new String(qualifier, Charset.forName("UTF-8")) + "_STD").getBytes();
+                    delete.deleteColumn(family, std_qualifier, timestamp);
                 }
-            }
-        } catch (IOException e) {
-            LOG.error("Exception in deleteCells CellScanner: " + e.getMessage());
-        }
-        return cellsToDelete;
-    }
+                delete.deleteColumn(family, qualifier, timestamp);
 
-    public void wrapDeletedCells(List<String> cellsToDelete, Delete delete) {
-        if (cellsToDelete.size() != 0) {
-            for (String c : cellsToDelete) {
-                String[] familiesAndQualifiers = c.split("#");
-                if (familiesAndQualifiers.length == 1) {
-                    delete.deleteFamily(familiesAndQualifiers[0].getBytes());
-                } else if (familiesAndQualifiers.length == 2) {
-                    delete.deleteColumns(familiesAndQualifiers[0].getBytes(), familiesAndQualifiers[1].getBytes());
-                } else {
-                    throw new IllegalArgumentException("Family or qualifier cannot contains # character.");
-                }
+            } else if (family.length != 0) {
+                delete.deleteFamily(family, timestamp);
             }
         }
+        delete.setTimestamp(originalDelete.getTimeStamp());
     }
 
     /**
@@ -225,6 +206,7 @@ public class HTableFeaturesUtils {
 
     /**
      * verifyFilterCryptoType(scan : Scan) method : verify the filter's CryptoBox
+     *
      * @param scan scan/filter object
      * @return the respective CryptoType
      */
@@ -238,6 +220,7 @@ public class HTableFeaturesUtils {
     }
 
     void wrapHColumnDescriptors(Get object, Map<byte[], List<byte[]>> columns) {
+
         for (byte[] f : columns.keySet()) {
             if (columns.get(f) == null) {
                 object.addFamily(f);

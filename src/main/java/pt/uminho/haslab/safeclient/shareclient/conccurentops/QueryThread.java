@@ -9,34 +9,34 @@ import pt.uminho.haslab.safeclient.shareclient.SharedClientConfiguration;
 import java.io.IOException;
 
 public abstract class QueryThread extends Thread {
-	static final Log LOG = LogFactory.getLog(QueryThread.class.getName());
+    static final Log LOG = LogFactory.getLog(QueryThread.class.getName());
 
-	protected final HTable table;
+    protected final HTable table;
 
-	protected Result res;
+    protected Result res;
 
-	protected SharedClientConfiguration conf;
+    protected SharedClientConfiguration conf;
 
-	public QueryThread(SharedClientConfiguration conf, HTable table) {
-		this.table = table;
-		this.conf = conf;
-	}
+    public QueryThread(SharedClientConfiguration conf, HTable table) {
+        this.table = table;
+        this.conf = conf;
+    }
 
-	public Result getResult() {
-		return res;
-	}
+    public Result getResult() {
+        return res;
+    }
 
-	protected abstract void query() throws IOException;
+    protected abstract void query() throws IOException;
 
-	@Override
-	public void run() {
-		try {
-			query();
-		} catch (IOException ex) {
-			LOG.debug(ex);
-			throw new IllegalStateException(ex);
-		}
+    @Override
+    public void run() {
+        try {
+            query();
+        } catch (IOException ex) {
+            LOG.debug(ex);
+            throw new IllegalStateException(ex);
+        }
 
-	}
+    }
 
 }

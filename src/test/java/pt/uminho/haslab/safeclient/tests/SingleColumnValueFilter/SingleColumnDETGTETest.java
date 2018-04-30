@@ -23,11 +23,12 @@ public class SingleColumnDETGTETest extends SimpleDETTest {
         s.setFilter(scvf);
         return s;
     }
-    protected boolean expectException(){
+
+    protected boolean expectException() {
         return true;
     }
 
-    protected Set<String> getExpectedExceptionNames(){
+    protected Set<String> getExpectedExceptionNames() {
         Set<String> expectedExceptions = new HashSet<String>();
         expectedExceptions.add(UnsupportedOperationException.class.getName());
         expectedExceptions.add(IllegalStateException.class.getName());

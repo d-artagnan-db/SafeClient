@@ -9,13 +9,13 @@ import pt.uminho.haslab.safeclient.secureTable.CryptoProperties;
  */
 public class PlaintextResultScanner extends ResultScannerAbstratClass {
 
-	public PlaintextResultScanner(CryptoProperties cp, ResultScanner encryptedScanner) {
-		super(cp, encryptedScanner);
-	}
+    public PlaintextResultScanner(CryptoProperties cp, ResultScanner encryptedScanner) {
+        super(cp, encryptedScanner);
+    }
 
-	@Override
-	public boolean digestor(byte[] content) {
-		return true;
-	}
+    @Override
+    public boolean digestor(byte[] content) {
+        return true;
+    }
 
 }

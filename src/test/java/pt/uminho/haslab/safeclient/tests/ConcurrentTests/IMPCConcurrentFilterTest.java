@@ -10,7 +10,7 @@ import pt.uminho.haslab.smpc.helpers.RandomGenerator;
 import java.io.IOException;
 import java.util.HashMap;
 
-public class IMPCConcurrentFilterTest extends ConcurrentFilters{
+public class IMPCConcurrentFilterTest extends ConcurrentFilters {
 
     @Before
     public void initializeRedisContainer() throws IOException {
@@ -33,7 +33,7 @@ public class IMPCConcurrentFilterTest extends ConcurrentFilters{
         return new ShareClient("share-hbase-client.xml");
     }
 
-    protected void defineColTypes(){
+    protected void defineColTypes() {
         this.qualifierColTypes.put("Teste", new HashMap<String, ColType>());
         this.qualifierColTypes.get("Teste").put("Name", ColType.STRING);
         this.qualifierColTypes.get("Teste").put("Age", ColType.INTEGER);

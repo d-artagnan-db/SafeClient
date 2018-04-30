@@ -26,11 +26,12 @@
                     <name>Age1</name>
                     <cryptotechnique>SMPC</cryptotechnique>
                     <colformatsize>64</colformatsize>
-                </qualifier>  <qualifier>
-                <name>Age2</name>
-                <cryptotechnique>SMPC</cryptotechnique>
-                <colformatsize>64</colformatsize>
-            </qualifier>
+                </qualifier>
+                <qualifier>
+                    <name>Age2</name>
+                    <cryptotechnique>SMPC</cryptotechnique>
+                    <colformatsize>64</colformatsize>
+                </qualifier>
                 <qualifier>
                     <name>Age3</name>
                     <cryptotechnique>SMPC</cryptotechnique>

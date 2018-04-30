@@ -12,43 +12,43 @@ import java.util.List;
 
 public class MultiGet extends MultiOP {
 
-	private Result result;
-	private Get originalGet;
+    private Result result;
+    private Get originalGet;
 
-	public MultiGet(SharedClientConfiguration config, List<HTable> connections, TableSchema schema, Get get) {
-		super(config, connections, schema);
-		result = Result.EMPTY_RESULT;
-		this.originalGet = get;
-	}
+    public MultiGet(SharedClientConfiguration config, List<HTable> connections, TableSchema schema, Get get) {
+        super(config, connections, schema);
+        result = Result.EMPTY_RESULT;
+        this.originalGet = get;
+    }
 
-	@Override
-	protected Thread queryThread(SharedClientConfiguration config,
-			HTable table, int index) {
-		return new GetThread(config, table, originalGet);
-	}
+    @Override
+    protected Thread queryThread(SharedClientConfiguration config,
+                                 HTable table, int index) {
+        return new GetThread(config, table, originalGet);
+    }
 
-	public Result getResult() {
-		return result;
-	}
+    public Result getResult() {
+        return result;
+    }
 
-	@Override
-	protected void threadsJoined(List<Thread> threads) throws IOException {
+    @Override
+    protected void threadsJoined(List<Thread> threads) throws IOException {
 
-		Result resOne = ((QueryThread) threads.get(0)).getResult();
-		Result resTwo = ((QueryThread) threads.get(1)).getResult();
-		Result resThree = ((QueryThread) threads.get(2)).getResult();
+        Result resOne = ((QueryThread) threads.get(0)).getResult();
+        Result resTwo = ((QueryThread) threads.get(1)).getResult();
+        Result resThree = ((QueryThread) threads.get(2)).getResult();
 
-		List<Result> results = new ArrayList<Result>();
-		results.add(resOne);
-		results.add(resTwo);
-		results.add(resThree);
+        List<Result> results = new ArrayList<Result>();
+        results.add(resOne);
+        results.add(resTwo);
+        results.add(resThree);
 
-		if (results.get(0).isEmpty()) {
-			result = Result.EMPTY_RESULT;
-		} else {
-			result = decodeResult(results);
-		}
+        if (results.get(0).isEmpty()) {
+            result = Result.EMPTY_RESULT;
+        } else {
+            result = decodeResult(results);
+        }
 
-	}
+    }
 
 }

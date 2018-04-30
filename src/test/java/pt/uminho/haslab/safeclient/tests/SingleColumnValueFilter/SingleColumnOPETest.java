@@ -7,7 +7,7 @@ import pt.uminho.haslab.safeclient.tests.BaseTests.SimpleOPETest;
 
 import java.util.Random;
 
-public abstract class SingleColumnOPETest extends SimpleOPETest{
+public abstract class SingleColumnOPETest extends SimpleOPETest {
 
 
     protected abstract CompareFilter.CompareOp getOperation();

@@ -10,7 +10,7 @@ import pt.uminho.haslab.safemapper.DatabaseSchema;
 
 import java.util.Random;
 
-public class MultiColumnSMPCTest extends MultiColumnCTypeTest{
+public class MultiColumnSMPCTest extends MultiColumnCTypeTest {
 
     @Override
     protected DatabaseSchema.CryptoType getProtectedColumnType() {
@@ -27,7 +27,7 @@ public class MultiColumnSMPCTest extends MultiColumnCTypeTest{
         return "mult-ctype-schema.xml";
     }
 
-    protected int getProtectedColumnFormatSize(){
+    protected int getProtectedColumnFormatSize() {
         return 64;
     }
 

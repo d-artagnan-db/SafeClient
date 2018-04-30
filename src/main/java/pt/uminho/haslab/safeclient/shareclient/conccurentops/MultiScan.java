@@ -53,7 +53,7 @@ public class MultiScan extends MultiOP implements ResultScanner {
 
     private void generateSecureScans() {
 
-        if(LOG.isDebugEnabled()){
+        if (LOG.isDebugEnabled()) {
             LOG.debug("Scan has filter " + scan.hasFilter());
             LOG.debug("Scan is " + scan);
         }
@@ -90,18 +90,18 @@ public class MultiScan extends MultiOP implements ResultScanner {
     }
 
     private List<Filter> handleFilterWithProtectedColumns(Filter original) {
-       if(LOG.isDebugEnabled()){
-         LOG.debug("Original filter " + original);
-       }
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Original filter " + original);
+        }
         if (original instanceof SingleColumnValueFilter) {
             return handleSingleColumnValueFilter((SingleColumnValueFilter) original);
         } else if (original instanceof FilterList) {
             return handleFilterList((FilterList) original);
         } else if (original instanceof WhileMatchFilter) {
             return handleWhileMatchFilter((WhileMatchFilter) original);
-        }else if(original instanceof RowFilter){
+        } else if (original instanceof RowFilter) {
             return handleRowFilter((RowFilter) original);
-        }else {
+        } else {
             throw new IllegalStateException("Filter not supported " + original.getClass().getName());
         }
     }
@@ -120,7 +120,7 @@ public class MultiScan extends MultiOP implements ResultScanner {
         return resFilters;
     }
 
-    private List<Filter> handleRowFilter(RowFilter filter){
+    private List<Filter> handleRowFilter(RowFilter filter) {
         List<Filter> result = new ArrayList<>();
         result.add(filter);
         result.add(filter);
@@ -165,7 +165,7 @@ public class MultiScan extends MultiOP implements ResultScanner {
 
         DatabaseSchema.CryptoType type = schema.getCryptoTypeFromQualifier(sFamily, sQualifier);
 
-        if(LOG.isDebugEnabled()){
+        if (LOG.isDebugEnabled()) {
             LOG.debug("CType is  " + type);
         }
         switch (type) {
@@ -254,7 +254,7 @@ public class MultiScan extends MultiOP implements ResultScanner {
     protected Thread queryThread(SharedClientConfiguration config,
                                  HTable table, int index) throws IOException {
 
-        if(LOG.isDebugEnabled()){
+        if (LOG.isDebugEnabled()) {
             LOG.debug("HasProtected scan on table " + table.getTableDescriptor().getNameAsString() + "? " + hasProtectedScan);
         }
 
@@ -307,27 +307,26 @@ public class MultiScan extends MultiOP implements ResultScanner {
         List<Result> resultIterator = new ArrayList<Result>();
         try {
 
-            for(Thread t: scans){
+            for (Thread t : scans) {
                 t.join();
             }
             boolean stop = false;
-            while(!stop){
+            while (!stop) {
 
                 List<Result> results = new ArrayList<Result>();
                 for (Thread t : scans) {
                     Result rst = ((ResultScannerThread) t).next();
-                        results.add(rst);
+                    results.add(rst);
                 }
-                if(!results.get(0).isEmpty()){
+                if (!results.get(0).isEmpty()) {
                     resultIterator.add(decodeResult(results));
-                }else{
+                } else {
                     stop = true;
                 }
             }
-        }
-        catch (InterruptedException | IOException e) {
-                LOG.error(e);
-                throw new IllegalStateException(e);
+        } catch (InterruptedException | IOException e) {
+            LOG.error(e);
+            throw new IllegalStateException(e);
         }
 
 

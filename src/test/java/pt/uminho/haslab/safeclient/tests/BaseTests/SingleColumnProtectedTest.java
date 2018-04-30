@@ -65,7 +65,7 @@ public abstract class SingleColumnProtectedTest extends AbstractTableGenerator {
 
     }
 
-    protected void defineColTypes(){
+    protected void defineColTypes() {
         this.qualifierColTypes.put("Teste", new HashMap<String, ColType>());
         this.qualifierColTypes.get("Teste").put("Name", ColType.STRING);
         this.qualifierColTypes.get("Teste").put("Age", ColType.INT);
@@ -90,7 +90,7 @@ public abstract class SingleColumnProtectedTest extends AbstractTableGenerator {
     @Override
     protected void put(ExtendedHTable table, List<Put> puts) throws Exception {
 
-        for(Put p: puts){
+        for (Put p : puts) {
             table.put(p);
         }
     }
@@ -98,10 +98,10 @@ public abstract class SingleColumnProtectedTest extends AbstractTableGenerator {
     @Override
     protected void additionalTestExecution(HTableDescriptor vanillaTableDescriptor, HTableDescriptor protectedTableDescriptor) throws Exception {
 
-       ExtendedHTable vanillaTable = getVanillaAdmin().createTableInterface(vanillaTableDescriptor.getNameAsString(), schema);
-       ExtendedHTable protectedTable = getProtectedHBaseAdmin().createTableInterface(protectedTableDescriptor.getNameAsString(), schema);
+        ExtendedHTable vanillaTable = getVanillaAdmin().createTableInterface(vanillaTableDescriptor.getNameAsString(), schema);
+        ExtendedHTable protectedTable = getProtectedHBaseAdmin().createTableInterface(protectedTableDescriptor.getNameAsString(), schema);
 
-        for(byte[] rowID: rowIdentifiers){
+        for (byte[] rowID : rowIdentifiers) {
             Get get = new Get(rowID);
             Result vanillaRes = vanillaTable.get(get);
             Result protectedRes = protectedTable.get(get);
@@ -120,11 +120,11 @@ public abstract class SingleColumnProtectedTest extends AbstractTableGenerator {
         return true;
     }
 
-    protected boolean expectException(){
+    protected boolean expectException() {
         return false;
     }
 
-    protected Set<String> getExpectedExceptionNames(){
+    protected Set<String> getExpectedExceptionNames() {
         return null;
     }
 

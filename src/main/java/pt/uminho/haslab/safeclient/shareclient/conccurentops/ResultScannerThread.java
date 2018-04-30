@@ -35,9 +35,9 @@ public class ResultScannerThread extends QueryThread implements ResultScanner {
         results = new LinkedBlockingDeque<Result>();
         this.hasProtectedScan = hasProtectedScan;
 
-        if(!hasProtectedScan || !conf.hasConcurrentScanEndpoint()){
-            resultScanner  = table.getScanner(scan);
-        }else if(conf.hasConcurrentScanEndpoint()){
+        if (!hasProtectedScan || !conf.hasConcurrentScanEndpoint()) {
+            resultScanner = table.getScanner(scan);
+        } else if (conf.hasConcurrentScanEndpoint()) {
             this.scan = scan;
         }
 
@@ -57,7 +57,7 @@ public class ResultScannerThread extends QueryThread implements ResultScanner {
     }
 
     public void close() {
-        if(!conf.hasConcurrentScanEndpoint()){
+        if (!conf.hasConcurrentScanEndpoint()) {
             resultScanner.close();
         }
     }
@@ -91,7 +91,7 @@ public class ResultScannerThread extends QueryThread implements ResultScanner {
     @Override
     protected void query() throws IOException {
 
-        if(LOG.isDebugEnabled()){
+        if (LOG.isDebugEnabled()) {
             LOG.debug("HasProtectedScan " + hasProtectedScan + " hasConcurrentScanEndpoint " + conf.hasConcurrentScanEndpoint());
         }
         if (!hasProtectedScan || !conf.hasConcurrentScanEndpoint()) {

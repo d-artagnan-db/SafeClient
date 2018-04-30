@@ -8,19 +8,19 @@ import pt.uminho.haslab.safeclient.secureTable.CryptoProperties;
  * ResultScanner instance, providing a secure ResultScanner with the OPE CryptoBox.
  */
 public class OrderPreservingResultScanner extends ResultScannerAbstratClass {
-	public CryptoProperties cProperties;
-	public ResultScanner encryptedScanner;
+    public CryptoProperties cProperties;
+    public ResultScanner encryptedScanner;
 
-	public OrderPreservingResultScanner(CryptoProperties cp, ResultScanner encryptedScanner) {
-		super(cp, encryptedScanner);
+    public OrderPreservingResultScanner(CryptoProperties cp, ResultScanner encryptedScanner) {
+        super(cp, encryptedScanner);
 //		this.cProperties = cp;
 //		this.encryptedScanner = encryptedScanner;
-	}
+    }
 
-	@Override
-	public boolean digestor(byte[] content) {
-		return true;
-	}
+    @Override
+    public boolean digestor(byte[] content) {
+        return true;
+    }
 
 //	/**
 //	 * next() method : decode both Row-Key and result set for the current Result object from the encryptedScanner

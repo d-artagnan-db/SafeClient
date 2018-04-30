@@ -7,7 +7,7 @@ import pt.uminho.haslab.safeclient.tests.BaseTests.SimpleDETTest;
 
 import java.util.Random;
 
-public class SingleColumnDETEqualTest extends SimpleDETTest{
+public class SingleColumnDETEqualTest extends SimpleDETTest {
 
     @Override
     protected Scan getTestScan() {

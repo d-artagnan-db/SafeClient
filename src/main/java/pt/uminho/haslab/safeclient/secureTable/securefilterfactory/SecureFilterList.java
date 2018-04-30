@@ -22,13 +22,13 @@ public class SecureFilterList implements SecureFilterProperties {
         List<Filter> fList = plaintextFilterList.getFilters();
         List<Filter> encryptedFList = new ArrayList<>(fList.size());
 
-        for(Filter f : fList) {
+        for (Filter f : fList) {
             Filter eFilter;
-            switch(SecureFilterConverter.getFilterType(f)) {
+            switch (SecureFilterConverter.getFilterType(f)) {
                 case RowFilter:
                     CryptoType rfCryptoType = new SecureRowFilter(this.cryptoProperties).getFilterCryptoType(f);
                     eFilter = new SecureRowFilter(this.cryptoProperties).buildEncryptedFilter(f, rfCryptoType);
-                    if(eFilter == null) {
+                    if (eFilter == null) {
                         throw new UnsupportedOperationException("Filter operation not supported for the Cryptographic Techniques specified.");
                     } else {
                         encryptedFList.add(eFilter);
@@ -37,7 +37,7 @@ public class SecureFilterList implements SecureFilterProperties {
                 case SingleColumnValueFilter:
                     CryptoType scvCryptoType = new SecureSingleColumnValueFilter(this.cryptoProperties).getFilterCryptoType(f);
                     eFilter = new SecureSingleColumnValueFilter(this.cryptoProperties).buildEncryptedFilter(f, scvCryptoType);
-                    if(eFilter == null) {
+                    if (eFilter == null) {
                         throw new UnsupportedOperationException("Filter operation not supported for the Cryptographic Techniques specified.");
                     } else {
                         encryptedFList.add(eFilter);

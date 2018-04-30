@@ -27,29 +27,29 @@ import java.util.List;
 
 public abstract class MultiOP {
 
-	static final org.apache.commons.logging.Log LOG = LogFactory
-			.getLog(MultiOP.class.getName());
+    static final org.apache.commons.logging.Log LOG = LogFactory
+            .getLog(MultiOP.class.getName());
 
-	private static final LongSharemindDealer lDealer = new LongSharemindDealer();
+    private static final LongSharemindDealer lDealer = new LongSharemindDealer();
     private static final IntSharemindDealer iDealer = new IntSharemindDealer();
 
     protected final List<HTable> connections;
-	protected final SharedClientConfiguration config;
-	protected final TableSchema schema;
+    protected final SharedClientConfiguration config;
+    protected final TableSchema schema;
     protected byte[] uniqueRowId;
 
 
-	public MultiOP(SharedClientConfiguration config, List<HTable> connections, TableSchema schema) {
-		this.connections = connections;
-		this.config = config;
-		this.schema = schema;
-	}
+    public MultiOP(SharedClientConfiguration config, List<HTable> connections, TableSchema schema) {
+        this.connections = connections;
+        this.config = config;
+        this.schema = schema;
+    }
 
-	protected abstract Thread queryThread(SharedClientConfiguration config,
+    protected abstract Thread queryThread(SharedClientConfiguration config,
                                           HTable table, int index) throws IOException;
 
-	protected abstract void threadsJoined(List<Thread> threads)
-			throws IOException;
+    protected abstract void threadsJoined(List<Thread> threads)
+            throws IOException;
 
 
     protected List<Put> generateMPCPut(Put originalPut) throws InvalidNumberOfBits, InvalidSecretValue, IOException, InvalidNumberOfBits, InvalidSecretValue {
@@ -118,7 +118,7 @@ public abstract class MultiOP {
                     }
                     break;
                 case XOR:
-                    if(LOG.isDebugEnabled()){
+                    if (LOG.isDebugEnabled()) {
                         LOG.debug("Encoding with XOR");
                     }
                     List<byte[]> xvalues = OneTimePad.oneTimePadEncode(value);
@@ -142,23 +142,23 @@ public abstract class MultiOP {
     protected Result decodeResult(List<Result> results) throws IOException {
 
 
-		Result resOne = results.get(0);
-		Result resTwo = results.get(1);
-		Result resThree = results.get(2);
+        Result resOne = results.get(0);
+        Result resTwo = results.get(1);
+        Result resThree = results.get(2);
         this.uniqueRowId = resOne.getRow();
 
-		CellScanner firstScanner = resOne.cellScanner();
-		CellScanner secondScanner = resTwo.cellScanner();
-		CellScanner thirdScanner = resThree.cellScanner();
-		List<Cell> cells = new ArrayList<Cell>();
+        CellScanner firstScanner = resOne.cellScanner();
+        CellScanner secondScanner = resTwo.cellScanner();
+        CellScanner thirdScanner = resThree.cellScanner();
+        List<Cell> cells = new ArrayList<Cell>();
 
-		while (firstScanner.advance() && secondScanner.advance()
-				&& thirdScanner.advance()) {
-			Cell firstCell = firstScanner.current();
-			Cell secondCell = secondScanner.current();
-			Cell thirdCell = thirdScanner.current();
-			byte[] cf = CellUtil.cloneFamily(firstCell);
-			byte[] cq = CellUtil.cloneQualifier(secondCell);
+        while (firstScanner.advance() && secondScanner.advance()
+                && thirdScanner.advance()) {
+            Cell firstCell = firstScanner.current();
+            Cell secondCell = secondScanner.current();
+            Cell thirdCell = thirdScanner.current();
+            byte[] cf = CellUtil.cloneFamily(firstCell);
+            byte[] cq = CellUtil.cloneQualifier(secondCell);
             byte[] row = CellUtil.cloneRow(firstCell);
 
             String family = new String(cf, Charset.forName("UTF-8"));
@@ -242,48 +242,48 @@ public abstract class MultiOP {
             cells.add(decCell);
         }
 
-		return Result.create(cells);
-	}
+        return Result.create(cells);
+    }
 
 
-	public void doOperation() throws InterruptedException, IOException {
-		List<Thread> calls = new ArrayList<Thread>();
-		int index = 0;
-		for (HTable table : connections) {
-			calls.add(queryThread(config, table, index));
-			index += 1;
-		}
+    public void doOperation() throws InterruptedException, IOException {
+        List<Thread> calls = new ArrayList<Thread>();
+        int index = 0;
+        for (HTable table : connections) {
+            calls.add(queryThread(config, table, index));
+            index += 1;
+        }
 
-		for (Thread t: calls) {
-			t.start();
-		}
+        for (Thread t : calls) {
+            t.start();
+        }
 
-		for (Thread t: calls) {
-			t.join();
-		}
+        for (Thread t : calls) {
+            t.join();
+        }
 
-		threadsJoined(calls);
-	}
+        threadsJoined(calls);
+    }
 
     public void startScan() throws IOException {
         List<Thread> calls = new ArrayList<Thread>();
         int index = 0;
-		for (HTable table : connections) {
-			calls.add(queryThread(config, table, index));
-			index += 1;
-		}
+        for (HTable table : connections) {
+            calls.add(queryThread(config, table, index));
+            index += 1;
+        }
 
-		if(LOG.isDebugEnabled()){
-		    LOG.debug("Going to start scan request");
-		}
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Going to start scan request");
+        }
 
-		for (Thread t : calls) {
-			t.start();
-		}
+        for (Thread t : calls) {
+            t.start();
+        }
 
-	}
+    }
 
     public byte[] getUniqueRowId() {
         return this.uniqueRowId;
-	}
+    }
 }

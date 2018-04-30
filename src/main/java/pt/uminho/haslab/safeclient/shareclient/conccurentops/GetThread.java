@@ -8,15 +8,15 @@ import java.io.IOException;
 
 public class GetThread extends QueryThread {
 
-	private Get originalGet;
+    private Get originalGet;
 
-	public GetThread(SharedClientConfiguration conf, HTable table, Get get){
-		super(conf, table);
-		this.originalGet = get;
-	}
+    public GetThread(SharedClientConfiguration conf, HTable table, Get get) {
+        super(conf, table);
+        this.originalGet = get;
+    }
 
-	@Override
-	protected void query() throws IOException {
-		res = table.get(originalGet);
-	}
+    @Override
+    protected void query() throws IOException {
+        res = table.get(originalGet);
+    }
 }

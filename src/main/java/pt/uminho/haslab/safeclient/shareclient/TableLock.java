@@ -4,7 +4,7 @@ import java.util.concurrent.locks.Lock;
 
 public interface TableLock {
 
-	public Lock readLock(String tableName);
+    public Lock readLock(String tableName);
 
-	public Lock writeLock(String tableName);
+    public Lock writeLock(String tableName);
 }

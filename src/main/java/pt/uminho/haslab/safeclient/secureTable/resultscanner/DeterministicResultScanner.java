@@ -9,18 +9,18 @@ import pt.uminho.haslab.safeclient.secureTable.CryptoProperties;
  */
 public class DeterministicResultScanner extends ResultScannerAbstratClass {
 
-	public DeterministicResultScanner(CryptoProperties cp, byte[] startRow, byte[] endRow, ResultScanner encryptedScanner, Object filterResult) {
-		super(cp, encryptedScanner, startRow, endRow, filterResult);
-	}
+    public DeterministicResultScanner(CryptoProperties cp, byte[] startRow, byte[] endRow, ResultScanner encryptedScanner, Object filterResult) {
+        super(cp, encryptedScanner, startRow, endRow, filterResult);
+    }
 
-	@Override
-	public boolean digestor(byte[] row) {
-		boolean digest = checkRow(row);
-		if (hasFilter && digest) {
-			if(this.filterType.equals("RowFilter")) {
-				digest = checkValue(row);
-			}
-		}
-		return digest;
-	}
+    @Override
+    public boolean digestor(byte[] row) {
+        boolean digest = checkRow(row);
+        if (hasFilter && digest) {
+            if (this.filterType.equals("RowFilter")) {
+                digest = checkValue(row);
+            }
+        }
+        return digest;
+    }
 }

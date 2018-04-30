@@ -1,221 +1,221 @@
 <schema>
-  <default>
-    <key>PLT</key>
-    <columns>PLT</columns>
-    <keypadding>false</keypadding>
-    <colpadding>false</colpadding>
-    <keyformatsize>10</keyformatsize>
-    <colformatsize>10</colformatsize>
-  </default>
-  <table>
-    <name>usertable</name>
     <default>
-      <key>PLT</key>
-      <columns>PLT</columns>
-      <formatsize>100</formatsize>
+        <key>PLT</key>
+        <columns>PLT</columns>
+        <keypadding>false</keypadding>
+        <colpadding>false</colpadding>
+        <keyformatsize>10</keyformatsize>
+        <colformatsize>10</colformatsize>
     </default>
-    <key>
-      <!--<formatsize>10</formatsize>-->
-        <!--<secureTable>PLT</secureTable>-->
-    </key>
-    <columns>
-      <family>
-        <name>Physician</name>
-          <!--<secureTable>OPE</secureTable>-->
-        <!--<formatsize>10</formatsize>-->
-        <qualifier>
-          <name>Physician ID</name>
-            <!--<secureTable>OPE</secureTable>-->
-          <!--<formatsize>10</formatsize>-->
-          <misc>
-            <property>GENERATOR</property>
-            <type>String</type>
-          </misc>
-        </qualifier>
-      </family>
-      <family>
-        <name>Patient</name>
-        <qualifier>
-          <name>Patient ID</name>
-            <!--<secureTable>OPE</secureTable>-->
-          <!--<formatsize>16</formatsize>-->
-          <misc>
-            <property>GENERATOR</property>
-            <type>String</type>
-          </misc>
-        </qualifier>
-      </family>
-      <family>
-        <name>Appointment</name>
-        <qualifier>
-          <name>Date</name>
-            <!--<secureTable>OPE</secureTable>-->
-          <!--<formatsize>14</formatsize>-->
-          <misc>
-            <property>GENERATOR</property>
-            <type>Date</type>
-          </misc>
-        </qualifier>
-        <qualifier>
-          <name>Type</name>
-            <!--<secureTable>OPE</secureTable>-->
-          <!--<formatsize>64</formatsize>-->
-          <misc>
-            <property>GENERATOR</property>
-            <type>String</type>
-          </misc>
-        </qualifier>
-        <qualifier>
-          <name>Obs</name>
-            <!--<secureTable>OPE</secureTable>-->
-          <!--<formatsize>1024</formatsize>-->
-          <misc>
-            <property>GENERATOR</property>
-            <type>String</type>
-          </misc>
-        </qualifier>
-      </family>
-      <family>
-        <name>Institution</name>
-        <qualifier>
-          <name>Name</name>
-            <!--<secureTable>OPE</secureTable>-->
-          <!--<formatsize>128</formatsize>-->
-          <misc>
-            <property>GENERATOR</property>
-            <type>String</type>
-          </misc>
-        </qualifier>
-        <qualifier>
-          <name>Address</name>
-            <!--<secureTable>OPE</secureTable>-->
-          <!--<formatsize>256</formatsize>-->
-          <misc>
-            <property>GENERATOR</property>
-            <type>String</type>
-          </misc>
-        </qualifier>
-      </family>
-    </columns>
-  </table>
-  <!--<table>-->
+    <table>
+        <name>usertable</name>
+        <default>
+            <key>PLT</key>
+            <columns>PLT</columns>
+            <formatsize>100</formatsize>
+        </default>
+        <key>
+            <!--<formatsize>10</formatsize>-->
+            <!--<secureTable>PLT</secureTable>-->
+        </key>
+        <columns>
+            <family>
+                <name>Physician</name>
+                <!--<secureTable>OPE</secureTable>-->
+                <!--<formatsize>10</formatsize>-->
+                <qualifier>
+                    <name>Physician ID</name>
+                    <!--<secureTable>OPE</secureTable>-->
+                    <!--<formatsize>10</formatsize>-->
+                    <misc>
+                        <property>GENERATOR</property>
+                        <type>String</type>
+                    </misc>
+                </qualifier>
+            </family>
+            <family>
+                <name>Patient</name>
+                <qualifier>
+                    <name>Patient ID</name>
+                    <!--<secureTable>OPE</secureTable>-->
+                    <!--<formatsize>16</formatsize>-->
+                    <misc>
+                        <property>GENERATOR</property>
+                        <type>String</type>
+                    </misc>
+                </qualifier>
+            </family>
+            <family>
+                <name>Appointment</name>
+                <qualifier>
+                    <name>Date</name>
+                    <!--<secureTable>OPE</secureTable>-->
+                    <!--<formatsize>14</formatsize>-->
+                    <misc>
+                        <property>GENERATOR</property>
+                        <type>Date</type>
+                    </misc>
+                </qualifier>
+                <qualifier>
+                    <name>Type</name>
+                    <!--<secureTable>OPE</secureTable>-->
+                    <!--<formatsize>64</formatsize>-->
+                    <misc>
+                        <property>GENERATOR</property>
+                        <type>String</type>
+                    </misc>
+                </qualifier>
+                <qualifier>
+                    <name>Obs</name>
+                    <!--<secureTable>OPE</secureTable>-->
+                    <!--<formatsize>1024</formatsize>-->
+                    <misc>
+                        <property>GENERATOR</property>
+                        <type>String</type>
+                    </misc>
+                </qualifier>
+            </family>
+            <family>
+                <name>Institution</name>
+                <qualifier>
+                    <name>Name</name>
+                    <!--<secureTable>OPE</secureTable>-->
+                    <!--<formatsize>128</formatsize>-->
+                    <misc>
+                        <property>GENERATOR</property>
+                        <type>String</type>
+                    </misc>
+                </qualifier>
+                <qualifier>
+                    <name>Address</name>
+                    <!--<secureTable>OPE</secureTable>-->
+                    <!--<formatsize>256</formatsize>-->
+                    <misc>
+                        <property>GENERATOR</property>
+                        <type>String</type>
+                    </misc>
+                </qualifier>
+            </family>
+        </columns>
+    </table>
+    <!--<table>-->
     <!--<name>temp_table</name>-->
     <!--<default>-->
-      <!--<key>PLT</key>-->
-      <!--<columns>PLT</columns>-->
-      <!--<formatsize>23</formatsize>-->
+    <!--<key>PLT</key>-->
+    <!--<columns>PLT</columns>-->
+    <!--<formatsize>23</formatsize>-->
     <!--</default>-->
     <!--<key>-->
-      <!--<formatsize>10</formatsize>-->
+    <!--<formatsize>10</formatsize>-->
     <!--<secureTable>FPE</secureTable>-->
-      <!--<instance>FF3</instance>-->
-      <!--<radix>10</radix>-->
-      <!--<tweak>hello world</tweak>-->
+    <!--<instance>FF3</instance>-->
+    <!--<radix>10</radix>-->
+    <!--<tweak>hello world</tweak>-->
     <!--</key>-->
     <!--<columns>-->
-      <!--<family>-->
-        <!--<name>Hello</name>-->
+    <!--<family>-->
+    <!--<name>Hello</name>-->
     <!--<secureTable>PLT</secureTable>-->
-      <!--</family>-->
-      <!--<family>-->
-        <!--<name>World</name>-->
-      <!--</family>-->
-      <!--<family>-->
-        <!--<name>Safe</name>-->
-      <!--</family>-->
-      <!--<family>-->
-        <!--<name>NoSQL</name>-->
-      <!--</family>-->
+    <!--</family>-->
+    <!--<family>-->
+    <!--<name>World</name>-->
+    <!--</family>-->
+    <!--<family>-->
+    <!--<name>Safe</name>-->
+    <!--</family>-->
+    <!--<family>-->
+    <!--<name>NoSQL</name>-->
+    <!--</family>-->
     <!--</columns>-->
-  <!--</table>-->
-  <!--<table>-->
+    <!--</table>-->
+    <!--<table>-->
     <!--<name>temp_table1</name>-->
     <!--<default>-->
-      <!--<key>PLT</key>-->
-      <!--<columns>PLT</columns>-->
-      <!--<formatsize>23</formatsize>-->
+    <!--<key>PLT</key>-->
+    <!--<columns>PLT</columns>-->
+    <!--<formatsize>23</formatsize>-->
     <!--</default>-->
     <!--<key>-->
-      <!--<formatsize>10</formatsize>-->
+    <!--<formatsize>10</formatsize>-->
     <!--<secureTable>FPE</secureTable>-->
-      <!--<instance>FF3</instance>-->
-      <!--<radix>10</radix>-->
-      <!--<tweak>hello world</tweak>-->
+    <!--<instance>FF3</instance>-->
+    <!--<radix>10</radix>-->
+    <!--<tweak>hello world</tweak>-->
     <!--</key>-->
     <!--<columns>-->
-      <!--<family>-->
-        <!--<name>Hello</name>-->
+    <!--<family>-->
+    <!--<name>Hello</name>-->
     <!--<secureTable>PLT</secureTable>-->
-      <!--</family>-->
-      <!--<family>-->
-        <!--<name>World</name>-->
-      <!--</family>-->
-      <!--<family>-->
-        <!--<name>Safe</name>-->
-      <!--</family>-->
-      <!--<family>-->
-        <!--<name>NoSQL</name>-->
-      <!--</family>-->
+    <!--</family>-->
+    <!--<family>-->
+    <!--<name>World</name>-->
+    <!--</family>-->
+    <!--<family>-->
+    <!--<name>Safe</name>-->
+    <!--</family>-->
+    <!--<family>-->
+    <!--<name>NoSQL</name>-->
+    <!--</family>-->
     <!--</columns>-->
-  <!--</table>-->
-  <!--<table>-->
+    <!--</table>-->
+    <!--<table>-->
     <!--<name>temp_table2</name>-->
     <!--<default>-->
-      <!--<key>PLT</key>-->
-      <!--<columns>PLT</columns>-->
-      <!--<formatsize>23</formatsize>-->
+    <!--<key>PLT</key>-->
+    <!--<columns>PLT</columns>-->
+    <!--<formatsize>23</formatsize>-->
     <!--</default>-->
     <!--<key>-->
-      <!--<formatsize>10</formatsize>-->
+    <!--<formatsize>10</formatsize>-->
     <!--<secureTable>FPE</secureTable>-->
-      <!--<instance>FF3</instance>-->
-      <!--<radix>10</radix>-->
-      <!--<tweak>hello world</tweak>-->
+    <!--<instance>FF3</instance>-->
+    <!--<radix>10</radix>-->
+    <!--<tweak>hello world</tweak>-->
     <!--</key>-->
     <!--<columns>-->
-      <!--<family>-->
-        <!--<name>Hello</name>-->
+    <!--<family>-->
+    <!--<name>Hello</name>-->
     <!--<secureTable>PLT</secureTable>-->
-      <!--</family>-->
-      <!--<family>-->
-        <!--<name>World</name>-->
-      <!--</family>-->
-      <!--<family>-->
-        <!--<name>Safe</name>-->
-      <!--</family>-->
-      <!--<family>-->
-        <!--<name>NoSQL</name>-->
-      <!--</family>-->
+    <!--</family>-->
+    <!--<family>-->
+    <!--<name>World</name>-->
+    <!--</family>-->
+    <!--<family>-->
+    <!--<name>Safe</name>-->
+    <!--</family>-->
+    <!--<family>-->
+    <!--<name>NoSQL</name>-->
+    <!--</family>-->
     <!--</columns>-->
-  <!--</table>-->
-  <!--<table>-->
+    <!--</table>-->
+    <!--<table>-->
     <!--<name>temp_table3</name>-->
     <!--<default>-->
-      <!--<key>PLT</key>-->
-      <!--<columns>PLT</columns>-->
-      <!--<formatsize>23</formatsize>-->
+    <!--<key>PLT</key>-->
+    <!--<columns>PLT</columns>-->
+    <!--<formatsize>23</formatsize>-->
     <!--</default>-->
     <!--<key>-->
-      <!--<formatsize>10</formatsize>-->
+    <!--<formatsize>10</formatsize>-->
     <!--<secureTable>FPE</secureTable>-->
-      <!--<instance>FF3</instance>-->
-      <!--<radix>10</radix>-->
-      <!--<tweak>hello world</tweak>-->
+    <!--<instance>FF3</instance>-->
+    <!--<radix>10</radix>-->
+    <!--<tweak>hello world</tweak>-->
     <!--</key>-->
     <!--<columns>-->
-      <!--<family>-->
-        <!--<name>Hello</name>-->
+    <!--<family>-->
+    <!--<name>Hello</name>-->
     <!--<secureTable>PLT</secureTable>-->
-      <!--</family>-->
-      <!--<family>-->
-        <!--<name>World</name>-->
-      <!--</family>-->
-      <!--<family>-->
-        <!--<name>Safe</name>-->
-      <!--</family>-->
-      <!--<family>-->
-        <!--<name>NoSQL</name>-->
-      <!--</family>-->
+    <!--</family>-->
+    <!--<family>-->
+    <!--<name>World</name>-->
+    <!--</family>-->
+    <!--<family>-->
+    <!--<name>Safe</name>-->
+    <!--</family>-->
+    <!--<family>-->
+    <!--<name>NoSQL</name>-->
+    <!--</family>-->
     <!--</columns>-->
-  <!--</table>-->
+    <!--</table>-->
 </schema>

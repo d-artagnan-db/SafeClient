@@ -32,22 +32,22 @@
     <property>
         <name>smhbase.column.qualifier</name>
         <value>shareKey</value>
-    </property>  
+    </property>
     <property>
         <name>smhbase.nbits</name>
         <value>62</value>
-        <description> 
+        <description>
             On the client the values are being
             generated with a parameter of 63 bits. On the
-            reality the SharemindDealer uses 64 bits. 
+            reality the SharemindDealer uses 64 bits.
             All of the values encrypted in SharemindSecret sharing
             must be between 0 and 2^(63)-1. But since the values
-            generated use 64 bits, each searver will also create a 
-            SharemindSharedSecret with the parameter of 64bits. 
+            generated use 64 bits, each searver will also create a
+            SharemindSharedSecret with the parameter of 64bits.
             Because every computation of the mod must be made on
             64 bits.
         </description>
-    </property> 
+    </property>
     <property>
         <name>hbase.rpc.timeout</name>
         <value>36000000</value>
@@ -57,16 +57,17 @@
         <value>36000000</value>
     </property>
     <property>
-     <name>hbase.client.operation.timeout</name>
-     <value>36000000</value>
-     <description>Operation timeout is a top-level restriction (millisecond) that makes sure a
-       blocking operation in Table will not be blocked more than this. In each operation, if rpc
-       request fails because of timeout or other reason, it will retry until success or throw
-       RetriesExhaustedException. But if the total time being blocking reach the operation timeout
-       before retries exhausted, it will break early and throw SocketTimeoutException.</description>
-   </property>
-   <property>
+        <name>hbase.client.operation.timeout</name>
+        <value>36000000</value>
+        <description>Operation timeout is a top-level restriction (millisecond) that makes sure a
+            blocking operation in Table will not be blocked more than this. In each operation, if rpc
+            request fails because of timeout or other reason, it will retry until success or throw
+            RetriesExhaustedException. But if the total time being blocking reach the operation timeout
+            before retries exhausted, it will break early and throw SocketTimeoutException.
+        </description>
+    </property>
+    <property>
         <name>smhbase.client.cache.size</name>
         <value>1000</value>
-   </property>
+    </property>
 </configuration>
