@@ -21,8 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public class ResultScannerThread extends QueryThread implements ResultScanner {
 
@@ -36,19 +34,24 @@ public class ResultScannerThread extends QueryThread implements ResultScanner {
     public ResultScannerThread(SharedClientConfiguration config, HTable table, Scan scan, boolean hasProtectedScan)
             throws IOException {
         super(config, table);
+        int queueSize = config.getScanQueueSize();
         results = new ArrayBlockingQueue<Result>(config.getScanQueueSize());
         this.hasProtectedScan = hasProtectedScan;
 
-        if(!hasProtectedScan || !conf.hasConcurrentScanEndpoint()){
-            resultScanner  = table.getScanner(scan);
-        }else if(conf.hasConcurrentScanEndpoint()){
+        if (!hasProtectedScan || !conf.hasConcurrentScanEndpoint()) {
+            if(LOG.isDebugEnabled()){
+                LOG.debug("Queue size is " + queueSize);
+                LOG.debug("Starting ResultScanner for scan " + scan);
+            }
+            resultScanner = table.getScanner(scan);
+        } else if (conf.hasConcurrentScanEndpoint()) {
             this.scan = scan;
         }
         isRunning = true;
 
     }
 
-    public Result next() throws IOException {
+    public Result next(){
         try {
             return results.take();
         } catch (InterruptedException ex) {
@@ -62,12 +65,15 @@ public class ResultScannerThread extends QueryThread implements ResultScanner {
     }
 
     public void close() {
-        if(LOG.isDebugEnabled()) {
-            LOG.debug("Going to close RescultScannerThread" + conf.hasConcurrentScanEndpoint());
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Going to close ResultScannerThread " + (!hasProtectedScan || !conf.hasConcurrentScanEndpoint()));
         }
-        if(!conf.hasConcurrentScanEndpoint()){
+       /* if (!hasProtectedScan || !conf.hasConcurrentScanEndpoint()) {
+            if(LOG.isDebugEnabled()){
+                LOG.debug("Closing resultScanner");
+            }
             resultScanner.close();
-        }
+        }*/
         isRunning = false;
         results.clear();
     }
@@ -101,7 +107,7 @@ public class ResultScannerThread extends QueryThread implements ResultScanner {
     @Override
     protected void query() throws IOException {
 
-        if(LOG.isDebugEnabled()){
+        if (LOG.isDebugEnabled()) {
             LOG.debug("HasProtectedScan " + hasProtectedScan + " hasConcurrentScanEndpoint " + conf.hasConcurrentScanEndpoint());
         }
         if (!hasProtectedScan || !conf.hasConcurrentScanEndpoint()) {
@@ -109,18 +115,25 @@ public class ResultScannerThread extends QueryThread implements ResultScanner {
                 LOG.debug("Scan to SmpcCoprocessor");
             }
             int count = 0;
-            for (Result result = resultScanner.next(); result != null && isRunning; result = resultScanner
+            Result result;
+            for ( result = resultScanner.next(); result != null && isRunning; result = resultScanner
                     .next()) {
-                    count++;
-                    try {
-                        results.put(result);
-                    } catch (InterruptedException e) {
-                        LOG.error(e);
-                        throw new IllegalStateException(e);
+                count++;
+                try {
+                    results.put(result);
+                } catch (InterruptedException e) {
+                    LOG.error(e);
+                    throw new IllegalStateException(e);
 
-                    }
+                }
             }
-            LOG.debug("Going to exit ResultScannerThread smpcoprocessor branch " +count);
+            if(!isRunning){
+                resultScanner.close();
+                results.clear();
+            }
+            if(LOG.isDebugEnabled()) {
+                LOG.debug("Going to exit ResultScannerThread smpcoprocessor branch " + count);
+            }
         } else if (conf.hasConcurrentScanEndpoint()) {
             try {
                 if (LOG.isDebugEnabled()) {

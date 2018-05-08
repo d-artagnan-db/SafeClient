@@ -19,7 +19,7 @@ public class FormatPreservingResultScanner extends ResultScannerAbstratClass {
         boolean digest = checkRow(content);
 
         if (hasFilter && digest) {
-            if(this.filterType.equals("RowFilter")) {
+            if (this.filterType.equals("RowFilter")) {
                 digest = checkValue(content);
             }
         }

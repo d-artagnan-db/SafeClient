@@ -33,35 +33,34 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class MultiOP {
 
-	static final org.apache.commons.logging.Log LOG = LogFactory
-			.getLog(MultiOP.class.getName());
+    static final org.apache.commons.logging.Log LOG = LogFactory
+            .getLog(MultiOP.class.getName());
 
     private static final AtomicLong cellVersions = new AtomicLong(0);
 
-	public static IntSharemindDealer iDealer = new IntSharemindDealer();
-	public static LongSharemindDealer lDealer = new LongSharemindDealer();
+    public static IntSharemindDealer iDealer = new IntSharemindDealer();
+    public static LongSharemindDealer lDealer = new LongSharemindDealer();
 
 
-	protected final List<HTable> connections;
-	protected final SharedClientConfiguration config;
-	protected final TableSchema schema;
+    protected final List<HTable> connections;
+    protected final SharedClientConfiguration config;
+    protected final TableSchema schema;
+    protected final ExecutorService threadPool;
     protected byte[] uniqueRowId;
 
-    protected final ExecutorService threadPool;
 
+    public MultiOP(SharedClientConfiguration config, List<HTable> connections, TableSchema schema, ExecutorService threadPool) {
+        this.connections = connections;
+        this.config = config;
+        this.schema = schema;
+        this.threadPool = threadPool;
+    }
 
-	public MultiOP(SharedClientConfiguration config, List<HTable> connections, TableSchema schema, ExecutorService threadPool) {
-		this.connections = connections;
-		this.config = config;
-		this.schema = schema;
-		this.threadPool = threadPool;
-	}
+    protected abstract Runnable queryThread(SharedClientConfiguration config,
+                                            HTable table, int index) throws IOException;
 
-	protected abstract Runnable queryThread(SharedClientConfiguration config,
-                                          HTable table, int index) throws IOException;
-
-	protected abstract void threadsJoined(List<Runnable> threads)
-			throws IOException;
+    protected abstract void threadsJoined(List<Runnable> threads)
+            throws IOException;
 
 
     protected List<Put> generateMPCPut(Put originalPut) throws IOException, InvalidNumberOfBits, InvalidSecretValue {
@@ -93,7 +92,7 @@ public abstract class MultiOP {
                     BigInteger bigVal = new BigInteger(value);
 
                     if (LOG.isDebugEnabled()) {
-                        LOG.debug("Sharing SMPC value " + bigVal + " with formatsize "+ formatSize +" for column " + family +":"+qualifier);
+                        LOG.debug("Sharing SMPC value " + bigVal + " with formatsize " + formatSize + " for column " + family + ":" + qualifier);
                     }
                     SharemindSharedSecret secret = (SharemindSharedSecret) dealer.share(bigVal);
 
@@ -127,7 +126,7 @@ public abstract class MultiOP {
                     }
                     break;
                 case XOR:
-                    if(LOG.isDebugEnabled()){
+                    if (LOG.isDebugEnabled()) {
                         LOG.debug("Encoding with XOR");
                     }
                     byte[][] xvalues = OneTimePad.oneTimePadEncode(value);
@@ -151,23 +150,23 @@ public abstract class MultiOP {
     protected Result decodeResult(List<Result> results) throws IOException {
 
 
-		Result resOne = results.get(0);
-		Result resTwo = results.get(1);
-		Result resThree = results.get(2);
+        Result resOne = results.get(0);
+        Result resTwo = results.get(1);
+        Result resThree = results.get(2);
         this.uniqueRowId = resOne.getRow();
 
-		CellScanner firstScanner = resOne.cellScanner();
-		CellScanner secondScanner = resTwo.cellScanner();
-		CellScanner thirdScanner = resThree.cellScanner();
-		List<Cell> cells = new ArrayList<Cell>();
+        CellScanner firstScanner = resOne.cellScanner();
+        CellScanner secondScanner = resTwo.cellScanner();
+        CellScanner thirdScanner = resThree.cellScanner();
+        List<Cell> cells = new ArrayList<Cell>();
 
-		while (firstScanner.advance() && secondScanner.advance()
-				&& thirdScanner.advance()) {
-			Cell firstCell = firstScanner.current();
-			Cell secondCell = secondScanner.current();
-			Cell thirdCell = thirdScanner.current();
-			byte[] cf = CellUtil.cloneFamily(firstCell);
-			byte[] cq = CellUtil.cloneQualifier(secondCell);
+        while (firstScanner.advance() && secondScanner.advance()
+                && thirdScanner.advance()) {
+            Cell firstCell = firstScanner.current();
+            Cell secondCell = secondScanner.current();
+            Cell thirdCell = thirdScanner.current();
+            byte[] cf = CellUtil.cloneFamily(firstCell);
+            byte[] cq = CellUtil.cloneQualifier(secondCell);
             byte[] row = CellUtil.cloneRow(firstCell);
 
             String family = new String(cf, Charset.forName("UTF-8"));
@@ -238,56 +237,56 @@ public abstract class MultiOP {
             cells.add(decCell);
         }
 
-		return Result.create(cells);
-	}
+        return Result.create(cells);
+    }
 
 
-	public void doOperation() throws InterruptedException, IOException, ExecutionException {
-		List<Runnable> calls = new ArrayList<Runnable>();
-		List<Future> futures = new ArrayList<Future>();
-		int index = 0;
-		for (HTable table : connections) {
-			calls.add(queryThread(config, table, index));
-			index += 1;
-		}
+    public void doOperation() throws InterruptedException, IOException, ExecutionException {
+        List<Runnable> calls = new ArrayList<Runnable>();
+        List<Future> futures = new ArrayList<Future>();
+        int index = 0;
+        for (HTable table : connections) {
+            calls.add(queryThread(config, table, index));
+            index += 1;
+        }
 
-		for (Runnable t: calls) {
-			futures.add(threadPool.submit(t));
-		}
+        for (Runnable t : calls) {
+            futures.add(threadPool.submit(t));
+        }
 
-		for (Future t: futures) {
-			t.get();
-		}
+        for (Future t : futures) {
+            t.get();
+        }
 
-		threadsJoined(calls);
-	}
+        threadsJoined(calls);
+    }
 
     public void startScan() throws IOException {
         List<Runnable> calls = new ArrayList<Runnable>();
         List<Future> futures = new ArrayList<Future>();
 
         int index = 0;
-		for (HTable table : connections) {
-			calls.add(queryThread(config, table, index));
-			index += 1;
-		}
+        for (HTable table : connections) {
+            calls.add(queryThread(config, table, index));
+            index += 1;
+        }
 
-		if(LOG.isDebugEnabled()){
-		    LOG.debug("Going to start scan request");
-		}
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Going to start scan request");
+        }
 
-		for (Runnable t : calls) {
-			futures.add(threadPool.submit(t));
-		}
+        for (Runnable t : calls) {
+            futures.add(threadPool.submit(t));
+        }
 
-		joinThreads(futures);
+        joinThreads(futures);
 
-	}
+    }
 
-    protected abstract void  joinThreads(List<Future> threads)
+    protected abstract void joinThreads(List<Future> threads)
             throws IOException;
 
     public byte[] getUniqueRowId() {
         return this.uniqueRowId;
-	}
+    }
 }

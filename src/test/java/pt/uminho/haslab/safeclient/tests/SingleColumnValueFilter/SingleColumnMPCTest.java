@@ -7,7 +7,7 @@ import pt.uminho.haslab.safeclient.tests.BaseTests.SimpleMPCTest;
 
 import java.util.Random;
 
-public abstract class SingleColumnMPCTest extends SimpleMPCTest{
+public abstract class SingleColumnMPCTest extends SimpleMPCTest {
 
     protected abstract CompareFilter.CompareOp getOperation();
 

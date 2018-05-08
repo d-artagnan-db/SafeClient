@@ -10,24 +10,24 @@ import pt.uminho.haslab.safemapper.DatabaseSchema.CryptoType;
  */
 public class ResultScannerFactory {
 
-	public ResultScanner getResultScanner(CryptoType cType, CryptoProperties cp, byte[] startRow, byte[] stopRow, ResultScanner rs, Object filterResult) {
-		switch (cType) {
-			case SMPC:
-			case ISMPC:
+    public ResultScanner getResultScanner(CryptoType cType, CryptoProperties cp, byte[] startRow, byte[] stopRow, ResultScanner rs, Object filterResult) {
+        switch (cType) {
+            case SMPC:
+            case ISMPC:
             case LSMPC:
-            case PLT :
-				return new PlaintextResultScanner(cp, rs);
-			case STD :
-				return new StandardResultScanner(cp, startRow, stopRow, rs, filterResult);
-			case DET :
-				return new DeterministicResultScanner(cp, startRow, stopRow, rs, filterResult);
-			case OPE :
-				return new OrderPreservingResultScanner(cp, rs);
-			case FPE :
-				return new FormatPreservingResultScanner(cp, startRow, stopRow, rs, filterResult);
-			default :
-				return null;
-		}
-	}
+            case PLT:
+                return new PlaintextResultScanner(cp, rs);
+            case STD:
+                return new StandardResultScanner(cp, startRow, stopRow, rs, filterResult);
+            case DET:
+                return new DeterministicResultScanner(cp, startRow, stopRow, rs, filterResult);
+            case OPE:
+                return new OrderPreservingResultScanner(cp, rs);
+            case FPE:
+                return new FormatPreservingResultScanner(cp, startRow, stopRow, rs, filterResult);
+            default:
+                return null;
+        }
+    }
 
 }

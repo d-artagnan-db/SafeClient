@@ -62,12 +62,11 @@ public abstract class ResultScannerAbstratClass implements ResultScanner {
         if (filter != null) {
             this.hasFilter = true;
             Object[] filterProperties = (Object[]) filter;
-            if(filterProperties.length == 2) {
+            if (filterProperties.length == 2) {
                 this.filterType = "RowFilter";
                 this.compareOp = (CompareFilter.CompareOp) filterProperties[0];
                 this.compareValue = (byte[]) filterProperties[1];
-            }
-            else if(filterProperties.length == 4) {
+            } else if (filterProperties.length == 4) {
                 this.filterType = "SingleColumnValueFilter";
                 this.compareOp = (CompareFilter.CompareOp) filterProperties[2];
                 this.compareValue = (byte[]) filterProperties[3];
@@ -99,7 +98,7 @@ public abstract class ResultScannerAbstratClass implements ResultScanner {
         Bytes.ByteArrayComparator byteArrayComparator = new Bytes.ByteArrayComparator();
 
         switch (this.compareOp) {
-            case EQUAL :
+            case EQUAL:
                 digest = (byteArrayComparator.compare(this.compareValue, value) == 0);
                 break;
             default:
@@ -125,8 +124,7 @@ public abstract class ResultScannerAbstratClass implements ResultScanner {
             }
 
             return result;
-        }
-        else {
+        } else {
             return null;
         }
     }
@@ -145,7 +143,7 @@ public abstract class ResultScannerAbstratClass implements ResultScanner {
     public Iterator<Result> iterator() {
         try {
             List<Result> rs = new ArrayList<>();
-            for(Result r = scanner.next(); r != null; r = scanner.next()) {
+            for (Result r = scanner.next(); r != null; r = scanner.next()) {
                 Result iteratorResult = Result.EMPTY_RESULT;
                 byte[] row = this.cryptoProperties.decodeRow(r.getRow());
 
@@ -160,7 +158,7 @@ public abstract class ResultScannerAbstratClass implements ResultScanner {
             return rs.iterator();
 
         } catch (Exception e) {
-            LOG.error("PlaintextResultScanner Iterator Exception: "+e.getMessage());
+            LOG.error("PlaintextResultScanner Iterator Exception: " + e.getMessage());
         }
         return null;
     }

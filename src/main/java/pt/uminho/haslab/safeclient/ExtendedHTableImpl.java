@@ -185,7 +185,7 @@ public class ExtendedHTableImpl implements ExtendedHTable {
 
     @Override
     public long incrementColumnValue(byte[] bytes, byte[] bytes1, byte[] bytes2, long l, Durability durability) throws IOException {
-        return  table.incrementColumnValue(bytes, bytes1, bytes2, l, durability);
+        return table.incrementColumnValue(bytes, bytes1, bytes2, l, durability);
     }
 
     @Override
@@ -196,6 +196,11 @@ public class ExtendedHTableImpl implements ExtendedHTable {
     @Override
     public boolean isAutoFlush() {
         return table.isAutoFlush();
+    }
+
+    @Override
+    public void setAutoFlush(boolean b) {
+        table.setAutoFlush(b);
     }
 
     @Override
@@ -221,11 +226,6 @@ public class ExtendedHTableImpl implements ExtendedHTable {
     @Override
     public <T extends Service, R> void coprocessorService(Class<T> aClass, byte[] bytes, byte[] bytes1, Batch.Call<T, R> call, Batch.Callback<R> callback) throws ServiceException, Throwable {
         table.coprocessorService(aClass, bytes, bytes1, call, callback);
-    }
-
-    @Override
-    public void setAutoFlush(boolean b) {
-        table.setAutoFlush(b);
     }
 
     @Override

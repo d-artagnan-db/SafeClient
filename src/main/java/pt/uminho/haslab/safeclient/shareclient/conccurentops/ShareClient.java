@@ -16,58 +16,58 @@ import java.util.List;
 
 public class ShareClient implements TestClient {
 
-	private ShareCluster clusters;
-	private SharedAdmin admin;
+    private ShareCluster clusters;
+    private SharedAdmin admin;
 
-	public ShareClient() throws Exception {
-		System.setProperty("hadoop.home.dir", "/home/roger/hadoop-2.7.2");
+    public ShareClient() throws Exception {
+        System.setProperty("hadoop.home.dir", "/home/roger/hadoop-2.7.2");
         // initialized on start method
         clusters = null;
         admin = null;
 
-	}
+    }
 
-	@Override
-	public void createTestTable(HTableDescriptor testeTable)
-			throws IOException, InterruptedException {
-		admin.createTable(testeTable);
-	}
+    @Override
+    public void createTestTable(HTableDescriptor testeTable)
+            throws IOException, InterruptedException {
+        admin.createTable(testeTable);
+    }
 
-	@Override
-	public boolean checkTableExists(String tableName) throws IOException {
+    @Override
+    public boolean checkTableExists(String tableName) throws IOException {
         return admin.tableExists(tableName);
     }
 
-	@After
-	public void tearDown() throws IOException {
-		clusters.tearDown();
-	}
+    @After
+    public void tearDown() throws IOException {
+        clusters.tearDown();
+    }
 
-	@Override
+    @Override
     public HTableInterface createTableInterface(String tableName, TableSchema schema)
-			throws IOException, InvalidNumberOfBits {
+            throws IOException, InvalidNumberOfBits {
         Configuration conf = new Configuration();
-		conf.addResource("hbase-client.xml");
+        conf.addResource("hbase-client.xml");
         return new SharedTable(conf, tableName, schema);
     }
 
-	@Override
-	public void startCluster() throws Exception {
-		List<String> resources = new ArrayList<String>();
+    @Override
+    public void startCluster() throws Exception {
+        List<String> resources = new ArrayList<String>();
 
-		for (int i = 0; i < 3; i++) {
-			resources.add("hbase-site-" + i + ".xml");
-		}
-		// Boot the clusters
-		clusters = new ShareCluster(resources, 1);
-		Configuration conf = new Configuration();
-		conf.addResource("hbase-client.xml");
-		admin = new SharedAdmin(conf);
-	}
+        for (int i = 0; i < 3; i++) {
+            resources.add("hbase-site-" + i + ".xml");
+        }
+        // Boot the clusters
+        clusters = new ShareCluster(resources, 1);
+        Configuration conf = new Configuration();
+        conf.addResource("hbase-client.xml");
+        admin = new SharedAdmin(conf);
+    }
 
-	@Override
-	public void stopCluster() throws IOException {
-		clusters.tearDown();
-	}
+    @Override
+    public void stopCluster() throws IOException {
+        clusters.tearDown();
+    }
 
 }

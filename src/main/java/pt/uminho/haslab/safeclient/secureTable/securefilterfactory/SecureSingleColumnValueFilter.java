@@ -23,7 +23,7 @@ public class SecureSingleColumnValueFilter implements SecureFilterProperties {
                 throw new UnsupportedOperationException("SingleColumnValueFilter is not supported for values protected with Standard Encryption (STD).");
             case DET:
             case FPE:
-                if(singleFilter.getOperator() == CompareFilter.CompareOp.EQUAL) {
+                if (singleFilter.getOperator() == CompareFilter.CompareOp.EQUAL) {
                     byte[] encryptedValue =
                             this.cryptoProperties.encodeValue(
                                     singleFilter.getFamily(),
@@ -35,8 +35,7 @@ public class SecureSingleColumnValueFilter implements SecureFilterProperties {
                             singleFilter.getQualifier(),
                             singleFilter.getOperator(),
                             this.cryptoProperties.checkComparatorType(singleFilter.getComparator(), encryptedValue, cryptoType));
-                }
-                else {
+                } else {
                     throw new UnsupportedOperationException("Only equality comparison is supported for values protected with Deterministic-based encryption schemes.");
                 }
             case SMPC:
@@ -65,10 +64,10 @@ public class SecureSingleColumnValueFilter implements SecureFilterProperties {
         SingleColumnValueFilter singleFilter = (SingleColumnValueFilter) plaintextFilter;
 
         switch (cryptoType) {
-            case STD :
+            case STD:
                 return null;
-            case DET :
-            case FPE :
+            case DET:
+            case FPE:
                 // TODO: adicionar parserResult[0] = SingleColumnValueFilter e remover o getFamily e getQualifier??
                 Object[] parserResult = new Object[4];
                 parserResult[0] = singleFilter.getFamily();
@@ -81,7 +80,7 @@ public class SecureSingleColumnValueFilter implements SecureFilterProperties {
             case ISMPC:
             case LSMPC:
             case PLT:
-            case OPE :
+            case OPE:
                 return buildEncryptedFilter(plaintextFilter, cryptoType);
 
             default:

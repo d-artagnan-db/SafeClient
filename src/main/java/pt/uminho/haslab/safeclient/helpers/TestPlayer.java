@@ -5,7 +5,7 @@ import pt.uminho.haslab.smpc.interfaces.Player;
 import java.math.BigInteger;
 import java.util.List;
 
-public class TestPlayer implements Player{
+public class TestPlayer implements Player {
     @Override
     public void sendValueToPlayer(int i, BigInteger bigInteger) {
 

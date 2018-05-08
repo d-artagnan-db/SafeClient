@@ -15,10 +15,10 @@ public class PutThread extends QueryThread {
 
     private boolean isBatchPut;
 
-	public PutThread(SharedClientConfiguration config, HTable table, Put put) {
-		super(config, table);
-		this.put = put;
-	}
+    public PutThread(SharedClientConfiguration config, HTable table, Put put) {
+        super(config, table);
+        this.put = put;
+    }
 
     public PutThread(SharedClientConfiguration config, HTable table, List<Put> puts) {
         super(config, table);

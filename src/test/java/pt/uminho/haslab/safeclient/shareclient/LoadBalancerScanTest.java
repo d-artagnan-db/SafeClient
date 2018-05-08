@@ -1,18 +1,5 @@
 package pt.uminho.haslab.safeclient.shareclient;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import pt.uminho.haslab.safemapper.TableSchema;
-import pt.uminho.haslab.testingutils.ScanValidator;
-
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
 /*
 public class LoadBalancerScanTest extends ScanTest {
 

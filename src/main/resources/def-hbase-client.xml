@@ -10,7 +10,7 @@
         <name>hbase.zookeeper.property.clientPort</name>
         <value>16262</value>
     </property>
-    
+
     <property>
         <name>Name.FirstName</name>
     </property>

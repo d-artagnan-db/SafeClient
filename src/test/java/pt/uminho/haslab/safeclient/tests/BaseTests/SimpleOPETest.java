@@ -21,7 +21,7 @@ public class SimpleOPETest extends SingleColumnProtectedTest {
         return null;
     }
 
-    protected int getProtectedColumnFormatSize(){
+    protected int getProtectedColumnFormatSize() {
         return 4;
     }
 }

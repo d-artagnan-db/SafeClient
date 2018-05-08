@@ -55,9 +55,9 @@ public class MultiPut extends MultiOP {
         return resultingPuts;
     }
 
-	@Override
-	protected Runnable queryThread(SharedClientConfiguration conf, HTable table,
-			int index) {
+    @Override
+    protected Runnable queryThread(SharedClientConfiguration conf, HTable table,
+                                   int index) {
 
         if (!isBatchPut) {
             return new PutThread(config, table, protectedPuts.get(index));
@@ -67,8 +67,8 @@ public class MultiPut extends MultiOP {
         }
     }
 
-	@Override
-	protected void threadsJoined(List<Runnable> threads) throws IOException {
+    @Override
+    protected void threadsJoined(List<Runnable> threads) throws IOException {
     }
 
     @Override

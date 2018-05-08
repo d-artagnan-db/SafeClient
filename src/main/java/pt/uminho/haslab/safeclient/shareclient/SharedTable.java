@@ -39,21 +39,20 @@ import java.util.concurrent.locks.Lock;
  */
 public class SharedTable implements ExtendedHTable {
 
-	static final Log LOG = LogFactory.getLog(SharedTable.class.getName());
+    static final Log LOG = LogFactory.getLog(SharedTable.class.getName());
 
-	private static final AtomicLong identifierGenerator = new AtomicLong();
-	private static ResultPlayerLoadBalancer LB = new ResultPlayerLoadBalancerImpl();
-    private static ExecutorService threadPool;
-
+    private static final AtomicLong identifierGenerator = new AtomicLong();
     private static final TableLock TABLE_LOCKS = new TableLockImpl();
+    private static ResultPlayerLoadBalancer LB = new ResultPlayerLoadBalancerImpl();
+    private static ExecutorService threadPool;
     private final String tableName;
     private final List<HTable> connections;
-    private SharedClientConfiguration sharedConfig;
-    private TableSchema schema;
     private final Lock readLock;
     private final Lock writeLock;
+    private SharedClientConfiguration sharedConfig;
+    private TableSchema schema;
 
-	public SharedTable(Configuration conf, String tableName, TableSchema schema)
+    public SharedTable(Configuration conf, String tableName, TableSchema schema)
             throws IOException, InvalidNumberOfBits {
 
         if (LB == null) {
@@ -63,11 +62,11 @@ public class SharedTable implements ExtendedHTable {
         }
 
 
-            if (threadPool == null) {
-                String error = "Thread Pool not initialized";
-                LOG.error(error);
-                throw new IllegalStateException(error);
-            }
+        if (threadPool == null) {
+            String error = "Thread Pool not initialized";
+            LOG.error(error);
+            throw new IllegalStateException(error);
+        }
 
         connections = new ArrayList<HTable>();
 
@@ -91,21 +90,20 @@ public class SharedTable implements ExtendedHTable {
         LB = loadBalancer;
     }
 
-    public static void initializeThreadPool(int nthreads){
-	    threadPool = Executors.newFixedThreadPool(nthreads);
+    public static void initializeThreadPool(int nthreads) {
+        threadPool = Executors.newFixedThreadPool(nthreads);
     }
 
     private Long getRequestId() {
         return identifierGenerator.getAndAdd(1);
     }
 
-	/**
-	 *
-	 * @param put
-	 * @throws java.io.InterruptedIOException
-	 * @throws RetriesExhaustedWithDetailsException
-	 */
-	public void put(final Put put) throws IOException {
+    /**
+     * @param put
+     * @throws java.io.InterruptedIOException
+     * @throws RetriesExhaustedWithDetailsException
+     */
+    public void put(final Put put) throws IOException {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Put operation");
         }
@@ -114,11 +112,11 @@ public class SharedTable implements ExtendedHTable {
         } catch (InterruptedException | InvalidNumberOfBits | ExecutionException | InvalidSecretValue ex) {
             LOG.error(ex);
             throw new IllegalStateException(ex);
-		}
+        }
     }
 
 
-	public Result get(Get get) throws IOException {
+    public Result get(Get get) throws IOException {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Get operation");
         }
@@ -155,7 +153,7 @@ public class SharedTable implements ExtendedHTable {
         return this.connections.get(0).getTableName();
     }
 
-	public TableName getName() {
+    public TableName getName() {
         if (LOG.isDebugEnabled()) {
             LOG.debug("getName");
         }
@@ -163,79 +161,79 @@ public class SharedTable implements ExtendedHTable {
         return this.connections.get(0).getName();
     }
 
-	public Configuration getConfiguration() {
+    public Configuration getConfiguration() {
         if (LOG.isDebugEnabled()) {
             LOG.debug("getConfiguration");
         }
         return this.connections.get(0).getConfiguration();
     }
 
-	public HTableDescriptor getTableDescriptor() throws IOException {
+    public HTableDescriptor getTableDescriptor() throws IOException {
         if (LOG.isDebugEnabled()) {
             LOG.debug("getTableDescriptor");
         }
         return this.connections.get(0).getTableDescriptor();
     }
 
-	public boolean exists(Get get) throws IOException {
+    public boolean exists(Get get) throws IOException {
         if (LOG.isDebugEnabled()) {
             LOG.debug("exists Get");
         }
         return this.connections.get(0).exists(get);
     }
 
-	public Boolean[] exists(List<Get> list) throws IOException {
+    public Boolean[] exists(List<Get> list) throws IOException {
         if (LOG.isDebugEnabled()) {
             LOG.debug("exits list get");
         }
         return this.connections.get(0).exists(list);
     }
 
-	public void batch(List<? extends Row> list, Object[] os)
-			throws IOException, InterruptedException {
+    public void batch(List<? extends Row> list, Object[] os)
+            throws IOException, InterruptedException {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
-	public Object[] batch(List<? extends Row> list) throws IOException,
-			InterruptedException {
+    public Object[] batch(List<? extends Row> list) throws IOException,
+            InterruptedException {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
-	public <R> void batchCallback(List<? extends Row> list, Object[] os,
-			Batch.Callback<R> clbck) throws IOException, InterruptedException {
-		throw new UnsupportedOperationException("Not supported yet.");
+    public <R> void batchCallback(List<? extends Row> list, Object[] os,
+                                  Batch.Callback<R> clbck) throws IOException, InterruptedException {
+        throw new UnsupportedOperationException("Not supported yet.");
 
-	}
+    }
 
-	public <R> Object[] batchCallback(List<? extends Row> list,
-			Batch.Callback<R> clbck) throws IOException, InterruptedException {
-		throw new UnsupportedOperationException("Not supported yet.");
+    public <R> Object[] batchCallback(List<? extends Row> list,
+                                      Batch.Callback<R> clbck) throws IOException, InterruptedException {
+        throw new UnsupportedOperationException("Not supported yet.");
 
-	}
+    }
 
-	public Result[] get(List<Get> list) throws IOException {
-		throw new UnsupportedOperationException("Not supported yet.");
+    public Result[] get(List<Get> list) throws IOException {
+        throw new UnsupportedOperationException("Not supported yet.");
 
-	}
+    }
 
-	public Result getRowOrBefore(byte[] bytes, byte[] bytes1)
-			throws IOException {
-		throw new UnsupportedOperationException("Not supported yet.");
+    public Result getRowOrBefore(byte[] bytes, byte[] bytes1)
+            throws IOException {
+        throw new UnsupportedOperationException("Not supported yet.");
 
-	}
+    }
 
-	public ResultScanner getScanner(byte[] bytes) throws IOException {
-		throw new UnsupportedOperationException("Not supported yet.");
+    public ResultScanner getScanner(byte[] bytes) throws IOException {
+        throw new UnsupportedOperationException("Not supported yet.");
 
-	}
+    }
 
-	public ResultScanner getScanner(byte[] startRow, byte[] stopRow)
-			throws IOException {
-		throw new UnsupportedOperationException("Not supported yet.");
+    public ResultScanner getScanner(byte[] startRow, byte[] stopRow)
+            throws IOException {
+        throw new UnsupportedOperationException("Not supported yet.");
 
-	}
+    }
 
-	public void put(List<Put> list) throws IOException {
+    public void put(List<Put> list) throws IOException {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Batch put operation");
         }
@@ -265,14 +263,14 @@ public class SharedTable implements ExtendedHTable {
         } catch (InvalidSecretValue | InterruptedException | InvalidNumberOfBits | ExecutionException ex) {
             LOG.error(ex);
             throw new IllegalStateException(ex);
-        }finally{
+        } finally {
             writeLock.unlock();
         }
 
         return res;
     }
 
-	public void delete(Delete delete) throws IOException {
+    public void delete(Delete delete) throws IOException {
         if (LOG.isDebugEnabled()) {
             LOG.debug("delete operation");
         }
@@ -283,13 +281,13 @@ public class SharedTable implements ExtendedHTable {
         } catch (InterruptedException | ExecutionException ex) {
             LOG.error(ex);
             throw new IllegalStateException(ex);
-        }finally{
+        } finally {
             writeLock.unlock();
         }
 
     }
 
-	public void delete(List<Delete> list) throws IOException {
+    public void delete(List<Delete> list) throws IOException {
 
         if (LOG.isDebugEnabled()) {
             LOG.debug("Batch delete operation");
@@ -301,7 +299,7 @@ public class SharedTable implements ExtendedHTable {
         } catch (InterruptedException | ExecutionException ex) {
             LOG.error(ex);
             throw new IllegalStateException(ex);
-        }finally{
+        } finally {
             writeLock.unlock();
         }
     }
@@ -310,22 +308,22 @@ public class SharedTable implements ExtendedHTable {
                                   byte[] value, Delete delete) throws IOException {
         throw new UnsupportedOperationException("Not supported yet.");
 
-	}
+    }
 
-	public void mutateRow(RowMutations rm) throws IOException {
-		throw new UnsupportedOperationException("Not supported yet.");
+    public void mutateRow(RowMutations rm) throws IOException {
+        throw new UnsupportedOperationException("Not supported yet.");
 
-	}
+    }
 
-	public Result append(Append append) throws IOException {
-		throw new UnsupportedOperationException("Not supported yet.");
+    public Result append(Append append) throws IOException {
+        throw new UnsupportedOperationException("Not supported yet.");
 
-	}
+    }
 
-	public Result increment(Increment i) throws IOException {
-		throw new UnsupportedOperationException("Not supported yet.");
+    public Result increment(Increment i) throws IOException {
+        throw new UnsupportedOperationException("Not supported yet.");
 
-	}
+    }
 
     /**
      * This operation is currently not supported for secret shared data since
@@ -349,108 +347,108 @@ public class SharedTable implements ExtendedHTable {
         return result;
     }
 
-	public long incrementColumnValue(byte[] bytes, byte[] bytes1,
-			byte[] bytes2, long l, Durability drblt) throws IOException {
-		throw new UnsupportedOperationException("Not supported yet.");
+    public long incrementColumnValue(byte[] bytes, byte[] bytes1,
+                                     byte[] bytes2, long l, Durability drblt) throws IOException {
+        throw new UnsupportedOperationException("Not supported yet.");
 
-	}
+    }
 
-	public long incrementColumnValue(byte[] bytes, byte[] bytes1,
-			byte[] bytes2, long l, boolean bln) throws IOException {
-		throw new UnsupportedOperationException("Not supported yet.");
+    public long incrementColumnValue(byte[] bytes, byte[] bytes1,
+                                     byte[] bytes2, long l, boolean bln) throws IOException {
+        throw new UnsupportedOperationException("Not supported yet.");
 
-	}
+    }
 
-	public boolean isAutoFlush() {
+    public boolean isAutoFlush() {
         if (LOG.isDebugEnabled()) {
             LOG.debug("isAutoFlush");
         }
         return this.connections.get(0).isAutoFlush();
     }
 
-	public void setAutoFlush(boolean bln) {
-		for (HTable table : this.connections) {
-			table.setAutoFlushTo(bln);
-		}
+    public void setAutoFlush(boolean bln) {
+        for (HTable table : this.connections) {
+            table.setAutoFlushTo(bln);
+        }
 
-	}
+    }
 
-	public void flushCommits() throws IOException {
-		for (HTable table : connections) {
-			table.flushCommits();
-		}
+    public void flushCommits() throws IOException {
+        for (HTable table : connections) {
+            table.flushCommits();
+        }
 
-	}
+    }
 
-	public void close() throws IOException {
-		for (HTable table : connections) {
-			table.close();
-		}
-	}
+    public void close() throws IOException {
+        for (HTable table : connections) {
+            table.close();
+        }
+    }
 
-	public CoprocessorRpcChannel coprocessorService(byte[] bytes) {
+    public CoprocessorRpcChannel coprocessorService(byte[] bytes) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
-	public <T extends Service, R> Map<byte[], R> coprocessorService(
-			Class<T> type, byte[] bytes, byte[] bytes1, Batch.Call<T, R> call)
-			throws ServiceException, Throwable {
-		throw new UnsupportedOperationException("Not supported yet.");
+    public <T extends Service, R> Map<byte[], R> coprocessorService(
+            Class<T> type, byte[] bytes, byte[] bytes1, Batch.Call<T, R> call)
+            throws ServiceException, Throwable {
+        throw new UnsupportedOperationException("Not supported yet.");
 
-	}
+    }
 
-	public <T extends Service, R> void coprocessorService(Class<T> type,
-			byte[] bytes, byte[] bytes1, Batch.Call<T, R> call,
-			Batch.Callback<R> clbck) throws ServiceException, Throwable {
+    public <T extends Service, R> void coprocessorService(Class<T> type,
+                                                          byte[] bytes, byte[] bytes1, Batch.Call<T, R> call,
+                                                          Batch.Callback<R> clbck) throws ServiceException, Throwable {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
-	public void setAutoFlush(boolean bln, boolean bln1) {
-		for (HTable table : this.connections) {
-			table.setAutoFlush(bln, bln1);
-		}
-	}
+    public void setAutoFlush(boolean bln, boolean bln1) {
+        for (HTable table : this.connections) {
+            table.setAutoFlush(bln, bln1);
+        }
+    }
 
-	public void setAutoFlushTo(boolean bln) {
+    public void setAutoFlushTo(boolean bln) {
         for (HTable table : this.connections) {
             table.setAutoFlush(bln);
         }
     }
 
-	public long getWriteBufferSize() {
+    public long getWriteBufferSize() {
         return connections.get(0).getWriteBufferSize();
     }
 
-	public void setWriteBufferSize(long l) throws IOException {
-		for (HTable table : this.connections) {
-			table.setWriteBufferSize(l);
-		}
+    public void setWriteBufferSize(long l) throws IOException {
+        for (HTable table : this.connections) {
+            table.setWriteBufferSize(l);
+        }
 
-	}
+    }
 
-	public <R extends Message> Map<byte[], R> batchCoprocessorService(
-			Descriptors.MethodDescriptor md, Message msg, byte[] bytes,
-			byte[] bytes1, R r) throws ServiceException, Throwable {
-		throw new UnsupportedOperationException("Not supported yet.");
+    public <R extends Message> Map<byte[], R> batchCoprocessorService(
+            Descriptors.MethodDescriptor md, Message msg, byte[] bytes,
+            byte[] bytes1, R r) throws ServiceException, Throwable {
+        throw new UnsupportedOperationException("Not supported yet.");
 
-	}
+    }
 
-	public <R extends Message> void batchCoprocessorService(
-			Descriptors.MethodDescriptor md, Message msg, byte[] bytes,
-			byte[] bytes1, R r, Batch.Callback<R> clbck)
-			throws ServiceException, Throwable {
+    public <R extends Message> void batchCoprocessorService(
+            Descriptors.MethodDescriptor md, Message msg, byte[] bytes,
+            byte[] bytes1, R r, Batch.Callback<R> clbck)
+            throws ServiceException, Throwable {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
-	public boolean checkAndMutate(byte[] bytes, byte[] bytes1, byte[] bytes2,
-			CompareFilter.CompareOp co, byte[] bytes3, RowMutations rm)
-			throws IOException {
-		throw new UnsupportedOperationException("Not supported yet.");
+    public boolean checkAndMutate(byte[] bytes, byte[] bytes1, byte[] bytes2,
+                                  CompareFilter.CompareOp co, byte[] bytes3, RowMutations rm)
+            throws IOException {
+        throw new UnsupportedOperationException("Not supported yet.");
 
-	}
+    }
 
-	@Override
-	public HRegionLocation getRegionLocation(byte[] row) throws IOException {
+    @Override
+    public HRegionLocation getRegionLocation(byte[] row) throws IOException {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

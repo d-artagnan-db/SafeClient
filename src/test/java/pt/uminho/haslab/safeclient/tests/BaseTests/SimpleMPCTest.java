@@ -29,7 +29,8 @@ public class SimpleMPCTest extends SingleColumnProtectedTest {
     protected String getProtectedSchemaPath() {
         return "/Users/roger/Documents/HASLab/safecloud-eu/safeclient/src/test/resources/put-get-schema.xml";
     }
-    protected int getProtectedColumnFormatSize(){
+
+    protected int getProtectedColumnFormatSize() {
         return 64;
     }
 

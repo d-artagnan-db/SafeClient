@@ -56,8 +56,8 @@ public class HTableFeaturesUtils {
                                     family,
                                     (qualifierString + opeValues).getBytes(Charset.forName("UTF-8")),
                                     value)
-                        );
-                    }
+                    );
+                }
 
             }
         } catch (Exception e) {
@@ -223,6 +223,7 @@ public class HTableFeaturesUtils {
 
     /**
      * verifyFilterCryptoType(scan : Scan) method : verify the filter's CryptoBox
+     *
      * @param scan scan/filter object
      * @return the respective CryptoType
      */

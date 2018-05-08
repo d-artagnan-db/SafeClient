@@ -5,8 +5,8 @@ import redis.clients.jedis.Jedis;
 public class RedisUtils {
 
 
-    public static void flushAll(String hostname){
-        Jedis jedis = new Jedis(hostname) ;
+    public static void flushAll(String hostname) {
+        Jedis jedis = new Jedis(hostname);
         jedis.flushDB();
     }
 }

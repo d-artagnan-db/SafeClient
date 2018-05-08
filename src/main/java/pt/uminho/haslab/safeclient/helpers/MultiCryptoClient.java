@@ -8,7 +8,7 @@ import pt.uminho.haslab.smpc.exceptions.InvalidNumberOfBits;
 
 import java.io.IOException;
 
-public class MultiCryptoClient extends ShareClient{
+public class MultiCryptoClient extends ShareClient {
 
     public MultiCryptoClient(String configuration) throws IOException {
         super(configuration);

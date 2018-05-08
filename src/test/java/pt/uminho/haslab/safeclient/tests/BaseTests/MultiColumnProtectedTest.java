@@ -72,7 +72,7 @@ public class MultiColumnProtectedTest extends SingleColumnProtectedTest {
         return "multi-put-get-schema.xml";
     }
 
-    protected void defineColTypes(){
+    protected void defineColTypes() {
         this.qualifierColTypes.put("Teste", new HashMap<String, ColType>());
         this.qualifierColTypes.get("Teste").put("Name", ColType.STRING);
         this.qualifierColTypes.get("Teste").put("Age1", ColType.INT);

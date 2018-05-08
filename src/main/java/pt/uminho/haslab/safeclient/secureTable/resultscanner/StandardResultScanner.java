@@ -8,20 +8,20 @@ import pt.uminho.haslab.safeclient.secureTable.CryptoProperties;
  * ResultScanner instance, providing a secure ResultScanner with the STD CryptoBox.
  */
 public class StandardResultScanner extends ResultScannerAbstratClass {
-	public StandardResultScanner(CryptoProperties cp, byte[] startRow, byte[] endRow, ResultScanner encryptedScanner, Object filterResult) {
-		super(cp, encryptedScanner, startRow, endRow, filterResult);
-	}
+    public StandardResultScanner(CryptoProperties cp, byte[] startRow, byte[] endRow, ResultScanner encryptedScanner, Object filterResult) {
+        super(cp, encryptedScanner, startRow, endRow, filterResult);
+    }
 
-	@Override
-	public boolean digestor(byte[] content) {
-		boolean digest = checkRow(content);
+    @Override
+    public boolean digestor(byte[] content) {
+        boolean digest = checkRow(content);
 
-			if (hasFilter && digest) {
-				if(this.filterType.equals("RowFilter")) {
-					digest = checkValue(content);
-				}
-			}
-		return digest;
-	}
+        if (hasFilter && digest) {
+            if (this.filterType.equals("RowFilter")) {
+                digest = checkValue(content);
+            }
+        }
+        return digest;
+    }
 
 }

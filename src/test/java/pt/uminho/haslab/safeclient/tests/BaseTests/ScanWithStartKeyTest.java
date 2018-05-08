@@ -5,7 +5,7 @@ import org.apache.hadoop.hbase.client.Scan;
 
 import java.util.Random;
 
-public class ScanWithStartKeyTest extends MultiColumnProtectedTest{
+public class ScanWithStartKeyTest extends MultiColumnProtectedTest {
 
     @Override
     protected Scan getTestScan() {

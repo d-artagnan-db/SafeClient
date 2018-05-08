@@ -55,7 +55,7 @@ public class DefaultHBaseAdmin implements CHBaseAdmin {
 
     @Override
     public ClusterStatus getClusterStatus() throws IOException {
-       return admin.getClusterStatus();
+        return admin.getClusterStatus();
     }
 
     @Override

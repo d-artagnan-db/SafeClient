@@ -45,10 +45,10 @@ public class SecureRowFilter implements SecureFilterProperties {
         RowFilter plainRowFilter = (RowFilter) plaintextFilter;
 
         switch (cryptoType) {
-            case STD :
-            case DET :
-            case FPE :
-            // TODO: adicionar parserResult[0] = RowFilter?
+            case STD:
+            case DET:
+            case FPE:
+                // TODO: adicionar parserResult[0] = RowFilter?
                 Object[] parserResult = new Object[2];
                 parserResult[0] = plainRowFilter.getOperator();
                 parserResult[1] = plainRowFilter.getComparator().getValue();
@@ -57,9 +57,9 @@ public class SecureRowFilter implements SecureFilterProperties {
             case SMPC:
             case ISMPC:
             case LSMPC:
-            case PLT :
-            case OPE :
-            // Generate a Binary Comparator to perform the comparison with the respective encrypted value
+            case PLT:
+            case OPE:
+                // Generate a Binary Comparator to perform the comparison with the respective encrypted value
                 return buildEncryptedFilter(plaintextFilter, cryptoType);
 
             default:

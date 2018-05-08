@@ -1,15 +1,15 @@
 <configuration>
-  <property>
-    <name>hbase.zookeeper.quorum</name>
-    <value>192.168.112.18</value>
-  </property>
-  <property>
-    <name>schema</name>
-    <!--<value>src/main/resources/schema.xml</value>-->
-    <value>/home/rgmacedo/Dropbox/Master_Thesis/SafeCloud/safeclient/src/main/resources/q_engine.xml</value>
-  </property>
-  <property>
-    <name>cryptographickey</name>
-    <value>/home/rgmacedo/Dropbox/Master_Thesis/SafeCloud/safeclient/key.txt</value>
-  </property>
+    <property>
+        <name>hbase.zookeeper.quorum</name>
+        <value>192.168.112.18</value>
+    </property>
+    <property>
+        <name>schema</name>
+        <!--<value>src/main/resources/schema.xml</value>-->
+        <value>/home/rgmacedo/Dropbox/Master_Thesis/SafeCloud/safeclient/src/main/resources/q_engine.xml</value>
+    </property>
+    <property>
+        <name>cryptographickey</name>
+        <value>/home/rgmacedo/Dropbox/Master_Thesis/SafeCloud/safeclient/key.txt</value>
+    </property>
 </configuration>

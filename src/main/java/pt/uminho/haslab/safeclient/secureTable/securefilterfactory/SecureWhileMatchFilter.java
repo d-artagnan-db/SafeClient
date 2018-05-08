@@ -23,7 +23,7 @@ public class SecureWhileMatchFilter implements SecureFilterProperties {
         WhileMatchFilter whileFilter = (WhileMatchFilter) plaintextFilter;
         Filter insideFilter = whileFilter.getFilter();
         Filter tempFilter;
-        switch(SecureFilterConverter.getFilterType(insideFilter)) {
+        switch (SecureFilterConverter.getFilterType(insideFilter)) {
             case RowFilter:
                 tempFilter = new SecureRowFilter(this.cryptoProperties).buildEncryptedFilter(insideFilter, cryptoType);
                 break;
@@ -45,7 +45,7 @@ public class SecureWhileMatchFilter implements SecureFilterProperties {
     public Object parseFilter(Filter plaintextFilter, CryptoType cryptoType) {
         WhileMatchFilter whileFilter = (WhileMatchFilter) plaintextFilter;
         Filter insideFilter = whileFilter.getFilter();
-        switch(SecureFilterConverter.getFilterType(insideFilter)) {
+        switch (SecureFilterConverter.getFilterType(insideFilter)) {
             case RowFilter:
                 return new SecureRowFilter(this.cryptoProperties).parseFilter(insideFilter, cryptoType);
             case SingleColumnValueFilter:
@@ -63,8 +63,8 @@ public class SecureWhileMatchFilter implements SecureFilterProperties {
         WhileMatchFilter whileFilter = (WhileMatchFilter) plaintextFilter;
         Filter f = whileFilter.getFilter();
 
-        if(f != null) {
-            switch(SecureFilterConverter.getFilterType(f)) {
+        if (f != null) {
+            switch (SecureFilterConverter.getFilterType(f)) {
                 case RowFilter:
                     return new SecureRowFilter(this.cryptoProperties).getFilterCryptoType(f);
                 case SingleColumnValueFilter:
@@ -75,8 +75,7 @@ public class SecureWhileMatchFilter implements SecureFilterProperties {
                     LOG.error("SecureMatchFilter.class:getFilterCryptoType: Filter operator not supported.");
                     throw new UnsupportedOperationException("Filter not supported.");
             }
-        }
-        else {
+        } else {
             LOG.error("SecureMatchFilter.class:getFilterCryptoType: WhilematchFilter cannot contain a null filter object.");
             throw new NullPointerException("WhileMatchFilter cannot contain a null filter object.");
         }

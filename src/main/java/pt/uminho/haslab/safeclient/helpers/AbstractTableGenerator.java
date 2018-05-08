@@ -32,14 +32,10 @@ public abstract class AbstractTableGenerator {
             .getLog(AbstractTableGenerator.class.getName());
 
     protected static String VANILLA = "_VANILLA";
-
-    protected TableSchema schema;
-
-    protected Map<String, Map<String, ColType>> qualifierColTypes;
-
-    protected Map<String, Map<String, List<byte[]>>> generatedValues;
-
     protected final List<byte[]> rowIdentifiers;
+    protected TableSchema schema;
+    protected Map<String, Map<String, ColType>> qualifierColTypes;
+    protected Map<String, Map<String, List<byte[]>>> generatedValues;
 
     public AbstractTableGenerator() {
         this.qualifierColTypes = new HashMap<>();
@@ -139,7 +135,7 @@ public abstract class AbstractTableGenerator {
         return table;
     }
 
-    protected void compareResult(Result vanillaResult, Result protectedResult){
+    protected void compareResult(Result vanillaResult, Result protectedResult) {
         byte[] normalRow = vanillaResult.getRow();
         byte[] protectedRow = protectedResult.getRow();
         assertArrayEquals(normalRow, protectedRow);
@@ -155,24 +151,25 @@ public abstract class AbstractTableGenerator {
         }
 
     }
+
     private void validateResults(Scan scan, ExtendedHTable vanillaTable, ExtendedHTable protectedTable) {
 
-        try{
+        try {
             ResultScanner vanillaResultScanner = vanillaTable.getScanner(scan);
             ResultScanner protectedResultScanner = protectedTable.getScanner(scan);
             Result vanillaResult = vanillaResultScanner.next();
             Result protectedResult = protectedResultScanner.next();
-            while(vanillaResult != null  && protectedResult != null ){
+            while (vanillaResult != null && protectedResult != null) {
                 compareResult(vanillaResult, protectedResult);
                 vanillaResult = vanillaResultScanner.next();
                 protectedResult = protectedResultScanner.next();
 
             }
-        }catch(Exception ex){
-            if(expectException()){
+        } catch (Exception ex) {
+            if (expectException()) {
                 LOG.debug("Expected exception");
                 assertEquals(true, getExpectedExceptionNames().contains(ex.getClass().getName()));
-            }else{
+            } else {
                 LOG.debug(ex);
                 throw new IllegalStateException(ex);
             }
@@ -217,7 +214,7 @@ public abstract class AbstractTableGenerator {
         LOG.info("Get HTable interface to tables");
 
         // Get HTable client interface for requests
-        ExtendedHTable protectedTable = protectedAdmin.createTableInterface(tableDesc.getNameAsString(),  schema);
+        ExtendedHTable protectedTable = protectedAdmin.createTableInterface(tableDesc.getNameAsString(), schema);
         ExtendedHTable vanillaTable = vanillaAdmin.createTableInterface(vanillaTableDesc.getNameAsString(), schema);
 
         // Insert records on tables
@@ -269,6 +266,7 @@ public abstract class AbstractTableGenerator {
     protected abstract boolean expectException();
 
     protected abstract Set<String> getExpectedExceptionNames();
+
     public enum ColType {
         STRING, INT, INTEGER, LONG
     }
