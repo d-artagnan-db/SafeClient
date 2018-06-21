@@ -45,10 +45,10 @@ All projects are built with maven. Therefore, to install each module, go to the 
 
     mvn install
 
-For the CryptoBox projects (std-enc, det-enc and ope-enc), since there core is built in C, first run the install.sh script 
-and then run it as a regular maven project.
+For the CryptoBox projects (```std-enc```, ```det-enc``` and ```ope-enc```), since there core is built in C, first run 
+the install.sh script and then run it as a regular maven project.
 
-Use -DskipTests if you want to skip the Unit Tests verification.
+Use ```-DskipTests``` if you want to skip the Unit Tests verification.
 
 # Configuration file
 Similarly to a vanilla database client, SafeNoSQL requires a simple configuration file (.xml) that comprises the essential 
@@ -102,12 +102,12 @@ used in the default configurations for both ```<key>``` and ```<column>``` prope
 overwrite such properties for specific *families* or *qualifiers* by using ```<cryptotechnique>```.
 
 - **Padding**: the padding property allow users to maintain a common format size for all keys and columns. Currently, 
-padding can be used by ```<keypadding>``` and ```<colpadding>```, using either **true** or **false**. (*Note 1*: In order 
-to use this property correctly, you must also specify the format size for each property. *Note 2*: When using OPE (Boldyreva 
-scheme), all values must be equal sized).
+padding can be used by ```<keypadding>``` and ```<colpadding>```, using either **true** or **false**. 
+    - *Note 1*: In order to use this property correctly, you must also specify the format size for each property. 
+    - *Note 2*: When using OPE (Boldyreva scheme), all values must be equally sized.
 
 - **Format Size**: the format size enables users to specify a common size (or what size to expect) for each type of values.
-(*Note 3*: when using the YCSB benchmark, the format size is used by the *value generators*.)
+    - *Note 3*: when using the YCSB benchmark, the format size is used by the *value generators*.
 
 - **Encryption Mode**: the encryption mode option (**enable** or **disable**) allow users to specify which table must 
 follow a secure scheme. 
@@ -116,7 +116,7 @@ follow a secure scheme.
 The default configurations are __**mandatory**__ in all schema files. These properties define the default behavior of the 
 database schema. For instance, if no table property is presented, all database tables will follow these scheme. If you 
 want to override and fine-tune each configuration, you must specify on the respective property (e.g., ```<table>```, 
-```key```,```family```).
+```<key>```,```<family>```).
 
 ```xml
 <schema>
@@ -143,13 +143,13 @@ provide a finer grain of secure configurations.
 - **columns**: Properties of the *Columns* (Values) to be stored in the database.
 
 #### Example of Key Properties
+
 ```xml
 <key>
     <cryptotechnique>OPE</cryptotechnique>
     <formatsize>16</formatsize>
     <keypadding>true</keypadding>
 </key>
-        
 ```
 
 #### Example of Columns Properties
