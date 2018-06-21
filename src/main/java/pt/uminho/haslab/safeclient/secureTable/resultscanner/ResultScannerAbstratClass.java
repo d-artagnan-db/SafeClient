@@ -130,8 +130,9 @@ public abstract class ResultScannerAbstratClass implements ResultScanner {
     }
 
     @Override
-    public Result[] next(int i) throws IOException {
-        return this.scanner.next(i);
+    public Result[] next(int i){
+        LOG.error("UnsupportedOperationException: Next(i) not supported for the current ResultScanner.");
+        throw new UnsupportedOperationException("Next(i) not supported for the current ResultScanner.");
     }
 
     @Override

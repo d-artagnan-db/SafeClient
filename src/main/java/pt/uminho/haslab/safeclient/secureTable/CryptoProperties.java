@@ -197,6 +197,7 @@ public class CryptoProperties {
      * @param cType CryptoBox type
      * @param key   Cryptographic key in byte[] format
      */
+    // TODO: change Exception
     public void setKey(DatabaseSchema.CryptoType cType, byte[] key) throws UnsupportedEncodingException {
         switch (cType) {
             case STD:

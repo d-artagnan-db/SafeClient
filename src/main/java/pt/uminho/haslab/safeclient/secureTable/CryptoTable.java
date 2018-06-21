@@ -79,7 +79,7 @@ public class CryptoTable implements ExtendedHTable {
             this.cryptoProperties = new CryptoProperties(this.tableSchema);
 
         } else {
-            this.setSchema(conf, schemaProperty, tableName);
+            this.setSchema(schemaProperty, tableName);
         }
 
         if (tableType.equals("HTable")) {
@@ -105,14 +105,13 @@ public class CryptoTable implements ExtendedHTable {
         this.htableUtils = new HTableFeaturesUtils(this.cryptoProperties, this.secureFilterConverter);
     }
 
-    private void setSchema(Configuration conf, String schemaProperty, String tableName) throws FileNotFoundException, UnsupportedEncodingException {
+    private void setSchema(String schemaProperty, String tableName) throws FileNotFoundException, UnsupportedEncodingException {
         if (schemaProperty != null && !schemaProperty.isEmpty()) {
             while (!parsingComplete) {
                 try {
                     lock.lock();
                     if (!parsingComplete) {
                         File file = new File(schemaProperty);
-                        // TODO: jtpaulo - Qual era o problema c/ a leitura da chave e do configuration file.
                         databaseSchema = new DatabaseSchema(file.getPath());
                         databaseDefaultProperties = new HashMap<>();
                         databaseDefaultProperties = databaseSchema.getDatabaseDefaultProperties();
@@ -148,13 +147,11 @@ public class CryptoTable implements ExtendedHTable {
                 try {
                     lock.lock();
                     if (!keyAcknowledgement) {
-                        String keyPath = ClassLoader.getSystemResource(cryptographicKeyProperty).getPath();
-                        LOG.debug("Load key in path " + keyPath);
-                        File keyFile = new File(keyPath);
-
+                        File keyFile = new File(cryptographicKeyProperty);
+                        LOG.debug("Loading file for path " + cryptographicKeyProperty);
                         if (keyFile.isFile() && keyFile.getName().equals("key.txt")) {
                             LOG.debug("File key.");
-                            cryptographicKey = Utils.readKeyFromFile(keyPath);
+                            cryptographicKey = Utils.readKeyFromFile(cryptographicKeyProperty);
                         } else {
                             throw new FileNotFoundException("The file " + cryptographicKeyProperty + " does not match with the requirements.");
                         }
@@ -931,6 +928,10 @@ public class CryptoTable implements ExtendedHTable {
             LOG.debug("Encrypted delete: " + encryptedObject);
         }
         return encryptedObject;
+    }
+
+    public void setCryptographicKey(DatabaseSchema.CryptoType cryptoType, byte[] key) throws UnsupportedEncodingException {
+        this.cryptoProperties.setKey(cryptoType, key);
     }
 
 
