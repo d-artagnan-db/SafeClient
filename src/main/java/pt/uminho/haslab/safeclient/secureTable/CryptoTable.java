@@ -26,7 +26,6 @@ import pt.uminho.haslab.safemapper.DatabaseSchema;
 import pt.uminho.haslab.safemapper.DatabaseSchema.CryptoType;
 import pt.uminho.haslab.safemapper.Key;
 import pt.uminho.haslab.safemapper.TableSchema;
-import pt.uminho.haslab.smpc.exceptions.InvalidNumberOfBits;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -57,15 +56,16 @@ public class CryptoTable implements ExtendedHTable {
     private ExtendedHTable htable;
 
 
-    public CryptoTable(Configuration conf, String tableName) throws IOException, InvalidNumberOfBits {
+
+    public CryptoTable(Configuration conf, String tableName) throws IOException {
         initializeResources(conf, tableName, null);
     }
 
-    public CryptoTable(Configuration conf, String tableName, TableSchema schema) throws IOException, InvalidNumberOfBits {
+    public CryptoTable(Configuration conf, String tableName, TableSchema schema) throws IOException {
         initializeResources(conf, tableName, schema);
     }
 
-    public void initializeResources(Configuration conf, String tableName, TableSchema schema) throws IOException, InvalidNumberOfBits {
+    public void initializeResources(Configuration conf, String tableName, TableSchema schema) throws IOException{
         String tableType = conf.get("baseTable");
         String schemaProperty = conf.get("schema");
 
@@ -79,7 +79,7 @@ public class CryptoTable implements ExtendedHTable {
             this.cryptoProperties = new CryptoProperties(this.tableSchema);
 
         } else {
-            this.setSchema(schemaProperty, tableName);
+            this.setSchema(conf, schemaProperty, tableName, tableType);
         }
 
         if (tableType.equals("HTable")) {
@@ -105,7 +105,7 @@ public class CryptoTable implements ExtendedHTable {
         this.htableUtils = new HTableFeaturesUtils(this.cryptoProperties, this.secureFilterConverter);
     }
 
-    private void setSchema(String schemaProperty, String tableName) throws FileNotFoundException, UnsupportedEncodingException {
+    private void setSchema(Configuration conf, String schemaProperty, String tableName, String tableType) throws FileNotFoundException, UnsupportedEncodingException {
         if (schemaProperty != null && !schemaProperty.isEmpty()) {
             while (!parsingComplete) {
                 try {
@@ -116,6 +116,9 @@ public class CryptoTable implements ExtendedHTable {
                         databaseDefaultProperties = new HashMap<>();
                         databaseDefaultProperties = databaseSchema.getDatabaseDefaultProperties();
                         parsingComplete = true;
+                        if (tableType.equals("SharedTable")) {
+                            SharedTable.initializeThreadPool(conf.getInt("sharedClient.ThreadPool.size", 50));
+                        }
                     }
 
                 } finally {
@@ -147,10 +150,9 @@ public class CryptoTable implements ExtendedHTable {
                 try {
                     lock.lock();
                     if (!keyAcknowledgement) {
-                        File keyFile = new File(cryptographicKeyProperty);
-                        LOG.debug("Loading file for path " + cryptographicKeyProperty);
-                        if (keyFile.isFile() && keyFile.getName().equals("key.txt")) {
-                            LOG.debug("File key.");
+                        File fileKey = new File(cryptographicKeyProperty);
+                        if (fileKey.isFile()) {
+                            LOG.debug("Loading key file " + cryptographicKeyProperty);
                             cryptographicKey = Utils.readKeyFromFile(cryptographicKeyProperty);
                         } else {
                             throw new FileNotFoundException("The file " + cryptographicKeyProperty + " does not match with the requirements.");
@@ -432,7 +434,6 @@ public class CryptoTable implements ExtendedHTable {
             LOG.error(e.getMessage());
             throw new IllegalStateException(e);
         }
-
     }
 
     @Override
@@ -476,7 +477,6 @@ public class CryptoTable implements ExtendedHTable {
             LOG.error(e.getMessage());
             throw new IllegalStateException(e);
         }
-
     }
 
     /**

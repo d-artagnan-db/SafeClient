@@ -15,6 +15,8 @@ import pt.uminho.haslab.smpc.exceptions.InvalidSecretValue;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 public class MultiCheckAndPut extends MultiOP {
 
@@ -34,9 +36,9 @@ public class MultiCheckAndPut extends MultiOP {
 
     public MultiCheckAndPut(SharedClientConfiguration config, List<HTable> connections, TableSchema schema,
                             byte[] row, byte[] family, byte[] qualifier, byte[] value, long requestID, int targetPlayer,
-                            Put put) throws InvalidNumberOfBits, IOException, InvalidSecretValue {
+                            Put put, ExecutorService threadPool) throws InvalidNumberOfBits, IOException, InvalidSecretValue {
 
-        super(config, connections, schema);
+        super(config, connections, schema, threadPool);
         this.row = row;
         this.family = family;
         this.qualifier = qualifier;
@@ -59,7 +61,7 @@ public class MultiCheckAndPut extends MultiOP {
             SingleColumnValueFilter scvf = new SingleColumnValueFilter(family, qualifier, CompareFilter.CompareOp.EQUAL, value);
             Scan s = new Scan();
             s.setFilter(scvf);
-            MultiScan ms = new MultiScan(config, connections, schema, requestID, targetPlayer, s);
+            MultiScan ms = new MultiScan(config, connections, schema, requestID, targetPlayer, s, threadPool);
             try {
                 ms.startScan();
                 Result r = ms.next();
@@ -76,12 +78,17 @@ public class MultiCheckAndPut extends MultiOP {
     }
 
     @Override
-    protected Thread queryThread(SharedClientConfiguration config, HTable table, int index) throws IOException {
+    protected Runnable queryThread(SharedClientConfiguration config, HTable table, int index) throws IOException {
         return new CheckAndPutThread(config, table, protectedPut.get(index), row, family, qualifier, value, isProtectedCheck, protectedCheckResult);
     }
 
+
     @Override
-    protected void threadsJoined(List<Thread> threads) throws IOException {
+    protected void joinThreads(List<Future> threads) throws IOException {
+    }
+
+    @Override
+    protected void threadsJoined(List<Runnable> threads) throws IOException {
 
         if (!isProtectedCheck) {
             boolean resOne = ((CheckAndPutThread) threads.get(0)).getResultCheckAndPut();

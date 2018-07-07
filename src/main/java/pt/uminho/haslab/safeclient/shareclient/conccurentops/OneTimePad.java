@@ -1,38 +1,37 @@
 package pt.uminho.haslab.safeclient.shareclient.conccurentops;
 
-import java.math.BigInteger;
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.List;
 
-public class OneTimePad {
-    public static List<byte[]> oneTimePadEncode(byte[] value) {
-        List<byte[]> encValues = new ArrayList<byte[]>();
+
+class OneTimePad {
+    static byte[][] oneTimePadEncode(byte[] value) {
+
+        byte[][] encValues = new byte[3][];
 
         SecureRandom random = new SecureRandom();
-        byte firstRandom[] = new byte[value.length];
-        byte secondRandom[] = new byte[value.length];
+        byte[] firstRandom = new byte[value.length];
+        byte[] secondRandom = new byte[value.length];
+        byte[] encValue = new byte[value.length];
 
         random.nextBytes(firstRandom);
         random.nextBytes(secondRandom);
-        encValues.add(firstRandom);
-        encValues.add(secondRandom);
 
-        BigInteger bfRandom = new BigInteger(firstRandom);
-        BigInteger bsRandom = new BigInteger(secondRandom);
-        BigInteger bvRandom = new BigInteger(value);
 
-        byte encValue[] = bfRandom.xor(bsRandom).xor(bvRandom).toByteArray();
-
-        encValues.add(encValue);
+        for (int i = 0; i < value.length; i++) {
+            encValue[i] = (byte) (firstRandom[i] ^ secondRandom[i] ^ value[i]);
+        }
+        encValues[0] = firstRandom;
+        encValues[1] = secondRandom;
+        encValues[2] = encValue;
         return encValues;
     }
 
-    public static byte[] oneTimeDecode(List<byte[]> values) {
-        BigInteger firstSecret = new BigInteger(values.get(0));
-        BigInteger secondSecret = new BigInteger(values.get(1));
-        BigInteger thirdSecret = new BigInteger(values.get(2));
-        return firstSecret.xor(secondSecret).xor(thirdSecret).toByteArray();
+    static byte[] oneTimeDecode(byte[][] values) {
+        byte[] value = new byte[values[0].length];
+        for (int i = 0; i < value.length; i++) {
+            value[i] = (byte) (values[0][i] ^ values[1][i] ^ values[2][i]);
+        }
+        return value;
     }
 
 }

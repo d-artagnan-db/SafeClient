@@ -1,6 +1,8 @@
 package pt.uminho.haslab.safeclient.shareclient.conccurentops;
 
 import com.google.protobuf.ByteString;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.HTable;
@@ -11,6 +13,7 @@ import org.apache.hadoop.hbase.client.coprocessor.Batch;
 import org.apache.hadoop.hbase.ipc.BlockingRpcCallback;
 import org.apache.hadoop.hbase.ipc.ServerRpcController;
 import pt.uminho.haslab.protocommunication.Smpc;
+import pt.uminho.haslab.safeclient.secureTable.CryptoTable;
 import pt.uminho.haslab.safeclient.shareclient.SharedClientConfiguration;
 import pt.uminho.haslab.saferegions.OperationAttributesIdentifiers;
 
@@ -19,31 +22,40 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 public class ResultScannerThread extends QueryThread implements ResultScanner {
 
-    private final LinkedBlockingDeque<Result> results;
+    private final BlockingQueue<Result> results;
     private ResultScanner resultScanner;
     private Scan scan;
 
     private boolean hasProtectedScan;
+    private boolean isRunning;
 
     public ResultScannerThread(SharedClientConfiguration config, HTable table, Scan scan, boolean hasProtectedScan)
             throws IOException {
         super(config, table);
-        results = new LinkedBlockingDeque<Result>();
+
+        int queueSize = config.getScanQueueSize();
+        results = new ArrayBlockingQueue<Result>(conf.getScanQueueSize());
         this.hasProtectedScan = hasProtectedScan;
 
         if (!hasProtectedScan || !conf.hasConcurrentScanEndpoint()) {
+            if(LOG.isDebugEnabled()){
+                LOG.debug("Queue size is " + queueSize);
+                LOG.debug("Starting ResultScanner for scan " + scan);
+            }
             resultScanner = table.getScanner(scan);
         } else if (conf.hasConcurrentScanEndpoint()) {
             this.scan = scan;
         }
+        isRunning = true;
 
     }
 
-    public Result next() throws IOException {
+    public Result next(){
         try {
             return results.take();
         } catch (InterruptedException ex) {
@@ -57,9 +69,13 @@ public class ResultScannerThread extends QueryThread implements ResultScanner {
     }
 
     public void close() {
-        if (!conf.hasConcurrentScanEndpoint()) {
-            resultScanner.close();
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Going to close ResultScannerThread " + (!hasProtectedScan || !conf.hasConcurrentScanEndpoint()));
         }
+
+        isRunning = false;
+        results.clear();
     }
 
     public Iterator<Result> iterator() {
@@ -67,7 +83,7 @@ public class ResultScannerThread extends QueryThread implements ResultScanner {
     }
 
 
-    private void handleCoprocessorService(Map<byte[], Smpc.Results> coprocessorResults) {
+    private void handleCoprocessorService(Map<byte[], Smpc.Results> coprocessorResults) throws InterruptedException {
         for (Smpc.Results res : coprocessorResults.values()) {
             List<Smpc.Row> rows = res.getRowsList();
             for (Smpc.Row r : rows) {
@@ -83,7 +99,8 @@ public class ResultScannerThread extends QueryThread implements ResultScanner {
                     Cell resCell = CellUtil.createCell(row, family, qualifier, timestamp, type[0], value);
                     resCells.add(resCell);
                 }
-                results.add(Result.create(resCells));
+                Result rnew = Result.create(resCells);
+                results.put(rnew);
             }
         }
     }
@@ -98,9 +115,26 @@ public class ResultScannerThread extends QueryThread implements ResultScanner {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Scan to SmpcCoprocessor");
             }
-            for (Result result = resultScanner.next(); result != null; result = resultScanner
+            int count = 0;
+            Result result;
+            for ( result = resultScanner.next(); result != null && isRunning; result = resultScanner
                     .next()) {
-                results.add(result);
+                count++;
+                try {
+                    results.put(result);
+                } catch (InterruptedException e) {
+                    LOG.error(e);
+                    throw new IllegalStateException(e);
+
+                }
+            }
+
+            if(!isRunning){
+                resultScanner.close();
+                results.clear();
+            }
+            if(LOG.isDebugEnabled()) {
+                LOG.debug("Going to exit ResultScannerThread smpcoprocessor branch " + count);
             }
         } else if (conf.hasConcurrentScanEndpoint()) {
             try {
@@ -110,16 +144,24 @@ public class ResultScannerThread extends QueryThread implements ResultScanner {
                 byte[] requestID = scan.getAttribute(OperationAttributesIdentifiers.RequestIdentifier);
                 int targetPlayer = Integer.parseInt(new String(scan.getAttribute(OperationAttributesIdentifiers.TargetPlayer)));
                 EndpointCallback callback = new EndpointCallback(scan, requestID, targetPlayer);
-                Map<byte[], Smpc.Results> coprocessorResults = table.coprocessorService(Smpc.ConcurrentScanService.class, null, null, callback);
+                Map<byte[], Smpc.Results> coprocessorResults = table.coprocessorService(Smpc.ConcurrentScanService.class, scan.getStartRow(), scan.getStopRow(), callback);
                 handleCoprocessorService(coprocessorResults);
             } catch (Throwable throwable) {
                 LOG.error(throwable);
                 throw new IllegalStateException(throwable);
             }
+
         } else {
             throw new IllegalStateException("Scan case not handled");
         }
-        results.add(Result.EMPTY_RESULT);
+
+        try {
+            results.put(Result.EMPTY_RESULT);
+        } catch (InterruptedException e) {
+            LOG.error(e);
+            throw new IllegalStateException(e);
+        }
+
     }
 
     public class EndpointCallback implements Batch.Call<Smpc.ConcurrentScanService, Smpc.Results> {

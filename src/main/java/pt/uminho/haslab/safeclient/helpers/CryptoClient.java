@@ -11,7 +11,7 @@ import java.io.IOException;
 public class CryptoClient extends DefaultHBaseClient {
 
 
-    public CryptoClient(String configuration) throws IOException {
+    public CryptoClient(String configuration){
         super(configuration);
     }
 

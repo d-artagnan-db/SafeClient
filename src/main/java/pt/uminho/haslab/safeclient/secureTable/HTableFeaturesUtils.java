@@ -58,8 +58,6 @@ public class HTableFeaturesUtils {
                                     value)
                     );
                 }
-
-
             }
         } catch (Exception e) {
             LOG.error("Exception in cell scanner. " + e.getMessage());

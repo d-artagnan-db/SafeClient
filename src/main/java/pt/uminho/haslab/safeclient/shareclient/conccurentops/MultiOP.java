@@ -1,12 +1,17 @@
 package pt.uminho.haslab.safeclient.shareclient.conccurentops;
 
 import org.apache.commons.logging.LogFactory;
+import org.apache.derby.iapi.error.StandardException;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellScanner;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.util.Bytes;
+import pt.uminho.haslab.safeclient.decoders.Decoder;
+import pt.uminho.haslab.safeclient.decoders.DecodingFactory;
+import pt.uminho.haslab.safeclient.decoders.Encoder;
 import pt.uminho.haslab.safeclient.shareclient.SharedClientConfiguration;
 import pt.uminho.haslab.safemapper.DatabaseSchema;
 import pt.uminho.haslab.safemapper.TableSchema;
@@ -23,40 +28,51 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class MultiOP {
 
     static final org.apache.commons.logging.Log LOG = LogFactory
             .getLog(MultiOP.class.getName());
 
-    private static final LongSharemindDealer lDealer = new LongSharemindDealer();
-    private static final IntSharemindDealer iDealer = new IntSharemindDealer();
+
+    private static final AtomicLong cellVersions = new AtomicLong(0);
+
+    public static IntSharemindDealer iDealer = new IntSharemindDealer();
+    public static LongSharemindDealer lDealer = new LongSharemindDealer();
+
 
     protected final List<HTable> connections;
     protected final SharedClientConfiguration config;
     protected final TableSchema schema;
+
+    protected final ExecutorService threadPool;
     protected byte[] uniqueRowId;
 
 
-    public MultiOP(SharedClientConfiguration config, List<HTable> connections, TableSchema schema) {
+    public MultiOP(SharedClientConfiguration config, List<HTable> connections, TableSchema schema, ExecutorService threadPool) {
         this.connections = connections;
         this.config = config;
         this.schema = schema;
+        this.threadPool = threadPool;
     }
 
-    protected abstract Thread queryThread(SharedClientConfiguration config,
-                                          HTable table, int index) throws IOException;
+    protected abstract Runnable queryThread(SharedClientConfiguration config,
+                                            HTable table, int index) throws IOException;
 
-    protected abstract void threadsJoined(List<Thread> threads)
-            throws IOException;
+    protected abstract void threadsJoined(List<Runnable> threads) throws IOException;
 
 
-    protected List<Put> generateMPCPut(Put originalPut) throws InvalidNumberOfBits, InvalidSecretValue, IOException, InvalidNumberOfBits, InvalidSecretValue {
+    protected List<Put> generateMPCPut(Put originalPut) throws IOException, InvalidNumberOfBits, InvalidSecretValue {
 
         byte[] row = originalPut.getRow();
         List<Put> putResults = new ArrayList<Put>();
-
+        long putVersion = cellVersions.addAndGet(1);
         for (int i = 0; i < 3; i++) {
             putResults.add(new Put(row));
         }
@@ -70,17 +86,20 @@ public abstract class MultiOP {
             String family = new String(bCF, Charset.forName("UTF-8"));
             String qualifier = new String(bCQ, Charset.forName("UTF-8"));
             List<byte[]> values = new ArrayList<byte[]>();
+
             DatabaseSchema.CryptoType type = schema.getCryptoTypeFromQualifier(family, qualifier);
 
             switch (type) {
                 case SMPC:
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Sharing SMPC");
-                    }
+                    Decoder smpcDcoder = DecodingFactory.decoder(schema, family, qualifier);
+
                     int formatSize = schema.getFormatSizeFromQualifier(family, qualifier);
                     Dealer dealer = new SharemindDealer(formatSize);
 
-                    BigInteger bigVal = new BigInteger(value);
+                    BigInteger bigVal = new BigInteger(smpcDcoder.getStringArray(value));
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Sharing SMPC value " + bigVal + " with formatsize " + formatSize + " for column " + family + ":" + qualifier);
+                    }
                     SharemindSharedSecret secret = (SharemindSharedSecret) dealer.share(bigVal);
 
                     values.add(secret.getU1().toByteArray());
@@ -88,41 +107,47 @@ public abstract class MultiOP {
                     values.add(secret.getU3().toByteArray());
                     break;
                 case ISMPC:
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Sharing ISMPC");
+                    Decoder intDecoder = DecodingFactory.decoder(schema, family, qualifier);
+
+                    int ptxValue = 0;
+                    try {
+                        assert intDecoder != null;
+                        ptxValue = intDecoder.getInt(value);
+                    } catch (StandardException e) {
+                        LOG.error(e);
+                        throw new IllegalStateException(e);
                     }
-                    int ptxValue = ByteBuffer.wrap(value).getInt();
+
                     int[] shares = iDealer.share(ptxValue);
 
                     for (int share : shares) {
-                        ByteBuffer buffer = ByteBuffer.allocate(4);
-                        buffer.putInt(share);
-                        buffer.flip();
-                        values.add(buffer.array());
-                        buffer.clear();
+                        values.add(Bytes.toBytes(share));
                     }
                     break;
                 case LSMPC:
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Sharing LSMPC");
+                    Decoder decoder = DecodingFactory.decoder(schema, family, qualifier);
+                    long lValue = 0;
+                    try {
+                        assert decoder != null;
+                        lValue = decoder.getLong(value);
+                    } catch (StandardException e) {
+                        LOG.error(e);
+                        throw new IllegalStateException(e);
                     }
-                    long lValue = ByteBuffer.wrap(value).getLong();
-                    long[] lshares = lDealer.share(lValue);
 
+                    long[] lshares = lDealer.share(lValue);
+                    LOG.debug(" insert long value " + lValue + " shared into " + Arrays.toString(lshares));
                     for (long lshare : lshares) {
-                        ByteBuffer buffer = ByteBuffer.allocate(8);
-                        buffer.putLong(lshare);
-                        buffer.flip();
-                        values.add(buffer.array());
-                        buffer.clear();
+                        values.add(Bytes.toBytes(lshare));
                     }
                     break;
                 case XOR:
                     if (LOG.isDebugEnabled()) {
-                        LOG.debug("Encoding with XOR");
+
+                        LOG.debug("Decoder with XOR");
                     }
-                    List<byte[]> xvalues = OneTimePad.oneTimePadEncode(value);
-                    values.addAll(xvalues);
+                    byte[][] xvalues = OneTimePad.oneTimePadEncode(value);
+                    values.addAll(Arrays.asList(xvalues));
                     break;
                 default:
                     values.add(value);
@@ -132,7 +157,7 @@ public abstract class MultiOP {
             }
 
             for (int i = 0; i < putResults.size(); i++) {
-                putResults.get(i).add(bCF, bCQ, values.get(i));
+                putResults.get(i).add(bCF, bCQ, putVersion, values.get(i));
             }
 
         }
@@ -176,6 +201,8 @@ public abstract class MultiOP {
                     if (LOG.isDebugEnabled()) {
                         LOG.debug("Decode SMPC");
                     }
+                    Encoder smpcDcoder = DecodingFactory.encoder(schema, family, qualifier);
+
                     int formatSize = schema.getFormatSizeFromQualifier(family, qualifier);
                     byte[] fSecret = CellUtil.cloneValue(firstCell);
                     byte[] sSecret = CellUtil.cloneValue(secondCell);
@@ -186,87 +213,80 @@ public abstract class MultiOP {
                     BigInteger thirdSecret = new BigInteger(tSecret);
 
                     SharemindSharedSecret secret = new SharemindSharedSecret(formatSize, firstSecret, secondSecret, thirdSecret);
-                    decValue = secret.unshare().toByteArray();
+                    decValue = smpcDcoder.encodeString(secret.unshare().toByteArray());
                     break;
                 case ISMPC:
-
                     if (LOG.isDebugEnabled()) {
-                        LOG.debug("Decode LSMPC");
+                        LOG.debug("Decode ISMPC");
                     }
+                    Encoder iencoder = DecodingFactory.encoder(schema, family, qualifier);
                     int[] shares = new int[3];
                     shares[0] = ByteBuffer.wrap(CellUtil.cloneValue(firstCell)).getInt();
                     shares[1] = ByteBuffer.wrap(CellUtil.cloneValue(secondCell)).getInt();
                     shares[2] = ByteBuffer.wrap(CellUtil.cloneValue(thirdCell)).getInt();
 
                     int plxValue = iDealer.unshare(shares);
-
-                    ByteBuffer buffer = ByteBuffer.allocate(4);
-                    buffer.putInt(plxValue);
-                    buffer.flip();
-                    decValue = buffer.array();
-                    buffer.clear();
+                    decValue = iencoder.encodeInt(plxValue);
                     break;
                 case LSMPC:
                     if (LOG.isDebugEnabled()) {
                         LOG.debug("Decode LSMPC");
                     }
+                    Encoder encoder = DecodingFactory.encoder(schema, family, qualifier);
                     long[] lshares = new long[3];
                     lshares[0] = ByteBuffer.wrap(CellUtil.cloneValue(firstCell)).getLong();
                     lshares[1] = ByteBuffer.wrap(CellUtil.cloneValue(secondCell)).getLong();
                     lshares[2] = ByteBuffer.wrap(CellUtil.cloneValue(thirdCell)).getLong();
-
-
                     long lValue = lDealer.unshare(lshares);
+                    decValue = encoder.encodeLong(lValue);
 
-                    ByteBuffer lbuffer = ByteBuffer.allocate(8);
-                    lbuffer.putLong(lValue);
-                    lbuffer.flip();
-                    decValue = lbuffer.array();
-                    lbuffer.clear();
+
                     break;
                 case XOR:
-                    List<byte[]> xors = new ArrayList<byte[]>();
-                    byte[] fxSecret = CellUtil.cloneValue(firstCell);
-                    byte[] sxSecret = CellUtil.cloneValue(secondCell);
-                    byte[] txSecret = CellUtil.cloneValue(thirdCell);
-                    xors.add(fxSecret);
-                    xors.add(sxSecret);
-                    xors.add(txSecret);
+                    byte[][] xors = new byte[3][];
+                    xors[0] = CellUtil.cloneValue(firstCell);
+                    xors[1] = CellUtil.cloneValue(secondCell);
+                    xors[2] = CellUtil.cloneValue(thirdCell);
                     decValue = OneTimePad.oneTimeDecode(xors);
                     break;
-
-
             }
+
             Cell decCell = CellUtil.createCell(row, cf, cq, timestamp,
                     type, decValue);
             cells.add(decCell);
+
+
         }
 
-        return Result.create(cells);
+        Result res = Result.create(cells);
+        return res;
     }
 
 
-    public void doOperation() throws InterruptedException, IOException {
-        List<Thread> calls = new ArrayList<Thread>();
+    public void doOperation() throws InterruptedException, IOException, ExecutionException {
+        List<Runnable> calls = new ArrayList<Runnable>();
+        List<Future> futures = new ArrayList<Future>();
         int index = 0;
         for (HTable table : connections) {
             calls.add(queryThread(config, table, index));
             index += 1;
         }
 
-        for (Thread t : calls) {
-            t.start();
+        for (Runnable t : calls) {
+            futures.add(threadPool.submit(t));
         }
 
-        for (Thread t : calls) {
-            t.join();
+        for (Future t : futures) {
+            t.get();
         }
 
         threadsJoined(calls);
     }
 
     public void startScan() throws IOException {
-        List<Thread> calls = new ArrayList<Thread>();
+        List<Runnable> calls = new ArrayList<Runnable>();
+        List<Future> futures = new ArrayList<Future>();
+
         int index = 0;
         for (HTable table : connections) {
             calls.add(queryThread(config, table, index));
@@ -277,11 +297,17 @@ public abstract class MultiOP {
             LOG.debug("Going to start scan request");
         }
 
-        for (Thread t : calls) {
-            t.start();
+
+        for (Runnable t : calls) {
+            futures.add(threadPool.submit(t));
         }
 
+        joinThreads(futures);
+
     }
+
+    protected abstract void joinThreads(List<Future> threads)
+            throws IOException;
 
     public byte[] getUniqueRowId() {
         return this.uniqueRowId;
