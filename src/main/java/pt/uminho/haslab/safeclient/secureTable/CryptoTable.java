@@ -57,15 +57,15 @@ public class CryptoTable implements ExtendedHTable {
     private ExtendedHTable htable;
 
 
-    public CryptoTable(Configuration conf, String tableName) throws IOException, InvalidNumberOfBits {
+    public CryptoTable(Configuration conf, String tableName) throws IOException {
         initializeResources(conf, tableName, null);
     }
 
-    public CryptoTable(Configuration conf, String tableName, TableSchema schema) throws IOException, InvalidNumberOfBits {
+    public CryptoTable(Configuration conf, String tableName, TableSchema schema) throws IOException {
         initializeResources(conf, tableName, schema);
     }
 
-    public void initializeResources(Configuration conf, String tableName, TableSchema schema) throws IOException, InvalidNumberOfBits {
+    public void initializeResources(Configuration conf, String tableName, TableSchema schema) throws IOException{
         String tableType = conf.get("baseTable");
         String schemaProperty = conf.get("schema");
 

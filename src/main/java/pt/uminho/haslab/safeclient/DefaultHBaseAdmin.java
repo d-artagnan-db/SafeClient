@@ -2,11 +2,14 @@ package pt.uminho.haslab.safeclient;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ClusterStatus;
+import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import pt.uminho.haslab.hbaseInterfaces.CHBaseAdmin;
 
 import java.io.IOException;
+import java.util.List;
 
 public class DefaultHBaseAdmin implements CHBaseAdmin {
 
@@ -56,6 +59,16 @@ public class DefaultHBaseAdmin implements CHBaseAdmin {
     @Override
     public ClusterStatus getClusterStatus() throws IOException {
         return admin.getClusterStatus();
+    }
+
+    @Override
+    public TableName[] listTableNames() throws IOException {
+        return admin.listTableNames();
+    }
+
+    @Override
+    public List<HRegionInfo> getTableRegions(TableName tableName) throws IOException {
+        return admin.getTableRegions(tableName);
     }
 
     @Override

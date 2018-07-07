@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>pt.uminho.haslab</groupId>
     <artifactId>safeclient</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <name>safeclient</name>
     <packaging>jar</packaging>
     <properties>
@@ -12,11 +12,11 @@
         <hbase.version>0.98.21-hadoop2</hbase.version>
         <smpc.version>1.2.1</smpc.version>
         <saferegions.version>1.1.0</saferegions.version>
-        <safemapper.version>1.0.0</safemapper.version>
+        <safemapper.version>1.0.1</safemapper.version>
         <cryptoEnv.version>1.0.0</cryptoEnv.version>
         <redis.version>2.9.0</redis.version>
         <testingutilities.version>1.1.1</testingutilities.version>
-        <hbaseinterfaces.version>1.0.0</hbaseinterfaces.version>
+        <hbaseinterfaces.version>1.0.1</hbaseinterfaces.version>
         <relativePath>..</relativePath>
     </properties>
     <dependencies>
@@ -55,6 +55,11 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>HBaseInterfaces</artifactId>
             <version>${hbaseinterfaces.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>pt.haslab.derby</groupId>
+            <artifactId>derbynet</artifactId>
+            <version>0.1-SNAPSHOT</version>
         </dependency>
     </dependencies>
     <build>

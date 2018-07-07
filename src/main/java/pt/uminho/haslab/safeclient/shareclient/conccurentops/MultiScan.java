@@ -2,11 +2,14 @@ package pt.uminho.haslab.safeclient.shareclient.conccurentops;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.derby.iapi.error.StandardException;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.*;
+import pt.uminho.haslab.safeclient.decoders.Decoder;
+import pt.uminho.haslab.safeclient.decoders.DecodingFactory;
 import pt.uminho.haslab.safeclient.shareclient.SharedClientConfiguration;
 import pt.uminho.haslab.safemapper.DatabaseSchema;
 import pt.uminho.haslab.safemapper.TableSchema;
@@ -181,6 +184,7 @@ public class MultiScan extends MultiOP implements ResultScanner {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Generate Protected Filter for column " + sFamily + ":" + sQualifier + " with type " + type + " value " + Arrays.toString(value));
                 }
+                Decoder smpcDcoder = DecodingFactory.decoder(schema, sFamily, sQualifier);
 
                 hasProtectedScan = true;
                 int formatSize = schema.getFormatSizeFromQualifier(sFamily, sQualifier);
@@ -188,7 +192,7 @@ public class MultiScan extends MultiOP implements ResultScanner {
                 try {
                     Dealer dealer = new SharemindDealer(formatSize);
                     byte[] sQualifierMod = sQualifier.getBytes();
-                    BigInteger bigVal = new BigInteger(value);
+                    BigInteger bigVal = new BigInteger(smpcDcoder.getStringArray(value));
                     SharemindSharedSecret secret = (SharemindSharedSecret) dealer.share(bigVal);
                     fList.add(new SingleColumnValueFilter(family, sQualifierMod, operator, secret.getU1().toByteArray()));
                     fList.add(new SingleColumnValueFilter(family, sQualifierMod, operator, secret.getU2().toByteArray()));
@@ -205,9 +209,12 @@ public class MultiScan extends MultiOP implements ResultScanner {
                 }
 
                 hasProtectedScan = true;
-                IntSharemindDealer dealer = new IntSharemindDealer();
+                IntSharemindDealer dealer = MultiOP.iDealer;
+                Decoder intDecoder = DecodingFactory.decoder(schema, sFamily, sQualifier);
+
                 try {
-                    int[] secrets = dealer.share(ByteBuffer.wrap(value).getInt());
+                    int ptxValue = intDecoder.getInt(value);
+                    int[] secrets = dealer.share(ptxValue);
                     if (LOG.isDebugEnabled()) {
                         LOG.debug("ISMPC single column value filter is " + ByteBuffer.wrap(value).getInt() + " with shares " + Arrays.toString(secrets));
                     }
@@ -218,12 +225,10 @@ public class MultiScan extends MultiOP implements ResultScanner {
                         buffer.putInt(secret);
                         buffer.flip();
                         byte[] res = buffer.array();
-                        //LOG.debug("Res is " + Arrays.toString(res));
                         fList.add(new SingleColumnValueFilter(family, sQualifierMod, operator, res));
-                        //buffer.clear();
 
                     }
-                } catch (InvalidSecretValue ex) {
+                } catch (InvalidSecretValue | StandardException | IOException ex) {
                     LOG.error(ex);
                     throw new IllegalStateException(ex);
                 }
@@ -234,9 +239,11 @@ public class MultiScan extends MultiOP implements ResultScanner {
                 }
 
                 hasProtectedScan = true;
-                LongSharemindDealer lDealer = new LongSharemindDealer();
+                LongSharemindDealer lDealer = MultiOP.lDealer;
+                Decoder longDecoder = DecodingFactory.decoder(schema, sFamily, sQualifier);
                 try {
-                    long[] secrets = lDealer.share(ByteBuffer.wrap(value).getLong());
+                    long lvalue = longDecoder.getLong(value);
+                    long[] secrets = lDealer.share(lvalue);
                     byte[] sQualifierMod = sQualifier.getBytes();
 
                     for (long secret : secrets) {
@@ -244,9 +251,9 @@ public class MultiScan extends MultiOP implements ResultScanner {
                         buffer.putLong(secret);
                         buffer.flip();
                         fList.add(new SingleColumnValueFilter(family, sQualifierMod, operator, buffer.array()));
-                        //buffer.clear();
                     }
-                } catch (InvalidSecretValue ex) {
+
+                } catch (InvalidSecretValue | IOException | StandardException ex) {
                     LOG.error(ex);
                     throw new IllegalStateException(ex);
                 }
@@ -350,30 +357,31 @@ public class MultiScan extends MultiOP implements ResultScanner {
             LOG.debug("Iterating over records");
         }
         List<Result> resultIterator = new ArrayList<Result>();
-        try {
 
-            for (Future t : futures) {
-                t.get();
-            }
-            boolean stop = false;
-            while (!stop) {
+        boolean stop = false;
 
-                List<Result> results = new ArrayList<Result>();
-                for (Runnable t : scans) {
-                    Result rst = ((ResultScannerThread) t).next();
-                    results.add(rst);
+        while(!stop){
+
+            List<Result> results = new ArrayList<Result>();
+            for (Runnable t : scans) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Getting next value");
                 }
-                if (!results.get(0).isEmpty()) {
+                Result rst = ((ResultScannerThread) t).next();
+                results.add(rst);
+            }
+
+            if (results.get(0).isEmpty()) {
+                stop=true;
+            } else{
+                try {
                     resultIterator.add(decodeResult(results));
-                } else {
-                    stop = true;
+                } catch (IOException e) {
+                    LOG.error(e);
+                    throw new IllegalStateException(e);
                 }
             }
-        } catch (InterruptedException | IOException | ExecutionException e) {
-            LOG.error(e);
-            throw new IllegalStateException(e);
         }
-
 
         return resultIterator.iterator();
     }

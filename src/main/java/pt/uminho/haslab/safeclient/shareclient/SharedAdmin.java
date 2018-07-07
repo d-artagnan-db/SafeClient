@@ -4,7 +4,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ClusterStatus;
+import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import pt.uminho.haslab.hbaseInterfaces.CHBaseAdmin;
 
@@ -41,7 +43,10 @@ public class SharedAdmin implements CHBaseAdmin {
     public void createTable(final HTableDescriptor descriptor)
             throws IOException, InterruptedException {
         LOG.debug("Create table " + descriptor.getNameAsString());
-        for (final HBaseAdmin admin : admins) {
+
+        if (this.tableSchema.getEncryptionMode()) {
+        }
+            for (final HBaseAdmin admin : admins) {
             admin.createTable(descriptor);
         }
     }
@@ -95,6 +100,16 @@ public class SharedAdmin implements CHBaseAdmin {
     public ClusterStatus getClusterStatus() throws IOException {
         LOG.debug("GetClusterStatus");
         return admins.get(0).getClusterStatus();
+    }
+
+    @Override
+    public TableName[] listTableNames() throws IOException {
+        return admins.get(0).listTableNames();
+    }
+
+    @Override
+    public List<HRegionInfo> getTableRegions(TableName tableName) throws IOException {
+        return admins.get(0).getTableRegions(tableName);
     }
 
     public void close() throws IOException {

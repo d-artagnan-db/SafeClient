@@ -158,9 +158,9 @@ public abstract class ResultScannerAbstratClass implements ResultScanner {
             return rs.iterator();
 
         } catch (Exception e) {
-            LOG.error("PlaintextResultScanner Iterator Exception: " + e.getMessage());
+            LOG.error(e);
+            throw new IllegalStateException(e);
         }
-        return null;
     }
 
 }

@@ -68,12 +68,7 @@ public class ResultScannerThread extends QueryThread implements ResultScanner {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Going to close ResultScannerThread " + (!hasProtectedScan || !conf.hasConcurrentScanEndpoint()));
         }
-       /* if (!hasProtectedScan || !conf.hasConcurrentScanEndpoint()) {
-            if(LOG.isDebugEnabled()){
-                LOG.debug("Closing resultScanner");
-            }
-            resultScanner.close();
-        }*/
+
         isRunning = false;
         results.clear();
     }
@@ -83,7 +78,7 @@ public class ResultScannerThread extends QueryThread implements ResultScanner {
     }
 
 
-    private void handleCoprocessorService(Map<byte[], Smpc.Results> coprocessorResults) {
+    private void handleCoprocessorService(Map<byte[], Smpc.Results> coprocessorResults) throws InterruptedException {
         for (Smpc.Results res : coprocessorResults.values()) {
             List<Smpc.Row> rows = res.getRowsList();
             for (Smpc.Row r : rows) {
@@ -99,7 +94,8 @@ public class ResultScannerThread extends QueryThread implements ResultScanner {
                     Cell resCell = CellUtil.createCell(row, family, qualifier, timestamp, type[0], value);
                     resCells.add(resCell);
                 }
-                results.add(Result.create(resCells));
+                Result rnew = Result.create(resCells);
+                results.put(rnew);
             }
         }
     }

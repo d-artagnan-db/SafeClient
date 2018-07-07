@@ -25,7 +25,7 @@ import java.util.*;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
-public abstract class AbstractTableGenerator {
+public abstract class  AbstractTableGenerator {
 
 
     protected static final Log LOG = LogFactory
@@ -53,7 +53,6 @@ public abstract class AbstractTableGenerator {
         for (int i = 0; i < getNumberOfRecords(); i++) {
             byte[] id = ("" + i).getBytes();
             Put put = new Put(id);
-
             List<Family> fams = this.schema.getColumnFamilies();
 
             for (Family fam : fams) {

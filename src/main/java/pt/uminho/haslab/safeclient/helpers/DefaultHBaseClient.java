@@ -22,14 +22,14 @@ public class DefaultHBaseClient implements AdminProxy {
     private ShareCluster clusters;
     private HBaseAdmin admin;
 
-    public DefaultHBaseClient(String configuration) throws IOException {
+    public DefaultHBaseClient(String configuration) {
         clusters = null;
         this.configuration = configuration;
 
     }
 
     @Override
-    public void createTable(HTableDescriptor tableDescriptor) throws IOException, InterruptedException {
+    public void createTable(HTableDescriptor tableDescriptor) throws IOException{
         admin.createTable(tableDescriptor);
     }
 

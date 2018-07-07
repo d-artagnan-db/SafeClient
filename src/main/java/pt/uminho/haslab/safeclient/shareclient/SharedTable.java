@@ -53,7 +53,7 @@ public class SharedTable implements ExtendedHTable {
     private TableSchema schema;
 
     public SharedTable(Configuration conf, String tableName, TableSchema schema)
-            throws IOException, InvalidNumberOfBits {
+            throws IOException {
 
         if (LB == null) {
             String error = "Player Load Balancer is not initialized";
@@ -212,8 +212,14 @@ public class SharedTable implements ExtendedHTable {
     }
 
     public Result[] get(List<Get> list) throws IOException {
-        throw new UnsupportedOperationException("Not supported yet.");
+        Result[] res = new Result[list.size()];
+        int offset = 0;
+        for(Get g: list){
+            res[offset] = this.get(g);
+            offset+=1;
+        }
 
+        return res;
     }
 
     public Result getRowOrBefore(byte[] bytes, byte[] bytes1)
@@ -386,10 +392,6 @@ public class SharedTable implements ExtendedHTable {
         }
     }
 
-    public CoprocessorRpcChannel coprocessorService(byte[] bytes) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
     public <T extends Service, R> Map<byte[], R> coprocessorService(
             Class<T> type, byte[] bytes, byte[] bytes1, Batch.Call<T, R> call)
             throws ServiceException, Throwable {
@@ -471,4 +473,19 @@ public class SharedTable implements ExtendedHTable {
     public NavigableMap getRegionLocations() throws IOException {
         return this.connections.get(0).getRegionLocations();
     }
+
+    @Override
+    public CoprocessorRpcChannel coprocessorService(byte[] bytes) {
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Issuing SharedTable coprocessor service");
+        }
+        List<CoprocessorRpcChannel> channels = new ArrayList<>();
+
+        for (HTable table : connections) {
+            channels.add(table.coprocessorService(bytes));
+        }
+        return new SharedCoprocessorRpcChannel(channels);
+    }
+
 }
+
