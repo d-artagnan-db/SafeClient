@@ -512,7 +512,7 @@ public class SharedTable implements ExtendedHTable {
     }
 
     @Override
-    public HRegionLocation getRegionLocation(byte[] row) throws IOException {
+    public HRegionLocation getRegionLocation(byte[] row){
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
@@ -538,26 +538,7 @@ public class SharedTable implements ExtendedHTable {
 
     @Override
     public CoprocessorRpcChannel coprocessorService(byte[] bytes) {
-        /*The coprocessors Service should only be issued to one cluster to simulate the appearance of a single
-           HBase cluster */
-      /*  if (schema.getEncryptionMode()) {
-
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("SharedTable protected coprocessor service");
-            }
-
-            List<CoprocessorRpcChannel> channels = new ArrayList<>();
-
-            for (HTable table : connections) {
-                channels.add(table.coprocessorService(bytes));
-            }
-            return new SharedCoprocessorRpcChannel(channels);
-        } else {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("SharedTable unprotected coprocessor service");
-            }*/
-            return this.connections.get(0).coprocessorService(bytes);
-        //}
+        return this.connections.get(0).coprocessorService(bytes);
     }
 
 }
