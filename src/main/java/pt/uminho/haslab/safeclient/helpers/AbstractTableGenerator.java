@@ -25,7 +25,7 @@ import java.util.*;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
-public abstract class  AbstractTableGenerator {
+public abstract class AbstractTableGenerator {
 
 
     protected static final Log LOG = LogFactory

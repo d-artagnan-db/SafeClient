@@ -1,8 +1,6 @@
 package pt.uminho.haslab.safeclient.shareclient.conccurentops;
 
 import com.google.protobuf.ByteString;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.HTable;
@@ -13,7 +11,6 @@ import org.apache.hadoop.hbase.client.coprocessor.Batch;
 import org.apache.hadoop.hbase.ipc.BlockingRpcCallback;
 import org.apache.hadoop.hbase.ipc.ServerRpcController;
 import pt.uminho.haslab.protocommunication.Smpc;
-import pt.uminho.haslab.safeclient.secureTable.CryptoTable;
 import pt.uminho.haslab.safeclient.shareclient.SharedClientConfiguration;
 import pt.uminho.haslab.saferegions.OperationAttributesIdentifiers;
 
@@ -43,7 +40,7 @@ public class ResultScannerThread extends QueryThread implements ResultScanner {
         this.hasProtectedScan = hasProtectedScan;
 
         if (!hasProtectedScan || !conf.hasConcurrentScanEndpoint()) {
-            if(LOG.isDebugEnabled()){
+            if (LOG.isDebugEnabled()) {
                 LOG.debug("Queue size is " + queueSize);
                 LOG.debug("Starting ResultScanner for scan " + scan);
             }
@@ -55,7 +52,7 @@ public class ResultScannerThread extends QueryThread implements ResultScanner {
 
     }
 
-    public Result next(){
+    public Result next() {
         try {
             return results.take();
         } catch (InterruptedException ex) {
@@ -117,7 +114,7 @@ public class ResultScannerThread extends QueryThread implements ResultScanner {
             }
             int count = 0;
             Result result;
-            for ( result = resultScanner.next(); result != null && isRunning; result = resultScanner
+            for (result = resultScanner.next(); result != null && isRunning; result = resultScanner
                     .next()) {
                 count++;
                 try {
@@ -129,11 +126,11 @@ public class ResultScannerThread extends QueryThread implements ResultScanner {
                 }
             }
 
-            if(!isRunning){
+            if (!isRunning) {
                 resultScanner.close();
                 results.clear();
             }
-            if(LOG.isDebugEnabled()) {
+            if (LOG.isDebugEnabled()) {
                 LOG.debug("Going to exit ResultScannerThread smpcoprocessor branch " + count);
             }
         } else if (conf.hasConcurrentScanEndpoint()) {

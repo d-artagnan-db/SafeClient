@@ -31,7 +31,7 @@ public class DefaultHBaseClient implements AdminProxy {
 
     @Override
 
-    public void createTable(HTableDescriptor tableDescriptor) throws IOException{
+    public void createTable(HTableDescriptor tableDescriptor) throws IOException {
         admin.createTable(tableDescriptor);
     }
 

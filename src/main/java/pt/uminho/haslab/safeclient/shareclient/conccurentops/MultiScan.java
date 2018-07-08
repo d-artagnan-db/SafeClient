@@ -339,8 +339,8 @@ public class MultiScan extends MultiOP implements ResultScanner {
         for (Future t : futures) {
             try {
                 t.get();
-                if(LOG.isDebugEnabled()){
-                    LOG.debug("Thread is done "+ t.isDone());
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Thread is done " + t.isDone());
                 }
 
             } catch (InterruptedException | ExecutionException e) {
@@ -360,7 +360,7 @@ public class MultiScan extends MultiOP implements ResultScanner {
 
         boolean stop = false;
 
-        while(!stop){
+        while (!stop) {
 
             List<Result> results = new ArrayList<Result>();
             for (Runnable t : scans) {
@@ -372,8 +372,8 @@ public class MultiScan extends MultiOP implements ResultScanner {
             }
 
             if (results.get(0).isEmpty()) {
-                stop=true;
-            } else{
+                stop = true;
+            } else {
                 try {
                     resultIterator.add(decodeResult(results));
                 } catch (IOException e) {

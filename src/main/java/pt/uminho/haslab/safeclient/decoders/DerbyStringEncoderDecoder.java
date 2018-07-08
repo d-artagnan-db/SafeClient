@@ -7,8 +7,8 @@ import java.io.IOException;
 public class DerbyStringEncoderDecoder implements Encoder, Decoder {
     private static DerbyStringEncoderDecoder encoder;
 
-    public synchronized static DerbyStringEncoderDecoder createDerbyStringDecoder(){
-        if(encoder == null){
+    public synchronized static DerbyStringEncoderDecoder createDerbyStringDecoder() {
+        if (encoder == null) {
             encoder = new DerbyStringEncoderDecoder();
         }
 

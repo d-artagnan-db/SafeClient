@@ -10,12 +10,11 @@ import java.util.List;
 
 public class SharedCoprocessorRpcChannel extends CoprocessorRpcChannel {
 
+    static final Log LOG = LogFactory.getLog(SharedCoprocessorRpcChannel.class.getName());
     private List<CoprocessorRpcChannel> channels;
     private RpcController controller;
-    static final Log LOG = LogFactory.getLog(SharedCoprocessorRpcChannel.class.getName());
 
-    public SharedCoprocessorRpcChannel(List<CoprocessorRpcChannel> channels){
-
+    public SharedCoprocessorRpcChannel(List<CoprocessorRpcChannel> channels) {
         this.channels = channels;
     }
 
@@ -32,14 +31,14 @@ public class SharedCoprocessorRpcChannel extends CoprocessorRpcChannel {
     @Override
     public Message callBlockingMethod(Descriptors.MethodDescriptor method, RpcController controller, Message request, Message responsePrototype) throws ServiceException {
         this.controller = controller;
-        return super.callBlockingMethod(method, controller,request, responsePrototype);
+        return super.callBlockingMethod(method, controller, request, responsePrototype);
     }
 
     @Override
     protected Message callExecService(Descriptors.MethodDescriptor methodDescriptor, Message message, Message message1) {
         Message msg = null;
 
-        for(CoprocessorRpcChannel channel: channels){
+        for (CoprocessorRpcChannel channel : channels) {
             try {
                 msg = channel.callBlockingMethod(methodDescriptor, controller, message, message1);
             } catch (ServiceException e) {

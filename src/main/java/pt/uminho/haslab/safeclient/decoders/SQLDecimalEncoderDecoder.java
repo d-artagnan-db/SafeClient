@@ -12,8 +12,8 @@ public class SQLDecimalEncoderDecoder extends DerbyEncoderDecoder {
 
     private static SQLDecimalEncoderDecoder encoder;
 
-    public synchronized static SQLDecimalEncoderDecoder createSQLDecimalEncoder(){
-        if(encoder == null){
+    public synchronized static SQLDecimalEncoderDecoder createSQLDecimalEncoder() {
+        if (encoder == null) {
             encoder = new SQLDecimalEncoderDecoder();
         }
         return encoder;
@@ -33,7 +33,7 @@ public class SQLDecimalEncoderDecoder extends DerbyEncoderDecoder {
 
     @Override
     public long getLong(byte[] val) throws StandardException, IOException {
-       return getDecodeDecimal(val).getLong();
+        return getDecodeDecimal(val).getLong();
     }
 
 

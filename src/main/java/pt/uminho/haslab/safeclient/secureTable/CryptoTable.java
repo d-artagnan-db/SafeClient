@@ -18,19 +18,17 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 import pt.uminho.haslab.cryptoenv.Utils;
 import pt.uminho.haslab.hbaseInterfaces.ExtendedHTable;
+import pt.uminho.haslab.safeclient.Database;
 import pt.uminho.haslab.safeclient.ExtendedHTableImpl;
 import pt.uminho.haslab.safeclient.secureTable.resultscanner.ResultScannerFactory;
 import pt.uminho.haslab.safeclient.secureTable.securefilterfactory.SecureFilterConverter;
 import pt.uminho.haslab.safeclient.shareclient.SharedTable;
-import pt.uminho.haslab.safemapper.DatabaseSchema;
 import pt.uminho.haslab.safemapper.DatabaseSchema.CryptoType;
-import pt.uminho.haslab.safemapper.Key;
 import pt.uminho.haslab.safemapper.TableSchema;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -43,18 +41,16 @@ public class CryptoTable implements ExtendedHTable {
 
     static final Log LOG = LogFactory.getLog(CryptoTable.class.getName());
     private static final Lock lock = new ReentrantLock();
-    private static Map<String, Object> databaseDefaultProperties;
-    private static DatabaseSchema databaseSchema;
-    private static boolean parsingComplete = false;
+
     private static boolean keyAcknowledgement = false;
     private static byte[] cryptographicKey;
+
     private CryptoProperties cryptoProperties;
     private ResultScannerFactory resultScannerFactory;
     private HTableFeaturesUtils htableUtils;
     private SecureFilterConverter secureFilterConverter;
     private TableSchema tableSchema;
     private ExtendedHTable htable;
-
 
 
     public CryptoTable(Configuration conf, String tableName) throws IOException {
@@ -65,12 +61,10 @@ public class CryptoTable implements ExtendedHTable {
         initializeResources(conf, tableName, schema);
     }
 
-    public void initializeResources(Configuration conf, String tableName, TableSchema schema) throws IOException{
+    public void initializeResources(Configuration conf, String tableName, TableSchema schema) throws IOException {
         String tableType = conf.get("baseTable");
-        String schemaProperty = conf.get("schema");
 
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Schema is " + schemaProperty);
             LOG.debug("Base table is " + tableType);
         }
 
@@ -79,15 +73,18 @@ public class CryptoTable implements ExtendedHTable {
             this.cryptoProperties = new CryptoProperties(this.tableSchema);
 
         } else {
-            this.setSchema(conf, schemaProperty, tableName, tableType);
+            this.tableSchema = Database.getTableSchema(conf, tableName);
+            this.cryptoProperties = new CryptoProperties(this.tableSchema);
         }
 
         if (tableType.equals("HTable")) {
-            LOG.debug("HTable create");
             htable = new ExtendedHTableImpl(conf, tableName);
         } else if (tableType.equals("SharedTable")) {
-            LOG.debug("SharedTable create");
             htable = new SharedTable(conf, tableName, tableSchema);
+        }
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Initalizing " + tableType + " for table " + tableName);
         }
 
         /* While the cryptographic keys management is not defined, read keys from specific files
@@ -105,41 +102,6 @@ public class CryptoTable implements ExtendedHTable {
         this.htableUtils = new HTableFeaturesUtils(this.cryptoProperties, this.secureFilterConverter);
     }
 
-    private void setSchema(Configuration conf, String schemaProperty, String tableName, String tableType) throws FileNotFoundException, UnsupportedEncodingException {
-        if (schemaProperty != null && !schemaProperty.isEmpty()) {
-            while (!parsingComplete) {
-                try {
-                    lock.lock();
-                    if (!parsingComplete) {
-                        File file = new File(schemaProperty);
-                        databaseSchema = new DatabaseSchema(file.getPath());
-                        databaseDefaultProperties = new HashMap<>();
-                        databaseDefaultProperties = databaseSchema.getDatabaseDefaultProperties();
-                        parsingComplete = true;
-                        if (tableType.equals("SharedTable")) {
-                            SharedTable.initializeThreadPool(conf.getInt("sharedClient.ThreadPool.size", 50));
-                        }
-                    }
-
-                } finally {
-                    lock.unlock();
-                }
-            }
-
-            if (databaseSchema.containsKey(tableName)) {
-                this.tableSchema = getTableSchema(tableName);
-            } else {
-                this.tableSchema = generateDefaultTableSchema(tableName);
-                LOG.debug("Generate Default Table Schema for " + tableName + " table: " + tableSchema.toString());
-            }
-
-            this.cryptoProperties = new CryptoProperties(this.tableSchema);
-
-        } else {
-            LOG.error("Schema file not found");
-            throw new FileNotFoundException("Schema file not found.");
-        }
-    }
 
     // TODO: esta parte depois tem de ser feita com um gestor de chaves
     // FIXME: The current approach instantiate the same cryptograhic key for all CryptoBox. Solution: Provide different cryptographic keys for each CryptoBox
@@ -152,7 +114,9 @@ public class CryptoTable implements ExtendedHTable {
                     if (!keyAcknowledgement) {
                         File fileKey = new File(cryptographicKeyProperty);
                         if (fileKey.isFile()) {
-                            LOG.debug("Loading key file " + cryptographicKeyProperty);
+                            if (LOG.isDebugEnabled()) {
+                                LOG.debug("Loading key file " + cryptographicKeyProperty);
+                            }
                             cryptographicKey = Utils.readKeyFromFile(cryptographicKeyProperty);
                         } else {
                             throw new FileNotFoundException("The file " + cryptographicKeyProperty + " does not match with the requirements.");
@@ -176,31 +140,6 @@ public class CryptoTable implements ExtendedHTable {
     }
 
 
-    private TableSchema getTableSchema(String tableName) {
-        return databaseSchema.getTableSchema(tableName);
-    }
-
-    private TableSchema generateDefaultTableSchema(String tablename) {
-        TableSchema temp = new TableSchema();
-        temp.setTablename(tablename);
-        temp.setDefaultKeyCryptoType((CryptoType) databaseDefaultProperties.get("defaultPropertiesKey"));
-        temp.setDefaultColumnsCryptoType((CryptoType) databaseDefaultProperties.get("defaultPropertiesColumns"));
-        temp.setDefaultKeyFormatSize((Integer) databaseDefaultProperties.get("defaultPropertiesKeyFormatSize"));
-        temp.setDefaultColumnFormatSize((Integer) databaseDefaultProperties.get("defaultPropertiesColFormatSize"));
-        temp.setDefaultKeyPadding((Boolean) databaseDefaultProperties.get("defaultPropertiesKeyPadding"));
-        temp.setDefaultColumnPadding((Boolean) databaseDefaultProperties.get("defaultPropertiesColumnPadding"));
-        temp.setEncryptionMode((Boolean) databaseDefaultProperties.get("defaultPropertiesEncryptionMode"));
-        // KEY
-        // FIXME: does not contemplate FPE
-        temp.setKey(
-                new Key(
-                        (CryptoType) databaseDefaultProperties.get("defaultPropertiesKey"),
-                        (Integer) databaseDefaultProperties.get("defaultPropertiesKeyFormatSize"),
-                        (Boolean) databaseDefaultProperties.get("defaultPropertiesKeyPadding")));
-        return temp;
-    }
-
-
 //----------------------------------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -214,7 +153,9 @@ public class CryptoTable implements ExtendedHTable {
      */
     @Override
     public void put(Put put) {
-        LOG.debug("Put operation");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Put " + put);
+        }
         Put finalPut;
         try {
             if (this.tableSchema.getEncryptionMode()) {
@@ -233,7 +174,9 @@ public class CryptoTable implements ExtendedHTable {
 
     @Override
     public void put(List<Put> puts) {
-        LOG.debug("Batch put operation");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Batch put " + puts);
+        }
         List<Put> finalPutList;
         try {
             if (this.tableSchema.getEncryptionMode()) {
@@ -264,7 +207,9 @@ public class CryptoTable implements ExtendedHTable {
      */
     @Override
     public Result get(Get get) {
-        LOG.debug("Get operation");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Get " + get);
+        }
         Result getResult = Result.EMPTY_RESULT;
         try {
             if (this.tableSchema.getEncryptionMode()) {
@@ -307,7 +252,9 @@ public class CryptoTable implements ExtendedHTable {
 
     @Override
     public Result[] get(List<Get> gets) {
-        LOG.debug("Batch get operation");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Batch get " + gets);
+        }
         Result[] results = new Result[gets.size()];
         try {
             if (this.tableSchema.getEncryptionMode()) {
@@ -397,7 +344,9 @@ public class CryptoTable implements ExtendedHTable {
      */
     @Override
     public void delete(Delete delete) {
-        LOG.debug("Delete operation " + delete);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Delete operation " + delete);
+        }
         try {
             if (this.tableSchema.getEncryptionMode()) {
                 byte[] row = this.htableUtils.getObjectRow(delete);
@@ -438,7 +387,9 @@ public class CryptoTable implements ExtendedHTable {
 
     @Override
     public void delete(List<Delete> deletes) {
-        LOG.debug("Batch delete operation");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Batch delete " + deletes);
+        }
         try {
             if (this.tableSchema.getEncryptionMode()) {
                 List<Delete> encryptedDeletes = new ArrayList<>(deletes.size());
@@ -490,7 +441,7 @@ public class CryptoTable implements ExtendedHTable {
     @Override
     public ResultScanner getScanner(Scan scan) {
         if (LOG.isDebugEnabled()) {
-            LOG.debug("getScanner operation");
+            LOG.debug("getScanner " + scan);
         }
         ResultScanner result = null;
         try {
@@ -677,7 +628,9 @@ public class CryptoTable implements ExtendedHTable {
     }
 
     public HRegionLocation getRegionLocation(byte[] row) {
-        LOG.debug("getRegionLocation operation");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("getRegionLocation operation");
+        }
         HRegionLocation hRegionLocation = null;
         try {
             if (this.tableSchema.getEncryptionMode()) {
@@ -724,31 +677,41 @@ public class CryptoTable implements ExtendedHTable {
 
     @Override
     public byte[][] getStartKeys() throws IOException {
-        LOG.debug("getStartKeys operation");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("getStartKeys operation");
+        }
         return this.htable.getStartKeys();
     }
 
     @Override
     public Pair getStartEndKeys() throws IOException {
-        LOG.debug("getStartEndKeys operation");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("getStartEndKeys operation");
+        }
         return this.htable.getStartEndKeys();
     }
 
     @Override
     public List getRegionsInRange(byte[] bytes, byte[] bytes1) throws IOException {
-        LOG.debug("getRegionsInRange operation");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("getRegionsInRange operation");
+        }
         return this.htable.getRegionsInRange(bytes, bytes1);
     }
 
     @Override
     public NavigableMap getRegionLocations() throws IOException {
-        LOG.debug("getRegionLocations operation");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("getRegionLocations operation");
+        }
         return this.htable.getRegionLocations();
     }
 
     @Override
     public Result getRowOrBefore(byte[] row, byte[] family) {
-        LOG.debug("GetRowOrBefore operation");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("GetRowOrBefore operation");
+        }
         Result result = Result.EMPTY_RESULT;
         try {
             if (this.tableSchema.getEncryptionMode()) {
@@ -850,7 +813,7 @@ public class CryptoTable implements ExtendedHTable {
             }
 
         } catch (Exception e) {
-            LOG.error(e.getMessage());
+            LOG.error(e);
             throw new IllegalStateException(e);
         }
 
@@ -871,7 +834,7 @@ public class CryptoTable implements ExtendedHTable {
                 throw new NullPointerException(errorMsg);
             }
         } catch (Exception e) {
-            LOG.error(e.getMessage());
+            LOG.error(e);
             throw new IllegalStateException(e);
         }
 
@@ -890,7 +853,7 @@ public class CryptoTable implements ExtendedHTable {
                 throw new NullPointerException(errorMsg);
             }
         } catch (Exception e) {
-            LOG.error(e.getMessage());
+            LOG.error(e);
             throw new IllegalStateException(e);
         }
 
@@ -910,11 +873,11 @@ public class CryptoTable implements ExtendedHTable {
                 }
             } else {
                 String errorMsg = "Unrecognized object type.";
-                LOG.debug(errorMsg);
+                LOG.error(errorMsg);
                 throw new NullPointerException(errorMsg);
             }
         } catch (Exception e) {
-            LOG.error(e.getMessage());
+            LOG.error(e);
             throw new IllegalStateException(e);
         }
 
@@ -929,11 +892,6 @@ public class CryptoTable implements ExtendedHTable {
         }
         return encryptedObject;
     }
-
-    public void setCryptographicKey(DatabaseSchema.CryptoType cryptoType, byte[] key) throws UnsupportedEncodingException {
-        this.cryptoProperties.setKey(cryptoType, key);
-    }
-
 
     @Override
     public byte[] getTableName() {
@@ -952,67 +910,87 @@ public class CryptoTable implements ExtendedHTable {
 
     @Override
     public HTableDescriptor getTableDescriptor() throws IOException {
-        LOG.debug("Get table Descriptor operator");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Get table Descriptor operator");
+        }
         return htable.getTableDescriptor();
     }
 
     @Override
     public boolean exists(Get get) throws IOException {
-        LOG.debug("Exists operator");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Exists operator");
+        }
         return htable.exists(get);
     }
 
     @Override
     public Boolean[] exists(List<Get> list) throws IOException {
-        LOG.debug("Batch Exists operator");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Batch Exists operator");
+        }
         return htable.exists(list);
     }
 
     @Override
     public void batch(List<? extends Row> list, Object[] objects) throws IOException, InterruptedException {
-        LOG.debug("Batch operator");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Batch operator");
+        }
         htable.batch(list, objects);
     }
 
     @Override
     public Object[] batch(List<? extends Row> list) throws IOException, InterruptedException {
-        LOG.debug("BatchOperator");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("BatchOperator");
+        }
         return htable.batch(list);
     }
 
     @Override
     public <R> void batchCallback(List<? extends Row> list, Object[] objects, Batch.Callback<R> callback) throws IOException, InterruptedException {
-        LOG.debug("BatchCallback operator");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("BatchCallback operator");
+        }
         htable.batchCallback(list, objects, callback);
     }
 
     @Override
     public <R> Object[] batchCallback(List<? extends Row> list, Batch.Callback<R> callback) throws IOException, InterruptedException {
-        LOG.debug("BatchCallBack operator");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("BatchCallBack operator");
+        }
         return htable.batchCallback(list, callback);
     }
 
     @Override
-    public boolean checkAndDelete(byte[] bytes, byte[] bytes1, byte[] bytes2, byte[] bytes3, Delete delete) throws IOException {
+    public boolean checkAndDelete(byte[] bytes, byte[] bytes1, byte[] bytes2, byte[] bytes3, Delete delete) {
         throw new UnsupportedOperationException("Not supported yet.");
 
     }
 
     @Override
     public void mutateRow(RowMutations rowMutations) throws IOException {
-        LOG.debug("MutateRow operator");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("MutateRow operator");
+        }
         htable.mutateRow(rowMutations);
     }
 
     @Override
     public Result append(Append append) throws IOException {
-        LOG.debug("Append operator");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Append operator");
+        }
         return htable.append(append);
     }
 
     @Override
     public Result increment(Increment increment) throws IOException {
-        LOG.debug("increment operator");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("increment operator");
+        }
         return htable.increment(increment);
     }
 
@@ -1038,13 +1016,17 @@ public class CryptoTable implements ExtendedHTable {
 
     @Override
     public void flushCommits() throws IOException {
-        LOG.debug("FlushCommits operator");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("FlushCommits operator");
+        }
         htable.flushCommits();
     }
 
     @Override
     public void close() throws IOException {
-        LOG.debug("Close operator");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Close operator");
+        }
         htable.close();
     }
 
@@ -1054,14 +1036,18 @@ public class CryptoTable implements ExtendedHTable {
     }
 
     @Override
-    public <T extends Service, R> Map<byte[], R> coprocessorService(Class<T> aClass, byte[] bytes, byte[] bytes1, Batch.Call<T, R> call) throws ServiceException, Throwable {
-        LOG.debug("coprocessorServerice operator");
+    public <T extends Service, R> Map<byte[], R> coprocessorService(Class<T> aClass, byte[] bytes, byte[] bytes1, Batch.Call<T, R> call) throws Throwable {
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("coprocessorServerice operator");
+        }
         return htable.coprocessorService(aClass, bytes, bytes1, call);
     }
 
     @Override
-    public <T extends Service, R> void coprocessorService(Class<T> aClass, byte[] bytes, byte[] bytes1, Batch.Call<T, R> call, Batch.Callback<R> callback) throws ServiceException, Throwable {
-        LOG.debug("Coprocessor sErvice");
+    public <T extends Service, R> void coprocessorService(Class<T> aClass, byte[] bytes, byte[] bytes1, Batch.Call<T, R> call, Batch.Callback<R> callback) throws Throwable {
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Coprocessor sErvice");
+        }
         htable.coprocessorService(aClass, bytes, bytes1, call, callback);
     }
 
@@ -1087,19 +1073,25 @@ public class CryptoTable implements ExtendedHTable {
 
     @Override
     public <R extends Message> Map<byte[], R> batchCoprocessorService(Descriptors.MethodDescriptor methodDescriptor, Message message, byte[] bytes, byte[] bytes1, R r) throws ServiceException, Throwable {
-        LOG.debug("batchCoprocessorService");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("batchCoprocessorService");
+        }
         return htable.batchCoprocessorService(methodDescriptor, message, bytes, bytes1, r);
     }
 
     @Override
     public <R extends Message> void batchCoprocessorService(Descriptors.MethodDescriptor methodDescriptor, Message message, byte[] bytes, byte[] bytes1, R r, Batch.Callback<R> callback) throws ServiceException, Throwable {
-        LOG.debug("batchCoprocessorService");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("batchCoprocessorService");
+        }
         htable.batchCoprocessorService(methodDescriptor, message, bytes, bytes1, r, callback);
     }
 
     @Override
     public boolean checkAndMutate(byte[] bytes, byte[] bytes1, byte[] bytes2, CompareFilter.CompareOp compareOp, byte[] bytes3, RowMutations rowMutations) throws IOException {
-        LOG.debug("CheckAndMutate");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("CheckAndMutate");
+        }
         return htable.checkAndMutate(bytes, bytes1, bytes2, compareOp, bytes3, rowMutations);
     }
 

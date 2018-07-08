@@ -9,6 +9,8 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import pt.uminho.haslab.hbaseInterfaces.CHBaseAdmin;
+import pt.uminho.haslab.safeclient.Database;
+import pt.uminho.haslab.safemapper.TableSchema;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,10 +23,12 @@ public class SharedAdmin implements CHBaseAdmin {
     private final List<HBaseAdmin> admins;
     private final List<Configuration> confs;
     private SharedClientConfiguration sharedConfig;
+    private Configuration config;
 
     public SharedAdmin(Configuration conf) throws IOException {
         admins = new ArrayList<HBaseAdmin>();
         confs = new ArrayList<Configuration>();
+        this.config = conf;
         for (int i = 1; i < 4; i++) {
             /**
              *
@@ -41,30 +45,52 @@ public class SharedAdmin implements CHBaseAdmin {
     }
 
     public void createTable(final HTableDescriptor descriptor)
-            throws IOException{
+            throws IOException {
+        TableSchema schema = Database.getTableSchema(config, descriptor.getTableName().getNameAsString());
+        if (schema.getEncryptionMode()) {
             for (final HBaseAdmin admin : admins) {
-            admin.createTable(descriptor);
+                admin.createTable(descriptor);
+            }
+        } else {
+            admins.get(0).createTable(descriptor);
         }
     }
 
     @Override
-    public void createTable(HTableDescriptor hTableDescriptor, byte[][] bytes) throws IOException {
-        for (final HBaseAdmin admin : admins) {
-            admin.createTable(hTableDescriptor, bytes);
+    public void createTable(HTableDescriptor descriptor, byte[][] bytes) throws IOException {
+        TableSchema schema = Database.getTableSchema(config, descriptor.getTableName().getNameAsString());
+        if (schema.getEncryptionMode()) {
+            for (final HBaseAdmin admin : admins) {
+                admin.createTable(descriptor, bytes);
+            }
+        } else {
+            admins.get(0).createTable(descriptor, bytes);
+
         }
+
     }
 
     public void deleteTable(String tableName) throws IOException {
-        for (HBaseAdmin admin : admins) {
+        TableSchema schema = Database.getTableSchema(config, tableName);
+        if (schema.getEncryptionMode()) {
 
-            admin.deleteTable(tableName);
+            for (HBaseAdmin admin : admins) {
+                admin.deleteTable(tableName);
+            }
+        } else {
+            admins.get(0).deleteTable(tableName);
         }
 
     }
 
     public void disableTable(String tableName) throws IOException {
-        for (HBaseAdmin admin : admins) {
-            admin.disableTable(tableName);
+        TableSchema schema = Database.getTableSchema(config, tableName);
+        if (schema.getEncryptionMode()) {
+            for (HBaseAdmin admin : admins) {
+                admin.disableTable(tableName);
+            }
+        } else {
+            admins.get(0).disableTable(tableName);
         }
 
     }
@@ -81,9 +107,15 @@ public class SharedAdmin implements CHBaseAdmin {
 
     @Override
     public void createTableAsync(HTableDescriptor hTableDescriptor, byte[][] bytes) throws IOException {
-        for (HBaseAdmin admin : admins) {
-            admin.createTable(hTableDescriptor, bytes);
+        TableSchema schema = Database.getTableSchema(config, hTableDescriptor.getTableName().getNameAsString());
+        if (schema.getEncryptionMode()) {
+            for (HBaseAdmin admin : admins) {
+                admin.createTable(hTableDescriptor, bytes);
+            }
+        } else {
+            admins.get(0).createTable(hTableDescriptor, bytes);
         }
+
     }
 
     @Override

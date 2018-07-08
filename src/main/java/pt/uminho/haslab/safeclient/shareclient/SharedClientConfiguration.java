@@ -59,6 +59,7 @@ public class SharedClientConfiguration {
         }
         return cluster;
     }
+
     public int getGetVersionNRetries() {
         return getVersionNRetries;
     }

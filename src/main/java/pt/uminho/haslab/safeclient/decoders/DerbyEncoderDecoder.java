@@ -13,7 +13,7 @@ import java.io.ObjectOutput;
 public abstract class DerbyEncoderDecoder implements Decoder, Encoder {
 
 
-    protected FormatIdInputStream getInputStream(byte[] value){
+    protected FormatIdInputStream getInputStream(byte[] value) {
         return new FormatIdInputStream(new CloneableByteArrayInputStream(value));
     }
 

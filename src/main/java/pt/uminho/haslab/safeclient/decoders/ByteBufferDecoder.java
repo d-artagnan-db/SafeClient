@@ -5,12 +5,12 @@ import org.apache.hadoop.hbase.util.Bytes;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-public class ByteBufferDecoder implements Encoder, Decoder{
+public class ByteBufferDecoder implements Encoder, Decoder {
 
     private static ByteBufferDecoder encoder;
 
-    public synchronized static ByteBufferDecoder createByteBufferDecoder(){
-        if(encoder == null){
+    public synchronized static ByteBufferDecoder createByteBufferDecoder() {
+        if (encoder == null) {
             encoder = new ByteBufferDecoder();
         }
 
@@ -18,7 +18,7 @@ public class ByteBufferDecoder implements Encoder, Decoder{
     }
 
     @Override
-    public int getInt(byte[] value){
+    public int getInt(byte[] value) {
         return ByteBuffer.wrap(value).getInt();
     }
 

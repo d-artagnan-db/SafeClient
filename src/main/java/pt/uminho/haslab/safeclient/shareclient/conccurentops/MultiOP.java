@@ -309,7 +309,4 @@ public abstract class MultiOP {
     protected abstract void joinThreads(List<Future> threads)
             throws IOException;
 
-    public byte[] getUniqueRowId() {
-        return this.uniqueRowId;
-    }
 }

@@ -3,7 +3,6 @@ package pt.uminho.haslab.safeclient.shareclient;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.Message;
 import com.google.protobuf.Service;
-import com.google.protobuf.ServiceException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -45,14 +44,16 @@ public class SharedTable implements ExtendedHTable {
     private static final TableLock TABLE_LOCKS = new TableLockImpl();
     private static ResultPlayerLoadBalancer LB = new ResultPlayerLoadBalancerImpl();
     private static ExecutorService threadPool;
-    private final String tableName;
     private final List<HTable> connections;
     private final Lock readLock;
     private final Lock writeLock;
     private SharedClientConfiguration sharedConfig;
     private TableSchema schema;
 
+
     public SharedTable(Configuration conf, String tableName, TableSchema schema) throws IOException {
+
+        SharedTable.initializeThreadPool(conf.getInt("sharedClient.ThreadPool.size", 50));
 
         if (LB == null) {
             String error = "Player Load Balancer is not initialized";
@@ -78,19 +79,19 @@ public class SharedTable implements ExtendedHTable {
             connections.add(clusterTable);
         }
         this.schema = schema;
-        this.tableName = tableName;
         readLock = TABLE_LOCKS.readLock(tableName);
         writeLock = TABLE_LOCKS.writeLock(tableName);
 
     }
 
-    public static void initializeLoadBalancer(
-            ResultPlayerLoadBalancer loadBalancer) {
+    public static void initializeLoadBalancer(ResultPlayerLoadBalancer loadBalancer) {
         LB = loadBalancer;
     }
 
-    public static void initializeThreadPool(int nthreads) {
-        threadPool = Executors.newFixedThreadPool(nthreads);
+    public synchronized static void initializeThreadPool(int nthreads) {
+        if (threadPool == null) {
+            threadPool = Executors.newFixedThreadPool(nthreads);
+        }
     }
 
     private Long getRequestId() {
@@ -103,202 +104,236 @@ public class SharedTable implements ExtendedHTable {
      * @throws RetriesExhaustedWithDetailsException
      */
     public void put(final Put put) throws IOException {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Put operation");
-        }
-        try {
-            new MultiPut(this.sharedConfig, connections, schema, put, threadPool).doOperation();
-        } catch (InterruptedException | InvalidNumberOfBits | ExecutionException | InvalidSecretValue ex) {
-            LOG.error(ex);
-            throw new IllegalStateException(ex);
+        if (schema.getEncryptionMode()) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("SharedTable protected Put");
+            }
+            try {
+                new MultiPut(this.sharedConfig, connections, schema, put, threadPool).doOperation();
+            } catch (InterruptedException | InvalidNumberOfBits | ExecutionException | InvalidSecretValue ex) {
+                LOG.error(ex);
+                throw new IllegalStateException(ex);
+            }
+        } else {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("SharedTable standard Put");
+            }
+            this.connections.get(0).put(put);
         }
     }
 
 
     public Result get(Get get) throws IOException {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Get operation");
-        }
-        try {
-            MultiGet mGet = new MultiGet(sharedConfig, connections, schema, get, threadPool);
-            mGet.doOperation();
-            return mGet.getResult();
-        } catch (InterruptedException | IOException | ExecutionException ex) {
-            LOG.error(ex);
-            throw new IllegalStateException(ex);
+
+        if (schema.getEncryptionMode()) {
+
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("SharedTable protected Get");
+            }
+
+            try {
+                MultiGet mGet = new MultiGet(sharedConfig, connections, schema, get, threadPool);
+                mGet.doOperation();
+                return mGet.getResult();
+            } catch (InterruptedException | IOException | ExecutionException ex) {
+                LOG.error(ex);
+                throw new IllegalStateException(ex);
+            }
+        } else {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("SharedTable unprotected Get");
+            }
+            return this.connections.get(0).get(get);
         }
     }
 
     public ResultScanner getScanner(Scan scan) throws IOException {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("getScanner");
-        }
 
-        readLock.lock();
-        long requestID = getRequestId();
-        int targetPlayer = LB.getResultPlayer();
-        MultiScan mScan = new MultiScan(sharedConfig, connections, schema, requestID, targetPlayer, scan, threadPool);
-        mScan.startScan();
-        readLock.unlock();
-        return mScan;
+        if (schema.getEncryptionMode()) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("SharedTable protected getScanner");
+            }
+            readLock.lock();
+            long requestID = getRequestId();
+            int targetPlayer = LB.getResultPlayer();
+            MultiScan mScan = new MultiScan(sharedConfig, connections, schema, requestID, targetPlayer, scan, threadPool);
+            mScan.startScan();
+            readLock.unlock();
+            return mScan;
+        } else {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("SharedTable unprotected getScanner");
+            }
+            return this.connections.get(0).getScanner(scan);
+
+        }
 
     }
 
 
     public byte[] getTableName() {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("GetTableName");
-        }
         return this.connections.get(0).getTableName();
     }
 
     public TableName getName() {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("getName");
-        }
-
         return this.connections.get(0).getName();
     }
 
     public Configuration getConfiguration() {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("getConfiguration");
-        }
         return this.connections.get(0).getConfiguration();
     }
 
     public HTableDescriptor getTableDescriptor() throws IOException {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("getTableDescriptor");
-        }
         return this.connections.get(0).getTableDescriptor();
     }
 
     public boolean exists(Get get) throws IOException {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("exists Get");
-        }
         return this.connections.get(0).exists(get);
     }
 
     public Boolean[] exists(List<Get> list) throws IOException {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("exits list get");
-        }
         return this.connections.get(0).exists(list);
     }
 
-    public void batch(List<? extends Row> list, Object[] os)
-            throws IOException, InterruptedException {
+    public void batch(List<? extends Row> list, Object[] os) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
-    public Object[] batch(List<? extends Row> list) throws IOException,
-            InterruptedException {
+    public Object[] batch(List<? extends Row> list) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
-    public <R> void batchCallback(List<? extends Row> list, Object[] os,
-                                  Batch.Callback<R> clbck) throws IOException, InterruptedException {
+    public <R> void batchCallback(List<? extends Row> list, Object[] os, Batch.Callback<R> clbck) {
         throw new UnsupportedOperationException("Not supported yet.");
 
     }
 
-    public <R> Object[] batchCallback(List<? extends Row> list,
-                                      Batch.Callback<R> clbck) throws IOException, InterruptedException {
+    public <R> Object[] batchCallback(List<? extends Row> list, Batch.Callback<R> clbck) {
         throw new UnsupportedOperationException("Not supported yet.");
 
     }
 
     public Result[] get(List<Get> list) throws IOException {
-        Result[] res = new Result[list.size()];
-        int offset = 0;
-        for(Get g: list){
-            res[offset] = this.get(g);
-            offset+=1;
+        if (schema.getEncryptionMode()) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("SharedTable protected bach get");
+            }
+            Result[] res = new Result[list.size()];
+            int offset = 0;
+            for (Get g : list) {
+                res[offset] = this.get(g);
+                offset += 1;
+            }
+
+            return res;
+        } else {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("SharedTable unprotected bach get");
+            }
+            return this.connections.get(0).get(list);
         }
-
-        return res;
     }
 
-    public Result getRowOrBefore(byte[] bytes, byte[] bytes1)
-            throws IOException {
+    public Result getRowOrBefore(byte[] bytes, byte[] bytes1) {
         throw new UnsupportedOperationException("Not supported yet.");
 
     }
 
-    public ResultScanner getScanner(byte[] bytes) throws IOException {
+    public ResultScanner getScanner(byte[] bytes) {
         throw new UnsupportedOperationException("Not supported yet.");
 
     }
 
-    public ResultScanner getScanner(byte[] startRow, byte[] stopRow)
-            throws IOException {
+    public ResultScanner getScanner(byte[] startRow, byte[] stopRow) {
         throw new UnsupportedOperationException("Not supported yet.");
 
     }
 
     public void put(List<Put> list) throws IOException {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Batch put operation");
-        }
-        //writeLock.lock();
-        try {
-            new MultiPut(this.sharedConfig, connections, schema, list, threadPool).doOperation();
-        } catch (InvalidSecretValue | InterruptedException | InvalidNumberOfBits | ExecutionException ex) {
-            LOG.error(ex);
-            throw new IllegalStateException(ex);
+        if (schema.getEncryptionMode()) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("SharedTable protected batch put");
+            }
+            try {
+                new MultiPut(this.sharedConfig, connections, schema, list, threadPool).doOperation();
+            } catch (InvalidSecretValue | InterruptedException | InvalidNumberOfBits | ExecutionException ex) {
+                LOG.error(ex);
+                throw new IllegalStateException(ex);
+            }
+        } else {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("SharedTable unprotected batch put");
+            }
+            this.connections.get(0).put(list);
         }
 
     }
 
     public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier,
                                byte[] value, Put put) throws IOException {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("checkAndPut operation");
-        }
-        boolean res;
-        writeLock.lock();
-        try {
-            long requestID = getRequestId();
-            int targetPlayer = LB.getResultPlayer();
-            MultiCheckAndPut op = new MultiCheckAndPut(this.sharedConfig, connections, schema, row, family, qualifier, value, requestID, targetPlayer, put, threadPool);
-            op.doOperation();
-            res = op.getResult();
-        } catch (InvalidSecretValue | InterruptedException | InvalidNumberOfBits | ExecutionException ex) {
-            LOG.error(ex);
-            throw new IllegalStateException(ex);
-        } finally {
-            writeLock.unlock();
-        }
+        if (schema.getEncryptionMode()) {
 
-        return res;
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("SharedTable protected checkAndPut");
+            }
+            boolean res;
+            writeLock.lock();
+            try {
+                long requestID = getRequestId();
+                int targetPlayer = LB.getResultPlayer();
+                MultiCheckAndPut op = new MultiCheckAndPut(this.sharedConfig, connections, schema, row, family, qualifier, value, requestID, targetPlayer, put, threadPool);
+                op.doOperation();
+                res = op.getResult();
+            } catch (InvalidSecretValue | InterruptedException | InvalidNumberOfBits | ExecutionException ex) {
+                LOG.error(ex);
+                throw new IllegalStateException(ex);
+            } finally {
+                writeLock.unlock();
+            }
+
+            return res;
+        } else {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("SharedTable unprotected checkAndPut");
+            }
+            return this.connections.get(0).checkAndPut(row, family, qualifier, value, put);
+        }
     }
 
     public void delete(Delete delete) throws IOException {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("delete operation");
-        }
-        writeLock.lock();
-        MultiDelete mDel = new MultiDelete(sharedConfig, connections, schema, delete, threadPool);
-        try {
-            mDel.doOperation();
-        } catch (InterruptedException | ExecutionException ex) {
-            LOG.error(ex);
-            throw new IllegalStateException(ex);
-        } finally {
-            writeLock.unlock();
+        if (schema.getEncryptionMode()) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("SharedTable protected delete");
+            }
+            writeLock.lock();
+            MultiDelete mDel = new MultiDelete(sharedConfig, connections, schema, delete, threadPool);
+            deleteOP(mDel);
+        } else {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("SharedTable unprotected delete");
+            }
+            this.connections.get(0).delete(delete);
         }
 
     }
 
     public void delete(List<Delete> list) throws IOException {
-
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Batch delete operation");
+        if (schema.getEncryptionMode()) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("SharedTable protected batch delete");
+            }
+            writeLock.lock();
+            MultiDelete mDel = new MultiDelete(sharedConfig, connections, schema, list, threadPool);
+            deleteOP(mDel);
+        } else {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("SharedTable unprotected batch delete");
+            }
+            this.connections.get(0).delete(list);
         }
-        writeLock.lock();
-        MultiDelete mDel = new MultiDelete(sharedConfig, connections, schema, list, threadPool);
+    }
+
+    private void deleteOP(MultiDelete mDel) throws IOException {
         try {
             mDel.doOperation();
         } catch (InterruptedException | ExecutionException ex) {
@@ -309,23 +344,22 @@ public class SharedTable implements ExtendedHTable {
         }
     }
 
-    public boolean checkAndDelete(byte[] row, byte[] family, byte[] qualifier,
-                                  byte[] value, Delete delete) throws IOException {
+    public boolean checkAndDelete(byte[] row, byte[] family, byte[] qualifier, byte[] value, Delete delete) {
         throw new UnsupportedOperationException("Not supported yet.");
 
     }
 
-    public void mutateRow(RowMutations rm) throws IOException {
+    public void mutateRow(RowMutations rm) {
         throw new UnsupportedOperationException("Not supported yet.");
 
     }
 
-    public Result append(Append append) throws IOException {
+    public Result append(Append append) {
         throw new UnsupportedOperationException("Not supported yet.");
 
     }
 
-    public Result increment(Increment i) throws IOException {
+    public Result increment(Increment i) {
         throw new UnsupportedOperationException("Not supported yet.");
 
     }
@@ -341,77 +375,104 @@ public class SharedTable implements ExtendedHTable {
      */
     public long incrementColumnValue(byte[] bytes, byte[] bytes1,
                                      byte[] bytes2, long l) throws IOException {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("incrementColumnValue");
-        }
-        long result = 0;
-        for (HTable table : this.connections) {
-            result = table.incrementColumnValue(bytes, bytes1, bytes2, l);
-        }
+        if (schema.getEncryptionMode()) {
 
-        return result;
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("SharedTable protected incrementColumnValue");
+            }
+
+            long result = 0;
+
+            for (HTable table : this.connections) {
+                result = table.incrementColumnValue(bytes, bytes1, bytes2, l);
+            }
+
+            return result;
+        } else {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("SharedTable unprotected incrementColumnValue");
+            }
+            return this.connections.get(0).incrementColumnValue(bytes, bytes1, bytes2, l);
+        }
     }
 
-    public long incrementColumnValue(byte[] bytes, byte[] bytes1,
-                                     byte[] bytes2, long l, Durability drblt) throws IOException {
+    public long incrementColumnValue(byte[] bytes, byte[] bytes1, byte[] bytes2, long l, Durability drblt) {
         throw new UnsupportedOperationException("Not supported yet.");
 
     }
 
-    public long incrementColumnValue(byte[] bytes, byte[] bytes1,
-                                     byte[] bytes2, long l, boolean bln) throws IOException {
+    public long incrementColumnValue(byte[] bytes, byte[] bytes1, byte[] bytes2, long l, boolean bln) {
         throw new UnsupportedOperationException("Not supported yet.");
 
     }
 
     public boolean isAutoFlush() {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("isAutoFlush");
-        }
         return this.connections.get(0).isAutoFlush();
     }
 
     public void setAutoFlush(boolean bln) {
-        for (HTable table : this.connections) {
-            table.setAutoFlushTo(bln);
+        if (schema.getEncryptionMode()) {
+
+            for (HTable table : this.connections) {
+                table.setAutoFlushTo(bln);
+            }
+        } else {
+            this.connections.get(0).setAutoFlushTo(bln);
         }
     }
 
     public void flushCommits() throws IOException {
-        for (HTable table : connections) {
-            table.flushCommits();
+        if (schema.getEncryptionMode()) {
+            for (HTable table : connections) {
+                table.flushCommits();
+            }
+        } else {
+            this.connections.get(0).flushCommits();
         }
 
     }
 
     public void close() throws IOException {
-        for (HTable table : connections) {
-            table.close();
+        if (schema.getEncryptionMode()) {
+
+            for (HTable table : connections) {
+                table.close();
+            }
+        } else {
+            this.connections.get(0).close();
         }
     }
 
     public <T extends Service, R> Map<byte[], R> coprocessorService(
-            Class<T> type, byte[] bytes, byte[] bytes1, Batch.Call<T, R> call)
-            throws ServiceException, Throwable {
+            Class<T> type, byte[] bytes, byte[] bytes1, Batch.Call<T, R> call) {
         throw new UnsupportedOperationException("Not supported yet.");
 
     }
 
     public <T extends Service, R> void coprocessorService(Class<T> type,
                                                           byte[] bytes, byte[] bytes1, Batch.Call<T, R> call,
-                                                          Batch.Callback<R> clbck) throws ServiceException, Throwable {
+                                                          Batch.Callback<R> clbck) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
     public void setAutoFlush(boolean bln, boolean bln1) {
-        for (HTable table : this.connections) {
-            table.setAutoFlush(bln, bln1);
+        if (schema.getEncryptionMode()) {
+            for (HTable table : this.connections) {
+                table.setAutoFlush(bln, bln1);
+            }
+        } else {
+            this.connections.get(0).setAutoFlush(bln, bln1);
         }
     }
 
     public void setAutoFlushTo(boolean bln) {
-        for (HTable table : this.connections) {
-            table.setAutoFlush(bln);
+        if (schema.getEncryptionMode()) {
+
+            for (HTable table : this.connections) {
+                table.setAutoFlushTo(bln);
+            }
+        } else {
+            this.connections.get(0).setAutoFlushTo(bln);
         }
     }
 
@@ -420,29 +481,32 @@ public class SharedTable implements ExtendedHTable {
     }
 
     public void setWriteBufferSize(long l) throws IOException {
-        for (HTable table : this.connections) {
-            table.setWriteBufferSize(l);
+        if (schema.getEncryptionMode()) {
+
+            for (HTable table : this.connections) {
+                table.setWriteBufferSize(l);
+            }
+        } else {
+            this.connections.get(0).setWriteBufferSize(l);
         }
 
     }
 
     public <R extends Message> Map<byte[], R> batchCoprocessorService(
             Descriptors.MethodDescriptor md, Message msg, byte[] bytes,
-            byte[] bytes1, R r) throws ServiceException, Throwable {
+            byte[] bytes1, R r) {
         throw new UnsupportedOperationException("Not supported yet.");
 
     }
 
     public <R extends Message> void batchCoprocessorService(
             Descriptors.MethodDescriptor md, Message msg, byte[] bytes,
-            byte[] bytes1, R r, Batch.Callback<R> clbck)
-            throws ServiceException, Throwable {
+            byte[] bytes1, R r, Batch.Callback<R> clbck) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
     public boolean checkAndMutate(byte[] bytes, byte[] bytes1, byte[] bytes2,
-                                  CompareFilter.CompareOp co, byte[] bytes3, RowMutations rm)
-            throws IOException {
+                                  CompareFilter.CompareOp co, byte[] bytes3, RowMutations rm) {
         throw new UnsupportedOperationException("Not supported yet.");
 
     }
@@ -474,15 +538,26 @@ public class SharedTable implements ExtendedHTable {
 
     @Override
     public CoprocessorRpcChannel coprocessorService(byte[] bytes) {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Issuing SharedTable coprocessor service");
-        }
-        List<CoprocessorRpcChannel> channels = new ArrayList<>();
+        /*The coprocessors Service should only be issued to one cluster to simulate the appearance of a single
+           HBase cluster */
+      /*  if (schema.getEncryptionMode()) {
 
-        for (HTable table : connections) {
-            channels.add(table.coprocessorService(bytes));
-        }
-        return new SharedCoprocessorRpcChannel(channels);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("SharedTable protected coprocessor service");
+            }
+
+            List<CoprocessorRpcChannel> channels = new ArrayList<>();
+
+            for (HTable table : connections) {
+                channels.add(table.coprocessorService(bytes));
+            }
+            return new SharedCoprocessorRpcChannel(channels);
+        } else {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("SharedTable unprotected coprocessor service");
+            }*/
+            return this.connections.get(0).coprocessorService(bytes);
+        //}
     }
 
 }
