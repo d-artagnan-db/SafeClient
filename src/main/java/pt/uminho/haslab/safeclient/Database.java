@@ -3,13 +3,15 @@ package pt.uminho.haslab.safeclient;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import pt.uminho.haslab.safemapper.DatabaseSchema;
-import pt.uminho.haslab.safemapper.Key;
-import pt.uminho.haslab.safemapper.TableSchema;
+import pt.uminho.haslab.safemapper.*;
 
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+
+import static pt.uminho.haslab.safemapper.DatabaseSchema.CryptoType.LSMPC;
+import static pt.uminho.haslab.safemapper.DatabaseSchema.CryptoType.SMPC;
+import static pt.uminho.haslab.safemapper.DatabaseSchema.CryptoType.XOR;
 
 public class Database {
 
@@ -37,6 +39,20 @@ public class Database {
             }
             return generateDefaultTableSchema(tableName);
         }
+    }
+
+    public static boolean requiresSharedTable(TableSchema schema){
+        boolean requires = false;
+        for(Family fam: schema.getColumnFamilies()){
+            for(Qualifier qual: fam.getQualifiers()){
+                DatabaseSchema.CryptoType ctype = qual.getCryptoType();
+                if( ctype == SMPC || ctype  == LSMPC || ctype == XOR ){
+                    requires = true;
+                }
+            }
+        }
+        return requires;
+
     }
 
     private static TableSchema generateDefaultTableSchema(String tablename) {

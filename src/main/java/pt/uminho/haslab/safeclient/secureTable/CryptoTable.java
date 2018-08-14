@@ -22,8 +22,11 @@ import pt.uminho.haslab.safeclient.Database;
 import pt.uminho.haslab.safeclient.ExtendedHTableImpl;
 import pt.uminho.haslab.safeclient.secureTable.resultscanner.ResultScannerFactory;
 import pt.uminho.haslab.safeclient.secureTable.securefilterfactory.SecureFilterConverter;
+import pt.uminho.haslab.safeclient.shareclient.SharedClientConfiguration;
 import pt.uminho.haslab.safeclient.shareclient.SharedTable;
 import pt.uminho.haslab.safemapper.DatabaseSchema.CryptoType;
+import pt.uminho.haslab.safemapper.Family;
+import pt.uminho.haslab.safemapper.Qualifier;
 import pt.uminho.haslab.safemapper.TableSchema;
 
 import java.io.File;
@@ -32,6 +35,10 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import static pt.uminho.haslab.safemapper.DatabaseSchema.CryptoType.LSMPC;
+import static pt.uminho.haslab.safemapper.DatabaseSchema.CryptoType.SMPC;
+import static pt.uminho.haslab.safemapper.DatabaseSchema.CryptoType.XOR;
 
 /**
  * CryptoTable class.
@@ -78,9 +85,27 @@ public class CryptoTable implements ExtendedHTable {
         }
 
         if (tableType.equals("HTable")) {
+            if(LOG.isDebugEnabled()){
+                LOG.debug("Initiating default HTable for table " + tableName);
+            }
             htable = new ExtendedHTableImpl(conf, tableName);
         } else if (tableType.equals("SharedTable")) {
-            htable = new SharedTable(conf, tableName, tableSchema);
+
+            if(Database.requiresSharedTable(tableSchema)){
+                //The configuration requests a sharedtable but current table does not need it, so use a normal HTable.
+                if(LOG.isDebugEnabled()){
+                    LOG.debug("Initiating shared table for table " + tableName);
+                }
+                htable = new SharedTable(conf, tableName, tableSchema);
+            }else{
+                if(LOG.isDebugEnabled()){
+                    LOG.debug("Initiating default HTable for table for single cluster " + tableName);
+                }
+                SharedClientConfiguration sharedConfig = new SharedClientConfiguration(conf, 1);
+                Configuration clusterConfig = sharedConfig.createClusterConfiguration();
+                htable =  new ExtendedHTableImpl(clusterConfig, tableName);
+            }
+
         }
 
         if (LOG.isDebugEnabled()) {
