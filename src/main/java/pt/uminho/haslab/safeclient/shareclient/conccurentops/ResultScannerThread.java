@@ -15,10 +15,7 @@ import pt.uminho.haslab.safeclient.shareclient.SharedClientConfiguration;
 import pt.uminho.haslab.saferegions.OperationAttributesIdentifiers;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -141,7 +138,13 @@ public class ResultScannerThread extends QueryThread implements ResultScanner {
                 byte[] requestID = scan.getAttribute(OperationAttributesIdentifiers.RequestIdentifier);
                 int targetPlayer = Integer.parseInt(new String(scan.getAttribute(OperationAttributesIdentifiers.TargetPlayer)));
                 EndpointCallback callback = new EndpointCallback(scan, requestID, targetPlayer);
+                if(LOG.isDebugEnabled()){
+                    LOG.debug("Send coprocessor request + " + Arrays.toString(scan.getStartRow()) + " :: " + Arrays.toString(scan.getStopRow()) + " " + scan.getFilter());
+                }
                 Map<byte[], Smpc.Results> coprocessorResults = table.coprocessorService(Smpc.ConcurrentScanService.class, scan.getStartRow(), scan.getStopRow(), callback);
+                if(LOG.isDebugEnabled()){
+                    LOG.debug("Request completed with result size of " + coprocessorResults.size());
+                }
                 handleCoprocessorService(coprocessorResults);
             } catch (Throwable throwable) {
                 LOG.error(throwable);
@@ -186,8 +189,8 @@ public class ResultScannerThread extends QueryThread implements ResultScanner {
                     .setTargetPlayer(targetPlayer)
                     .setFilterType(scan.getFilter().getClass().getName())
                     .setRequestID(ByteString.copyFrom(requestID)).build();
-
             concurrentScanService.scan(controller, message, rpcCallback);
+
             if (controller.failedOnException()) {
                 throw controller.getFailedOn();
             }

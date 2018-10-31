@@ -19,6 +19,8 @@ import java.util.List;
 
 public class SharedAdmin implements CHBaseAdmin {
 
+
+
     static final Log LOG = LogFactory.getLog(SharedAdmin.class.getName());
 
     private final List<HBaseAdmin> admins;

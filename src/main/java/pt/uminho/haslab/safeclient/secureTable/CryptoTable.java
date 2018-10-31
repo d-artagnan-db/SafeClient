@@ -25,8 +25,6 @@ import pt.uminho.haslab.safeclient.secureTable.securefilterfactory.SecureFilterC
 import pt.uminho.haslab.safeclient.shareclient.SharedClientConfiguration;
 import pt.uminho.haslab.safeclient.shareclient.SharedTable;
 import pt.uminho.haslab.safemapper.DatabaseSchema.CryptoType;
-import pt.uminho.haslab.safemapper.Family;
-import pt.uminho.haslab.safemapper.Qualifier;
 import pt.uminho.haslab.safemapper.TableSchema;
 
 import java.io.File;
@@ -35,10 +33,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
-import static pt.uminho.haslab.safemapper.DatabaseSchema.CryptoType.LSMPC;
-import static pt.uminho.haslab.safemapper.DatabaseSchema.CryptoType.SMPC;
-import static pt.uminho.haslab.safemapper.DatabaseSchema.CryptoType.XOR;
 
 /**
  * CryptoTable class.
