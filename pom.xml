@@ -68,10 +68,5 @@
             <artifactId>HBaseInterfaces</artifactId>
             <version>${hbaseinterfaces.version}</version>
         </dependency>
-        <dependency>
-            <groupId>pt.haslab.derby</groupId>
-            <artifactId>derbynet</artifactId>
-            <version>0.1-SNAPSHOT</version>
-        </dependency>
     </dependencies>
 </project>
