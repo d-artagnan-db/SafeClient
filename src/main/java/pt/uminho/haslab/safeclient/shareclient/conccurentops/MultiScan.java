@@ -2,14 +2,11 @@ package pt.uminho.haslab.safeclient.shareclient.conccurentops;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.derby.iapi.error.StandardException;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.*;
-import pt.uminho.haslab.safeclient.decoders.Decoder;
-import pt.uminho.haslab.safeclient.decoders.DecodingFactory;
 import pt.uminho.haslab.safeclient.shareclient.SharedClientConfiguration;
 import pt.uminho.haslab.safemapper.DatabaseSchema;
 import pt.uminho.haslab.safemapper.TableSchema;
@@ -184,7 +181,6 @@ public class MultiScan extends MultiOP implements ResultScanner {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Generate Protected Filter for column " + sFamily + ":" + sQualifier + " with type " + type + " value " + Arrays.toString(value));
                 }
-                Decoder smpcDcoder = DecodingFactory.decoder(schema, sFamily, sQualifier);
 
                 hasProtectedScan = true;
                 int formatSize = schema.getFormatSizeFromQualifier(sFamily, sQualifier);
@@ -192,7 +188,7 @@ public class MultiScan extends MultiOP implements ResultScanner {
                 try {
                     Dealer dealer = new SharemindDealer(formatSize);
                     byte[] sQualifierMod = sQualifier.getBytes();
-                    BigInteger bigVal = new BigInteger(smpcDcoder.getStringArray(value));
+                    BigInteger bigVal = new BigInteger(value);
                     SharemindSharedSecret secret = (SharemindSharedSecret) dealer.share(bigVal);
                     fList.add(new SingleColumnValueFilter(family, sQualifierMod, operator, secret.getU1().toByteArray()));
                     fList.add(new SingleColumnValueFilter(family, sQualifierMod, operator, secret.getU2().toByteArray()));
@@ -210,11 +206,9 @@ public class MultiScan extends MultiOP implements ResultScanner {
 
                 hasProtectedScan = true;
                 IntSharemindDealer dealer = MultiOP.iDealer;
-                Decoder intDecoder = DecodingFactory.decoder(schema, sFamily, sQualifier);
 
                 try {
-                    int ptxValue = intDecoder.getInt(value);
-                    int[] secrets = dealer.share(ptxValue);
+                    int[] secrets = dealer.share(ByteBuffer.wrap(value).getInt());
                     if (LOG.isDebugEnabled()) {
                         LOG.debug("ISMPC single column value filter is " + ByteBuffer.wrap(value).getInt() + " with shares " + Arrays.toString(secrets));
                     }
@@ -228,7 +222,7 @@ public class MultiScan extends MultiOP implements ResultScanner {
                         fList.add(new SingleColumnValueFilter(family, sQualifierMod, operator, res));
 
                     }
-                } catch (InvalidSecretValue | StandardException | IOException ex) {
+                } catch (InvalidSecretValue ex) {
                     LOG.error(ex);
                     throw new IllegalStateException(ex);
                 }
@@ -240,10 +234,8 @@ public class MultiScan extends MultiOP implements ResultScanner {
 
                 hasProtectedScan = true;
                 LongSharemindDealer lDealer = MultiOP.lDealer;
-                Decoder longDecoder = DecodingFactory.decoder(schema, sFamily, sQualifier);
                 try {
-                    long lvalue = longDecoder.getLong(value);
-                    long[] secrets = lDealer.share(lvalue);
+                    long[] secrets = lDealer.share(ByteBuffer.wrap(value).getLong());
                     byte[] sQualifierMod = sQualifier.getBytes();
 
                     for (long secret : secrets) {
@@ -253,7 +245,7 @@ public class MultiScan extends MultiOP implements ResultScanner {
                         fList.add(new SingleColumnValueFilter(family, sQualifierMod, operator, buffer.array()));
                     }
 
-                } catch (InvalidSecretValue | IOException | StandardException ex) {
+                } catch (InvalidSecretValue ex) {
                     LOG.error(ex);
                     throw new IllegalStateException(ex);
                 }

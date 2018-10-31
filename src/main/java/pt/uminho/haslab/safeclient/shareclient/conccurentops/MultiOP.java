@@ -1,7 +1,6 @@
 package pt.uminho.haslab.safeclient.shareclient.conccurentops;
 
 import org.apache.commons.logging.LogFactory;
-import org.apache.derby.iapi.error.StandardException;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellScanner;
 import org.apache.hadoop.hbase.CellUtil;
