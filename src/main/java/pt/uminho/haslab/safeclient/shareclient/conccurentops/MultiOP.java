@@ -9,9 +9,6 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
-import pt.uminho.haslab.safeclient.decoders.Decoder;
-import pt.uminho.haslab.safeclient.decoders.DecodingFactory;
-import pt.uminho.haslab.safeclient.decoders.Encoder;
 import pt.uminho.haslab.safeclient.shareclient.SharedClientConfiguration;
 import pt.uminho.haslab.safemapper.DatabaseSchema;
 import pt.uminho.haslab.safemapper.TableSchema;
@@ -91,12 +88,11 @@ public abstract class MultiOP {
 
             switch (type) {
                 case SMPC:
-                    Decoder smpcDcoder = DecodingFactory.decoder(schema, family, qualifier);
 
                     int formatSize = schema.getFormatSizeFromQualifier(family, qualifier);
                     Dealer dealer = new SharemindDealer(formatSize);
 
-                    BigInteger bigVal = new BigInteger(smpcDcoder.getStringArray(value));
+                    BigInteger bigVal = new BigInteger(value);
                     if (LOG.isDebugEnabled()) {
                         LOG.debug("Sharing SMPC value " + bigVal + " with formatsize " + formatSize + " for column " + family + ":" + qualifier);
                     }
@@ -107,16 +103,7 @@ public abstract class MultiOP {
                     values.add(secret.getU3().toByteArray());
                     break;
                 case ISMPC:
-                    Decoder intDecoder = DecodingFactory.decoder(schema, family, qualifier);
-
-                    int ptxValue = 0;
-                    try {
-                        assert intDecoder != null;
-                        ptxValue = intDecoder.getInt(value);
-                    } catch (StandardException e) {
-                        LOG.error(e);
-                        throw new IllegalStateException(e);
-                    }
+                    int ptxValue = ByteBuffer.wrap(value).getInt();
 
                     int[] shares = iDealer.share(ptxValue);
 
@@ -125,15 +112,12 @@ public abstract class MultiOP {
                     }
                     break;
                 case LSMPC:
-                    Decoder decoder = DecodingFactory.decoder(schema, family, qualifier);
-                    long lValue = 0;
-                    try {
-                        assert decoder != null;
-                        lValue = decoder.getLong(value);
-                    } catch (StandardException e) {
-                        LOG.error(e);
-                        throw new IllegalStateException(e);
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Sharing LSMPC");
                     }
+
+                    long lValue = ByteBuffer.wrap(value).getLong();
+
 
                     long[] lshares = lDealer.share(lValue);
                     LOG.debug(" insert long value " + lValue + " shared into " + Arrays.toString(lshares));
@@ -201,7 +185,6 @@ public abstract class MultiOP {
                     if (LOG.isDebugEnabled()) {
                         LOG.debug("Decode SMPC");
                     }
-                    Encoder smpcDcoder = DecodingFactory.encoder(schema, family, qualifier);
 
                     int formatSize = schema.getFormatSizeFromQualifier(family, qualifier);
                     byte[] fSecret = CellUtil.cloneValue(firstCell);
@@ -213,32 +196,32 @@ public abstract class MultiOP {
                     BigInteger thirdSecret = new BigInteger(tSecret);
 
                     SharemindSharedSecret secret = new SharemindSharedSecret(formatSize, firstSecret, secondSecret, thirdSecret);
-                    decValue = smpcDcoder.encodeString(secret.unshare().toByteArray());
+                    decValue = secret.unshare().toByteArray();
                     break;
                 case ISMPC:
                     if (LOG.isDebugEnabled()) {
                         LOG.debug("Decode ISMPC");
                     }
-                    Encoder iencoder = DecodingFactory.encoder(schema, family, qualifier);
                     int[] shares = new int[3];
                     shares[0] = ByteBuffer.wrap(CellUtil.cloneValue(firstCell)).getInt();
                     shares[1] = ByteBuffer.wrap(CellUtil.cloneValue(secondCell)).getInt();
                     shares[2] = ByteBuffer.wrap(CellUtil.cloneValue(thirdCell)).getInt();
 
                     int plxValue = iDealer.unshare(shares);
-                    decValue = iencoder.encodeInt(plxValue);
+                    decValue = Bytes.toBytes(plxValue);
+
                     break;
                 case LSMPC:
                     if (LOG.isDebugEnabled()) {
                         LOG.debug("Decode LSMPC");
                     }
-                    Encoder encoder = DecodingFactory.encoder(schema, family, qualifier);
                     long[] lshares = new long[3];
                     lshares[0] = ByteBuffer.wrap(CellUtil.cloneValue(firstCell)).getLong();
                     lshares[1] = ByteBuffer.wrap(CellUtil.cloneValue(secondCell)).getLong();
                     lshares[2] = ByteBuffer.wrap(CellUtil.cloneValue(thirdCell)).getLong();
+
                     long lValue = lDealer.unshare(lshares);
-                    decValue = encoder.encodeLong(lValue);
+                    decValue = Bytes.toBytes(lValue);
 
 
                     break;
