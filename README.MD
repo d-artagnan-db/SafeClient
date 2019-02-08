@@ -5,18 +5,22 @@ This component is responsible for abstracting from client applications the multi
 
 #Dependencies
 
-- ```cryptoenv``` ([High-level Wrapper for protocols](https://github.com/d-artagnan-db/CryptoEnv.git))
 - ```smpc``` ([Secure Multi-Party Computation Library](https://github.com/d-artagnan-db/SMPC.git)
 - ```testingutils``` ([Utility Testing component](https://github.com/d-artagnan-db/TestingUtils.git))
 - ```hbaseInterfaces``` ([Database Interfaces](https://github.com/d-artagnan-db/HBaseInterfaces.git))
 - ```protocommunications``` ([Protocol Buffers component](https://github.com/d-artagnan-db/ProtoCom.git))
 - ```safemapper``` ([Secure Schema Mapping module](https://github.com/d-artagnan-db/SafeMapper.git))
-- ```saferegions``` ([d'Artagnan SaveServer](https://github.com/d-artagnan-db/SafeServer.git))
+- ```safeserver``` ([d'Artagnan SaveServer](https://github.com/d-artagnan-db/SafeServer.git))
 
 
 # How to use Install SafeClient?
 
+To Install SafeClient and any other dependency just do in each project.
 mvn install -DskipTests
+
+However projects must be installed in the following sequence:
+
+testingutils, smpc, protocommunications, safemapper, hbaseInterfaces, SafeServer and SafeClient
 
 # How to use?
 

@@ -43,11 +43,6 @@
             <version>${saferegions.version}</version>
         </dependency>
         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>CryptoEnv</artifactId>
-            <version>${cryptoEnv.version}</version>
-        </dependency>
-        <dependency>
             <groupId>pt.uminho.haslab</groupId>
             <artifactId>smpc</artifactId>
             <version>${smpc.version}</version>
