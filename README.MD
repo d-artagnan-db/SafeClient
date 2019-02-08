@@ -3,7 +3,7 @@
 This component is responsible for abstracting from client applications the multiple underlying databases and protecting plaintext requests in to secure requests.
 
 
-#Dependencies
+# Dependencies
 
 - ```smpc``` ([Secure Multi-Party Computation Library](https://github.com/d-artagnan-db/SMPC.git)
 - ```testingutils``` ([Utility Testing component](https://github.com/d-artagnan-db/TestingUtils.git))
