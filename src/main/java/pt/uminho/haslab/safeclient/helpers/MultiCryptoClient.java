@@ -2,7 +2,7 @@ package pt.uminho.haslab.safeclient.helpers;
 
 import org.apache.hadoop.conf.Configuration;
 import pt.uminho.haslab.hbaseInterfaces.ExtendedHTable;
-import pt.uminho.haslab.safeclient.secureTable.CryptoTable;
+import pt.uminho.haslab.safeclient.shareclient.SharedTable;
 import pt.uminho.haslab.safemapper.TableSchema;
 import pt.uminho.haslab.smpc.exceptions.InvalidNumberOfBits;
 
@@ -19,6 +19,6 @@ public class MultiCryptoClient extends ShareClient {
             throws IOException, InvalidNumberOfBits {
         Configuration conf = new Configuration();
         conf.addResource(configuration);
-        return new CryptoTable(conf, tableName, schema);
+        return new SharedTable(conf, tableName, schema);
     }
 }
